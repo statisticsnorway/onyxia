@@ -104,10 +104,11 @@ jobs:
           IS_UPGRADED_VERSION: ${{ needs.check_if_version_upgraded.outputs.is_upgraded_version }}
           TO_VERSION: ${{ needs.check_if_version_upgraded.outputs.to_version }}
         run: |
-          OUT=$GITHUB_REPOSITORY:$TO_VERSION,$GITHUB_REPOSITORY:latest
+          OUT=${{ env.REGISTRY }}/${{ env.IMAGE }}:$TO_VERSION,${{ env.REGISTRY }}/${{ env.IMAGE }}:latest,${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ env.TAG }}
           OUT=$(echo "$OUT" | awk '{print tolower($0)}') 
           echo "docker_tags=$OUT" >> "$GITHUB_OUTPUT"
-      - uses: docker/build-push-action@v2
+
+      - uses: docker/build-push-action@v4
         with:
           push: true
           context: .
