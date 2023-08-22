@@ -61,7 +61,7 @@ export const Header = memo((props: Props) => {
     return (
         <header className={cx(classes.root, className)}>
             <div onClick={onLogoClick} className={classes.logoContainer}>
-                <img src={DaplaHoney} className={classes.svg} aria-hidden={true} />
+                <img src={DaplaHoney} className={classes.svg} aria-hidden={true} alt="" />
             </div>
             <div onClick={onLogoClick} className={classes.mainTextContainer}>
                 {doShowOnyxia && (
