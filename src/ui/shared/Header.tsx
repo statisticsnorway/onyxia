@@ -3,7 +3,7 @@ import { /*IconButton, */ Button, ButtonBarButton } from "ui/theme";
 import { useTranslation } from "ui/i18n";
 import { useConstCallback } from "powerhooks/useConstCallback";
 import { tss, Text } from "ui/theme";
-import { ReactComponent as OnyxiaLogoSvg } from "ui/assets/svg/OnyxiaLogo.svg";
+import DaplaHoney from "ui/assets/png/dapla_honey.png";
 import {
     HEADER_ORGANIZATION,
     HEADER_USECASE_DESCRIPTION
@@ -61,7 +61,7 @@ export const Header = memo((props: Props) => {
     return (
         <header className={cx(classes.root, className)}>
             <div onClick={onLogoClick} className={classes.logoContainer}>
-                <OnyxiaLogoSvg className={classes.svg} />
+                <img src={DaplaHoney} className={classes.svg} aria-hidden={true} />
             </div>
             <div onClick={onLogoClick} className={classes.mainTextContainer}>
                 {doShowOnyxia && (
