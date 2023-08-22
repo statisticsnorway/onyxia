@@ -48,7 +48,12 @@ export default function Home(props: Props) {
         <div className={cx(classes.root, className)}>
             <div className={classes.hero}>
                 <div className={classes.heroTextWrapper}>
-                    <img src={DaplaHoney} className={classes.svg} aria-hidden={true} />
+                    <img
+                        src={DaplaHoney}
+                        className={classes.svg}
+                        aria-hidden={true}
+                        alt=""
+                    />
                     <Text typo="display heading">
                         {isUserLoggedIn
                             ? t("welcome", {
@@ -63,7 +68,7 @@ export default function Home(props: Props) {
                         <Button href="https://docs.sspcloud.fr/">{t("new user")}</Button>
                     )}
                 </div>
-                <img src={DaplaBeeLogo} className={classes.bee} />
+                <img src={DaplaBeeLogo} className={classes.bee} alt="" />
             </div>
             <div className={classes.cardsWrapper}>
                 <Card
@@ -130,15 +135,6 @@ const useStyles = tss.withName({ Home }).create(({ theme }) => ({
         "backgroundRepeat": "no-repeat",
         "backgroundSize": "80%",
         "overflow": "hidden"
-    },
-    "dragoon": {
-        "position": "absolute",
-        "width": "46%",
-        "right": -82,
-        "top": -206,
-        "& .focus-color": {
-            "fill": theme.colors.useCases.typography.textFocus
-        }
     },
     "bee": {
         "position": "absolute",
