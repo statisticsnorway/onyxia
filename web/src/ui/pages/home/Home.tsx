@@ -2,7 +2,8 @@ import { useEffect, useMemo, memo } from "react";
 import { Button } from "ui/theme";
 import { routes } from "ui/routes";
 import { tss, Text, useStyles as useClasslessStyles } from "ui/theme";
-import { ReactComponent as OnyxiaLogoSvg } from "ui/assets/svg/OnyxiaLogo.svg";
+import DaplaBeeLogo from "ui/assets/png/dapla_bee_logo.png";
+import DaplaHoney from "ui/assets/png/dapla_honey.png";
 import { useCoreFunctions } from "core";
 import { useTranslation } from "ui/i18n";
 import { ReactComponent as IconCommunitySvg } from "ui/assets/svg/IconCommunity.svg";
@@ -12,7 +13,6 @@ import { Card as OnyxiaUiCard } from "onyxia-ui/Card";
 import type { Link } from "type-route";
 import onyxiaNeumorphismDarkModeUrl from "ui/assets/svg/OnyxiaNeumorphismDarkMode.svg";
 import onyxiaNeumorphismLightModeUrl from "ui/assets/svg/OnyxiaNeumorphismLightMode.svg";
-import { ReactComponent as DragoonSvg } from "ui/assets/svg/Dragoon.svg";
 import { getIsHomePageDisabled } from "ui/env";
 import { useConst } from "powerhooks/useConst";
 import { useStateRef } from "powerhooks/useStateRef";
@@ -48,7 +48,7 @@ export default function Home(props: Props) {
         <div className={cx(classes.root, className)}>
             <div className={classes.hero}>
                 <div className={classes.heroTextWrapper}>
-                    <OnyxiaLogoSvg className={classes.svg} />
+                    <img src={DaplaHoney} className={classes.svg} aria-hidden={true} />
                     <Text typo="display heading">
                         {isUserLoggedIn
                             ? t("welcome", {
@@ -63,7 +63,7 @@ export default function Home(props: Props) {
                         <Button href="https://docs.sspcloud.fr/">{t("new user")}</Button>
                     )}
                 </div>
-                <DragoonSvg className={classes.dragoon} />
+                <img src={DaplaBeeLogo} className={classes.bee} />
             </div>
             <div className={classes.cardsWrapper}>
                 <Card
@@ -136,6 +136,15 @@ const useStyles = tss.withName({ Home }).create(({ theme }) => ({
         "width": "46%",
         "right": -82,
         "top": -206,
+        "& .focus-color": {
+            "fill": theme.colors.useCases.typography.textFocus
+        }
+    },
+    "bee": {
+        "position": "absolute",
+        "width": "50%",
+        "right": -0,
+        "top": -0,
         "& .focus-color": {
             "fill": theme.colors.useCases.typography.textFocus
         }
