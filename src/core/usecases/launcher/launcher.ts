@@ -1,15 +1,12 @@
 import "minimal-polyfills/Object.fromEntries";
-import type { State as RootState, Thunks } from "../core";
-import type { PayloadAction } from "@reduxjs/toolkit";
+import type { State as RootState, Thunks, CreateEvt } from "../../core";
 import { createSelector, createSlice } from "@reduxjs/toolkit";
 import { id } from "tsafe/id";
 import { assert } from "tsafe/assert";
-import { selectors as userConfigsSelectors } from "./userConfigs";
+import { selectors as userConfigsSelectors } from "../userConfigs";
 import { same } from "evt/tools/inDepth/same";
-import type { FormFieldValue } from "./sharedDataModel/FormFieldValue";
-import { formFieldsValueToObject } from "./sharedDataModel/FormFieldValue";
+import { type FormFieldValue, formFieldsValueToObject } from "./FormField";
 import type {
-    Contract,
     JSONSchemaFormFieldDescription,
     JSONSchemaObject,
     OnyxiaValues
@@ -18,113 +15,21 @@ import {
     onyxiaFriendlyNameFormFieldPath,
     onyxiaIsSharedFormFieldPath
 } from "core/ports/OnyxiaApi";
-import type { RestorablePackageConfig } from "./restorablePackageConfigs";
-import type { WritableDraft } from "immer/dist/types/types-external";
-import * as publicIpUsecase from "./publicIp";
-import * as userAuthentication from "./userAuthentication";
-import * as deploymentRegion from "./deploymentRegion";
-import { exclude } from "tsafe/exclude";
-import * as projectConfigs from "./projectConfigs";
+import type { RestorablePackageConfig } from "../restorablePackageConfigs";
+import * as publicIpUsecase from "../publicIp";
+import * as userAuthentication from "../userAuthentication";
+import * as deploymentRegion from "../deploymentRegion";
+import * as projectConfigs from "../projectConfigs";
 import { parseUrl } from "core/tools/parseUrl";
 import { typeGuard } from "tsafe/typeGuard";
-import { getRandomK8sSubdomain, getServiceId } from "../ports/OnyxiaApi";
-import { getS3UrlAndRegion } from "../adapters/s3client/getS3UrlAndRegion";
-import * as secretExplorer from "./secretExplorer";
-
+import { getRandomK8sSubdomain, getServiceId } from "../../ports/OnyxiaApi";
+import { getS3UrlAndRegion } from "../../adapters/s3client/getS3UrlAndRegion";
+import * as secretExplorer from "../secretExplorer";
+import { scaffoldingIndexedFormFieldsToFinal } from "./scaffoldingIndexedFormFieldsToFinal";
+import type { FormField, IndexedFormFields } from "./FormField";
 import * as yaml from "yaml";
 import type { Equals } from "tsafe";
-
-export type FormField =
-    | FormField.Boolean
-    | FormField.Object
-    | FormField.Array
-    | FormField.Integer
-    | FormField.Enum
-    | FormField.Text
-    | FormField.Slider;
-export declare namespace FormField {
-    type Common = {
-        path: string[];
-        title: string;
-        description: string | undefined;
-        isReadonly: boolean;
-    };
-
-    export type Boolean = Common & {
-        type: "boolean";
-        value: boolean;
-    };
-
-    export type Object = Common & {
-        type: "object";
-        value: FormFieldValue.Value.Yaml;
-        defaultValue: FormFieldValue.Value.Yaml;
-    };
-
-    export type Array = Common & {
-        type: "array";
-        value: FormFieldValue.Value.Yaml;
-        defaultValue: FormFieldValue.Value.Yaml;
-    };
-
-    export type Integer = Common & {
-        type: "integer";
-        value: number;
-        minimum: number | undefined;
-    };
-
-    export type Enum<T extends string = string> = Common & {
-        type: "enum";
-        enum: T[];
-        value: T;
-    };
-
-    export type Text = Common & {
-        type: "text" | "password";
-        pattern: string | undefined;
-        value: string;
-        defaultValue: string;
-        doRenderAsTextArea: boolean;
-    };
-
-    export type Slider = Slider.Simple | Slider.Range;
-
-    export namespace Slider {
-        type SliderCommon<Unit extends string> = Common & {
-            type: "slider";
-            value: `${number}${Unit}`;
-        };
-
-        export type Simple<Unit extends string = string> = SliderCommon<Unit> & {
-            sliderVariation: "simple";
-            sliderMax: number;
-            sliderMin: number;
-            sliderUnit: Unit;
-            sliderStep: number;
-        };
-
-        export type Range = Range.Down | Range.Up;
-        export namespace Range {
-            type RangeCommon<Unit extends string> = SliderCommon<Unit> & {
-                sliderVariation: "range";
-                sliderExtremitySemantic: string;
-                sliderRangeId: string;
-            };
-
-            export type Down<Unit extends string = string> = RangeCommon<Unit> & {
-                sliderExtremity: "down";
-                sliderMin: number;
-                sliderUnit: Unit;
-                sliderStep: number;
-            };
-
-            export type Up<Unit extends string = string> = RangeCommon<Unit> & {
-                sliderExtremity: "up";
-                sliderMax: number;
-            };
-        }
-    }
-}
+import { Evt } from "evt";
 
 type State = State.NotInitialized | State.Ready;
 
@@ -138,242 +43,22 @@ export declare namespace State {
         stateDescription: "ready";
         icon: string | undefined;
         catalogId: string;
+        catalogLocation: string;
         packageName: string;
         sources: string[];
-        "~internal": {
-            pathOfFormFieldsWhoseValuesAreDifferentFromDefault: {
-                path: string[];
-            }[];
-            formFields: FormField[];
-            infosAboutWhenFieldsShouldBeHidden: {
-                path: string[];
-                isHidden: boolean | FormFieldValue;
-            }[];
-            defaultFormFieldsValue: FormFieldValue[];
-            dependencies?: string[];
-            config: JSONSchemaObject;
-        };
-    } & (
-        | {
-              launchState: "not launching";
-              sensitiveConfigurations: FormFieldValue[];
-          }
-        | {
-              launchState: "launching";
-          }
-        | {
-              launchState: "launched";
-              serviceId: string;
-          }
-    );
-}
-
-export type IndexedFormFields = IndexedFormFields.Final;
-
-export declare namespace IndexedFormFields {
-    type Generic<T> = {
-        [dependencyNamePackageNameOrGlobal: string]: {
-            meta:
-                | {
-                      type: "dependency";
-                  }
-                | {
-                      type: "package";
-                  }
-                | {
-                      type: "global";
-                      description?: string;
-                  };
-            formFieldsByTabName: {
-                [tabName: string]: { description?: string } & T;
-            };
-        };
-    };
-
-    export type Final = Generic<{
-        formFields: Exclude<FormField, FormField.Slider.Range>[];
-        assembledSliderRangeFormFields: AssembledSliderRangeFormField[];
-    }>;
-
-    export type Scaffolding = Generic<{
+        pathOfFormFieldsWhoseValuesAreDifferentFromDefault: {
+            path: string[];
+        }[];
         formFields: FormField[];
-    }>;
-
-    export type AssembledSliderRangeFormField<Unit extends string = string> = {
-        title: string;
-        description?: string;
-        sliderMax: number;
-        sliderMin: number;
-        sliderUnit: Unit;
-        sliderStep: number;
-        extremities: Record<
-            "up" | "down",
-            {
-                path: string[];
-                semantic: string;
-                value: `${number}${Unit}`;
-            }
-        >;
+        infosAboutWhenFieldsShouldBeHidden: {
+            path: string[];
+            isHidden: boolean | FormFieldValue;
+        }[];
+        defaultFormFieldsValue: FormFieldValue[];
+        dependencies?: string[];
+        config: JSONSchemaObject;
     };
 }
-
-const { scaffoldingIndexedFormFieldsToFinal } = (() => {
-    const { assembleFormFields } = (() => {
-        const { assembleRangeSliderFormField } = (() => {
-            const { assembleExtremities } = (() => {
-                function toExtremities(
-                    formField: FormField.Slider.Range
-                ): IndexedFormFields.AssembledSliderRangeFormField["extremities"][
-                    | "up"
-                    | "down"] {
-                    return {
-                        "path": formField.path,
-                        "semantic": formField.sliderExtremitySemantic,
-                        "value": formField.value
-                    };
-                }
-
-                function assembleExtremities(
-                    formField1: FormField.Slider.Range,
-                    formField2: FormField.Slider.Range
-                ): IndexedFormFields.AssembledSliderRangeFormField {
-                    const formFieldUp =
-                        formField1.sliderExtremity === "up" ? formField1 : formField2;
-
-                    assert(formFieldUp.sliderExtremity === "up");
-
-                    const formFieldDown = [formField1, formField2].find(
-                        formField => formField !== formFieldUp
-                    );
-
-                    assert(
-                        formFieldDown !== undefined &&
-                            formFieldDown.sliderExtremity === "down"
-                    );
-
-                    return {
-                        "extremities": {
-                            "down": toExtremities(formFieldDown),
-                            "up": toExtremities(formFieldUp)
-                        },
-                        "sliderMax": formFieldUp.sliderMax,
-                        ...formFieldDown
-                    };
-                }
-
-                return { assembleExtremities };
-            })();
-
-            function assembleRangeSliderFormField(
-                acc: (
-                    | IndexedFormFields.AssembledSliderRangeFormField
-                    | FormField.Slider.Range
-                )[],
-                formField: FormField.Slider.Range
-            ): void {
-                const otherExtremity = acc
-                    .map(assembledSliderRangeFormFieldOrFormFieldSliderRange =>
-                        "extremities" in
-                        assembledSliderRangeFormFieldOrFormFieldSliderRange
-                            ? undefined
-                            : assembledSliderRangeFormFieldOrFormFieldSliderRange
-                    )
-                    .filter(exclude(undefined))
-                    .find(
-                        ({ sliderRangeId }) => sliderRangeId === formField.sliderRangeId
-                    );
-
-                if (otherExtremity !== undefined) {
-                    acc[acc.indexOf(otherExtremity)] = assembleExtremities(
-                        otherExtremity,
-                        formField
-                    );
-                } else {
-                    acc.push(formField);
-                }
-            }
-
-            return { assembleRangeSliderFormField };
-        })();
-
-        function assembleFormFields(
-            formFields: FormField.Slider.Range[]
-        ): IndexedFormFields.AssembledSliderRangeFormField[] {
-            let acc: (
-                | IndexedFormFields.AssembledSliderRangeFormField
-                | FormField.Slider.Range
-            )[] = [];
-
-            formFields.forEach(formField => assembleRangeSliderFormField(acc, formField));
-
-            return acc.map(assembledSliderRangeFormField => {
-                if (!("extremities" in assembledSliderRangeFormField)) {
-                    throw new Error(
-                        `${assembledSliderRangeFormField.path.join("/")} only has ${
-                            assembledSliderRangeFormField.sliderExtremity
-                        } extremity`
-                    );
-                }
-                return assembledSliderRangeFormField;
-            });
-        }
-
-        return { assembleFormFields };
-    })();
-
-    function scaffoldingIndexedFormFieldsToFinal(
-        scaffoldingIndexedFormFields: IndexedFormFields.Scaffolding
-    ): IndexedFormFields.Final {
-        const indexedFormFields: IndexedFormFields.Final = {};
-
-        Object.entries(scaffoldingIndexedFormFields).forEach(
-            ([
-                dependencyNamePackageNameOrGlobal,
-                { meta, formFieldsByTabName: scaffoldingFormFieldsByTabName }
-            ]) => {
-                const formFieldsByTabName: IndexedFormFields.Final[string]["formFieldsByTabName"] =
-                    {};
-
-                Object.entries(scaffoldingFormFieldsByTabName).forEach(
-                    ([tabName, { description, formFields: allFormFields }]) => {
-                        const nonSliderRangeFormFields: Exclude<
-                            FormField,
-                            FormField.Slider.Range
-                        >[] = [];
-                        const sliderRangeFormFields: FormField.Slider.Range[] = [];
-
-                        allFormFields.forEach(formField => {
-                            if (
-                                formField.type === "slider" &&
-                                formField.sliderVariation === "range"
-                            ) {
-                                sliderRangeFormFields.push(formField);
-                            } else {
-                                nonSliderRangeFormFields.push(formField);
-                            }
-                        });
-
-                        formFieldsByTabName[tabName] = {
-                            description,
-                            "formFields": nonSliderRangeFormFields,
-                            "assembledSliderRangeFormFields":
-                                assembleFormFields(sliderRangeFormFields)
-                        };
-                    }
-                );
-
-                indexedFormFields[dependencyNamePackageNameOrGlobal] = {
-                    meta,
-                    formFieldsByTabName
-                };
-            }
-        );
-
-        return indexedFormFields;
-    }
-
-    return { scaffoldingIndexedFormFieldsToFinal };
-})();
 
 export const name = "launcher";
 
@@ -385,50 +70,54 @@ export const { reducer, actions } = createSlice({
             "isInitializing": false
         })
     ),
-    "reducers": {
-        "initializationStarted": state => {
-            assert(state.stateDescription === "not initialized");
-            state.isInitializing = true;
-        },
-        "initialized": (
-            state,
-            {
-                payload
-            }: PayloadAction<{
-                catalogId: string;
-                packageName: string;
-                icon: string | undefined;
-                sources: string[];
-                formFields: State.Ready["~internal"]["formFields"];
-                infosAboutWhenFieldsShouldBeHidden: State.Ready["~internal"]["infosAboutWhenFieldsShouldBeHidden"];
-                config: State.Ready["~internal"]["config"];
-                dependencies: string[];
-                formFieldsValueDifferentFromDefault: FormFieldValue[];
-                sensitiveConfigurations: FormFieldValue[];
-            }>
-        ) => {
-            const {
-                catalogId,
-                packageName,
-                icon,
-                sources,
-                formFields,
-                infosAboutWhenFieldsShouldBeHidden,
-                config,
-                dependencies,
-                formFieldsValueDifferentFromDefault,
-                sensitiveConfigurations
-            } = payload;
-
-            Object.assign(
+    "reducers": (() => {
+        const reducers = {
+            "initializationStarted": state => {
+                assert(state.stateDescription === "not initialized");
+                state.isInitializing = true;
+            },
+            "initialized": (
                 state,
-                id<State.Ready>({
-                    "stateDescription": "ready",
+                {
+                    payload
+                }: {
+                    payload: {
+                        catalogLocation: string;
+                        catalogId: string;
+                        packageName: string;
+                        icon: string | undefined;
+                        sources: string[];
+                        formFields: State.Ready["formFields"];
+                        infosAboutWhenFieldsShouldBeHidden: State.Ready["infosAboutWhenFieldsShouldBeHidden"];
+                        config: State.Ready["config"];
+                        dependencies: string[];
+                        formFieldsValueDifferentFromDefault: FormFieldValue[];
+                        sensitiveConfigurations: FormFieldValue[];
+                    };
+                }
+            ) => {
+                const {
+                    catalogLocation,
                     catalogId,
                     packageName,
                     icon,
                     sources,
-                    "~internal": {
+                    formFields,
+                    infosAboutWhenFieldsShouldBeHidden,
+                    config,
+                    dependencies,
+                    formFieldsValueDifferentFromDefault
+                } = payload;
+
+                Object.assign(
+                    state,
+                    id<State.Ready>({
+                        "stateDescription": "ready",
+                        catalogId,
+                        catalogLocation,
+                        packageName,
+                        icon,
+                        sources,
                         formFields,
                         infosAboutWhenFieldsShouldBeHidden,
                         "defaultFormFieldsValue": formFields.map(({ path, value }) => ({
@@ -438,77 +127,87 @@ export const { reducer, actions } = createSlice({
                         dependencies,
                         "pathOfFormFieldsWhoseValuesAreDifferentFromDefault": [],
                         config
-                    },
-                    "launchState": "not launching",
-                    sensitiveConfigurations
-                })
-            );
+                    })
+                );
 
-            assert(state.stateDescription === "ready");
+                assert(state.stateDescription === "ready");
 
-            formFieldsValueDifferentFromDefault.forEach(formFieldValue =>
-                formFieldValueChangedReducer({ state, formFieldValue })
-            );
-        },
-        "reset": () =>
-            id<State.NotInitialized>({
-                "stateDescription": "not initialized",
-                "isInitializing": false
-            }),
-        "formFieldValueChanged": (state, { payload }: PayloadAction<FormFieldValue>) => {
-            assert(state.stateDescription === "ready");
+                formFieldsValueDifferentFromDefault.forEach(formFieldValue =>
+                    reducers.formFieldValueChanged(state, {
+                        "payload": { formFieldValue }
+                    })
+                );
+            },
+            "reset": () =>
+                id<State.NotInitialized>({
+                    "stateDescription": "not initialized",
+                    "isInitializing": false
+                }),
+            "formFieldValueChanged": (
+                state,
+                { payload }: { payload: { formFieldValue: FormFieldValue } }
+            ) => {
+                assert(state.stateDescription === "ready");
 
-            formFieldValueChangedReducer({ state, "formFieldValue": payload });
-        },
-        "launchStarted": state => {
-            assert(state.stateDescription === "ready");
-            state.launchState = "launching";
-        },
-        "launchCompleted": (state, { payload }: PayloadAction<{ serviceId: string }>) => {
-            const { serviceId } = payload;
-            assert(state.stateDescription === "ready");
-            state.launchState = "launched";
-            assert(state.launchState === "launched");
-            state.serviceId = serviceId;
-        }
-    }
+                const { formFieldValue } = payload;
+
+                const { path, value } = formFieldValue;
+
+                {
+                    const formField = state.formFields.find(formField =>
+                        same(formField.path, path)
+                    )!;
+
+                    if (same(formField.value, value)) {
+                        return;
+                    }
+
+                    formField.value = value;
+                }
+
+                {
+                    const { pathOfFormFieldsWhoseValuesAreDifferentFromDefault } = state;
+
+                    if (
+                        state.defaultFormFieldsValue.find(formField =>
+                            same(formField.path, path)
+                        )!.value !== value
+                    ) {
+                        if (
+                            !pathOfFormFieldsWhoseValuesAreDifferentFromDefault.find(
+                                ({ path: path_i }) => same(path_i, path)
+                            )
+                        ) {
+                            pathOfFormFieldsWhoseValuesAreDifferentFromDefault.push({
+                                path
+                            });
+                        }
+                    } else {
+                        const index =
+                            pathOfFormFieldsWhoseValuesAreDifferentFromDefault.findIndex(
+                                ({ path: path_i }) => same(path_i, path)
+                            );
+
+                        if (index >= 0) {
+                            pathOfFormFieldsWhoseValuesAreDifferentFromDefault.splice(
+                                index,
+                                1
+                            );
+                        }
+                    }
+                }
+            },
+            "launchStarted": () => {
+                /* NOTE: For coreEvt */
+            },
+            "launchCompleted": (_state, _: { payload: { serviceId: string } }) => {
+                /* NOTE: For coreEvt */
+            }
+        } satisfies Record<string, (state: State, ...rest: any[]) => State | void>;
+
+        return reducers;
+    })()
 });
-
-const privateThunks = {
-    "launchOrPreviewContract":
-        (params: { isForContractPreview: boolean }) =>
-        async (...args): Promise<{ contract: Contract }> => {
-            const { isForContractPreview } = params;
-
-            const [dispatch, getState, { onyxiaApi }] = args;
-
-            if (!isForContractPreview) {
-                dispatch(actions.launchStarted());
-            }
-
-            const state = getState().launcher;
-
-            assert(state.stateDescription === "ready");
-
-            const { contract } = await onyxiaApi.launchPackage({
-                "catalogId": state.catalogId,
-                "packageName": state.packageName,
-                "options": formFieldsValueToObject(state["~internal"].formFields),
-                "isDryRun": isForContractPreview
-            });
-
-            if (!isForContractPreview) {
-                const { serviceId } = getServiceId({
-                    "packageName": state.packageName,
-                    "randomK8sSubdomain": getRandomK8sSubdomain()
-                });
-
-                dispatch(actions.launchCompleted({ serviceId }));
-            }
-
-            return { contract };
-        }
-} satisfies Thunks;
 
 export const thunks = {
     "initialize":
@@ -521,7 +220,8 @@ export const thunks = {
             const { catalogId, packageName, formFieldsValueDifferentFromDefault } =
                 params;
 
-            const [dispatch, getState, { onyxiaApi, oidc }] = args;
+            const [dispatch, getState, { onyxiaApi, oidc, secretsManager, s3Client }] =
+                args;
 
             assert(
                 getState().launcher.stateDescription === "not initialized",
@@ -549,7 +249,150 @@ export const thunks = {
             assert(oidc.isUserLoggedIn);
 
             const valuesSchemaJson = getValuesSchemaJson({
-                "onyxiaValues": await dispatch(thunks.getOnyxiaValues())
+                "onyxiaValues": await (async (): Promise<OnyxiaValues> => {
+                    const { publicIp } = await dispatch(publicIpUsecase.thunks.fetch());
+
+                    const user = dispatch(userAuthentication.thunks.getUser());
+
+                    const userConfigs = userConfigsSelectors.userConfigs(getState());
+
+                    const region = deploymentRegion.selectors.selectedDeploymentRegion(
+                        getState()
+                    );
+
+                    const servicePassword = await dispatch(
+                        projectConfigs.thunks.getServicesPassword()
+                    );
+
+                    const project = projectConfigs.selectors.selectedProject(getState());
+
+                    const onyxiaValues: OnyxiaValues = {
+                        "user": {
+                            "idep": user.username,
+                            "name": `${user.familyName} ${user.firstName}`,
+                            "email": user.email,
+                            "password": servicePassword,
+                            "ip": publicIp
+                        },
+                        "project": {
+                            "id": project.id,
+                            "password": servicePassword,
+                            "basic": btoa(
+                                unescape(
+                                    encodeURIComponent(`${project.id}:${servicePassword}`)
+                                )
+                            )
+                        },
+                        "git": {
+                            "name": userConfigs.gitName,
+                            "email": userConfigs.gitEmail,
+                            "credentials_cache_duration":
+                                userConfigs.gitCredentialCacheDuration,
+                            "token": userConfigs.githubPersonalAccessToken ?? undefined
+                        },
+                        "vault": await (async () => {
+                            const { vault } = region;
+
+                            if (vault === undefined) {
+                                return {
+                                    "VAULT_ADDR": "",
+                                    "VAULT_TOKEN": "",
+                                    "VAULT_MOUNT": "",
+                                    "VAULT_TOP_DIR": ""
+                                };
+                            }
+
+                            return {
+                                "VAULT_ADDR": vault.url,
+                                "VAULT_TOKEN": (await secretsManager.getToken()).token,
+                                "VAULT_MOUNT": vault.kvEngine,
+                                "VAULT_TOP_DIR": dispatch(
+                                    secretExplorer.protectedThunks.getHomeDirectoryPath()
+                                )
+                            };
+                        })(),
+                        "kaggleApiToken": userConfigs.kaggleApiToken ?? undefined,
+                        "s3": await (async () => {
+                            const project = projectConfigs.selectors.selectedProject(
+                                getState()
+                            );
+
+                            const { accessKeyId, secretAccessKey, sessionToken } =
+                                await s3Client.getToken({
+                                    "restrictToBucketName": project.isDefault
+                                        ? undefined
+                                        : project.bucket
+                                });
+
+                            s3Client.createBucketIfNotExist(project.bucket);
+
+                            return {
+                                "AWS_ACCESS_KEY_ID": accessKeyId,
+                                "AWS_BUCKET_NAME": project.bucket,
+                                "AWS_SECRET_ACCESS_KEY": secretAccessKey,
+                                "AWS_SESSION_TOKEN": sessionToken,
+                                ...(() => {
+                                    const { s3: s3Params } =
+                                        deploymentRegion.selectors.selectedDeploymentRegion(
+                                            getState()
+                                        );
+
+                                    if (s3Params === undefined) {
+                                        return {
+                                            "AWS_DEFAULT_REGION": "",
+                                            "AWS_S3_ENDPOINT": "",
+                                            "port": 443
+                                        };
+                                    }
+
+                                    const { region, host, port } = (() => {
+                                        const { region, url } =
+                                            getS3UrlAndRegion(s3Params);
+
+                                        const { host, port = 443 } = parseUrl(url);
+
+                                        return { region, host, port };
+                                    })();
+
+                                    return {
+                                        "AWS_DEFAULT_REGION": region,
+                                        "AWS_S3_ENDPOINT": host,
+                                        port
+                                    };
+                                })()
+                            };
+                        })(),
+                        "region": {
+                            "defaultIpProtection": region.defaultIpProtection,
+                            "defaultNetworkPolicy": region.defaultNetworkPolicy,
+                            "allowedURIPattern":
+                                region.allowedURIPatternForUserDefinedInitScript,
+                            "kafka": region.kafka,
+                            "from": region.from,
+                            "tolerations": region.tolerations,
+                            "nodeSelector": region.nodeSelector,
+                            "startupProbe": region.startupProbe,
+                            "sliders": region.sliders,
+                            "resources": region.resources
+                        },
+                        "k8s": {
+                            "domain": region.kubernetesClusterDomain,
+                            "ingressClassName": region.ingressClassName,
+                            "ingress": region.ingress,
+                            "route": region.route,
+                            "istio": region.istio,
+                            "randomSubdomain":
+                                (getRandomK8sSubdomain.clear(), getRandomK8sSubdomain()),
+                            "initScriptUrl": region.initScriptUrl
+                        },
+                        "proxyInjection": region.proxyInjection,
+                        "packageRepositoryInjection": region.packageRepositoryInjection,
+                        "certificateAuthorityInjection":
+                            region.certificateAuthorityInjection
+                    };
+
+                    return onyxiaValues;
+                })()
             });
 
             const {
@@ -557,8 +400,8 @@ export const thunks = {
                 infosAboutWhenFieldsShouldBeHidden,
                 sensitiveConfigurations
             } = (() => {
-                const formFields: State.Ready["~internal"]["formFields"] = [];
-                const infosAboutWhenFieldsShouldBeHidden: State.Ready["~internal"]["infosAboutWhenFieldsShouldBeHidden"] =
+                const formFields: State.Ready["formFields"] = [];
+                const infosAboutWhenFieldsShouldBeHidden: State.Ready["infosAboutWhenFieldsShouldBeHidden"] =
                     [];
 
                 const sensitiveConfigurations: FormFieldValue[] | undefined = (() => {
@@ -888,19 +731,29 @@ export const thunks = {
                 };
             })();
 
+            const { catalogLocation, icon } = await (async () => {
+                const catalog = await onyxiaApi.getCatalogs().then(apiRequestResult =>
+                    //TODO: Sort in the adapter of even better, assumes version sorted
+                    //and validate this assertion with zod
+                    apiRequestResult.find(({ id }) => id === catalogId)
+                );
+
+                assert(catalog !== undefined);
+
+                return {
+                    "catalogLocation": catalog.location,
+
+                    "icon": catalog.charts.find(({ name }) => name === packageName)!
+                        .versions[0].icon
+                };
+            })();
+
             dispatch(
                 actions.initialized({
                     catalogId,
+                    catalogLocation,
+                    icon,
                     packageName,
-                    "icon": await onyxiaApi.getCatalogs().then(
-                        apiRequestResult =>
-                            //TODO: Sort in the adapter of even better, assumes version sorted
-                            //and validate this assertion with zod
-                            apiRequestResult
-                                .find(({ id }) => id === catalogId)!
-                                .charts.find(({ name }) => name === packageName)!
-                                .versions[0].icon
-                    ),
                     sources,
                     formFields,
                     infosAboutWhenFieldsShouldBeHidden,
@@ -926,13 +779,15 @@ export const thunks = {
 
             assert(state.stateDescription === "ready");
 
-            const { defaultFormFieldsValue } = state["~internal"];
+            const { defaultFormFieldsValue } = state;
 
             defaultFormFieldsValue.forEach(({ path, value }) => {
                 dispatch(
                     actions.formFieldValueChanged({
-                        path,
-                        value
+                        "formFieldValue": {
+                            path,
+                            value
+                        }
                     })
                 );
             });
@@ -941,27 +796,32 @@ export const thunks = {
         (params: FormFieldValue) =>
         (...args) => {
             const [dispatch] = args;
-            dispatch(actions.formFieldValueChanged(params));
+            const formFieldValue = params;
+            dispatch(actions.formFieldValueChanged({ formFieldValue }));
         },
     "launch":
         () =>
         async (...args) => {
-            const [dispatch] = args;
-            dispatch(
-                privateThunks.launchOrPreviewContract({
-                    "isForContractPreview": false
-                })
-            );
-        },
-    "getContract":
-        () =>
-        async (...args): Promise<{ contract: Contract }> => {
-            const [dispatch] = args;
-            return dispatch(
-                privateThunks.launchOrPreviewContract({
-                    "isForContractPreview": true
-                })
-            );
+            const [dispatch, getState, { onyxiaApi }] = args;
+
+            dispatch(actions.launchStarted());
+
+            const state = getState().launcher;
+
+            assert(state.stateDescription === "ready");
+
+            await onyxiaApi.launchPackage({
+                "catalogId": state.catalogId,
+                "packageName": state.packageName,
+                "options": formFieldsValueToObject(state.formFields)
+            });
+
+            const { serviceId } = getServiceId({
+                "packageName": state.packageName,
+                "randomK8sSubdomain": getRandomK8sSubdomain()
+            });
+
+            dispatch(actions.launchCompleted({ serviceId }));
         },
     "changeFriendlyName":
         (friendlyName: string) =>
@@ -985,156 +845,11 @@ export const thunks = {
                     "value": params.isShared
                 })
             );
-        },
-    /** This thunk can be used outside of the launcher page,
-     *  even if the slice isn't initialized */
-    //@deprecated should be moved to privateThunks
-    "getOnyxiaValues":
-        () =>
-        async (...args): Promise<OnyxiaValues> => {
-            const [dispatch, getState, { secretsManager, s3Client }] = args;
-
-            const { publicIp } = await dispatch(publicIpUsecase.thunks.fetch());
-
-            const user = dispatch(userAuthentication.thunks.getUser());
-
-            const userConfigs = userConfigsSelectors.userConfigs(getState());
-
-            const region = deploymentRegion.selectors.selectedDeploymentRegion(
-                getState()
-            );
-
-            const servicePassword = await dispatch(
-                projectConfigs.thunks.getServicesPassword()
-            );
-
-            const project = projectConfigs.selectors.selectedProject(getState());
-
-            const onyxiaValues: OnyxiaValues = {
-                "user": {
-                    "idep": user.username,
-                    "name": `${user.familyName} ${user.firstName}`,
-                    "email": user.email,
-                    "password": servicePassword,
-                    "ip": publicIp
-                },
-                "project": {
-                    "id": project.id,
-                    "password": servicePassword,
-                    "basic": btoa(
-                        unescape(encodeURIComponent(`${project.id}:${servicePassword}`))
-                    )
-                },
-                "git": {
-                    "name": userConfigs.gitName,
-                    "email": userConfigs.gitEmail,
-                    "credentials_cache_duration": userConfigs.gitCredentialCacheDuration,
-                    "token": userConfigs.githubPersonalAccessToken ?? undefined
-                },
-                "vault": await (async () => {
-                    const { vault } = region;
-
-                    if (vault === undefined) {
-                        return {
-                            "VAULT_ADDR": "",
-                            "VAULT_TOKEN": "",
-                            "VAULT_MOUNT": "",
-                            "VAULT_TOP_DIR": ""
-                        };
-                    }
-
-                    return {
-                        "VAULT_ADDR": vault.url,
-                        "VAULT_TOKEN": (await secretsManager.getToken()).token,
-                        "VAULT_MOUNT": vault.kvEngine,
-                        "VAULT_TOP_DIR": dispatch(
-                            secretExplorer.protectedThunks.getProjectHomePath()
-                        )
-                    };
-                })(),
-                "kaggleApiToken": userConfigs.kaggleApiToken ?? undefined,
-                "s3": await (async () => {
-                    const project = projectConfigs.selectors.selectedProject(getState());
-
-                    const { accessKeyId, secretAccessKey, sessionToken } =
-                        await s3Client.getToken({
-                            "restrictToBucketName": project.isDefault
-                                ? undefined
-                                : project.bucket
-                        });
-
-                    s3Client.createBucketIfNotExist(project.bucket);
-
-                    return {
-                        "AWS_ACCESS_KEY_ID": accessKeyId,
-                        "AWS_BUCKET_NAME": project.bucket,
-                        "AWS_SECRET_ACCESS_KEY": secretAccessKey,
-                        "AWS_SESSION_TOKEN": sessionToken,
-                        ...(() => {
-                            const { s3: s3Params } =
-                                deploymentRegion.selectors.selectedDeploymentRegion(
-                                    getState()
-                                );
-
-                            if (s3Params === undefined) {
-                                return {
-                                    "AWS_DEFAULT_REGION": "",
-                                    "AWS_S3_ENDPOINT": "",
-                                    "port": 443
-                                };
-                            }
-
-                            const { region, host, port } = (() => {
-                                const { region, url } = getS3UrlAndRegion(s3Params);
-
-                                const { host, port = 443 } = parseUrl(url);
-
-                                return { region, host, port };
-                            })();
-
-                            return {
-                                "AWS_DEFAULT_REGION": region,
-                                "AWS_S3_ENDPOINT": host,
-                                port
-                            };
-                        })()
-                    };
-                })(),
-                "region": {
-                    "defaultIpProtection": region.defaultIpProtection,
-                    "defaultNetworkPolicy": region.defaultNetworkPolicy,
-                    "allowedURIPattern": region.allowedURIPatternForUserDefinedInitScript,
-                    "kafka": region.kafka,
-                    "from": region.from,
-                    "tolerations": region.tolerations,
-                    "nodeSelector": region.nodeSelector,
-                    "startupProbe": region.startupProbe,
-                    "sliders": region.sliders,
-                    "resources": region.resources
-                },
-                "k8s": {
-                    "domain": region.kubernetesClusterDomain,
-                    "ingressClassName": region.ingressClassName,
-                    "ingress": region.ingress,
-                    "route": region.route,
-                    "istio": region.istio,
-                    "randomSubdomain":
-                        (getRandomK8sSubdomain.clear(), getRandomK8sSubdomain()),
-                    "initScriptUrl": region.initScriptUrl
-                },
-                "proxyInjection": region.proxyInjection,
-                "packageRepositoryInjection": region.packageRepositoryInjection,
-                "certificateAuthorityInjection": region.certificateAuthorityInjection
-            };
-
-            console.log(onyxiaValues);
-
-            return onyxiaValues;
         }
 } satisfies Thunks;
 
 export const selectors = (() => {
-    const readyLauncher = (rootState: RootState): State.Ready | undefined => {
+    const readyState = (rootState: RootState): State.Ready | undefined => {
         const state = rootState[name];
         switch (state.stateDescription) {
             case "ready":
@@ -1144,24 +859,20 @@ export const selectors = (() => {
         }
     };
 
-    const packageName = createSelector(readyLauncher, state => state?.packageName);
+    const isReady = createSelector(readyState, state => state !== undefined);
 
-    const sources = createSelector(readyLauncher, state => state?.sources);
+    const packageName = createSelector(readyState, state => state?.packageName);
 
-    const formFields = createSelector(
-        readyLauncher,
-        state => state?.["~internal"].formFields
-    );
+    const sources = createSelector(readyState, state => state?.sources);
+
+    const formFields = createSelector(readyState, state => state?.formFields);
 
     const infosAboutWhenFieldsShouldBeHidden = createSelector(
-        readyLauncher,
-        state => state?.["~internal"].infosAboutWhenFieldsShouldBeHidden
+        readyState,
+        state => state?.infosAboutWhenFieldsShouldBeHidden
     );
 
-    const dependencies = createSelector(
-        readyLauncher,
-        state => state?.["~internal"].dependencies
-    );
+    const dependencies = createSelector(readyState, state => state?.dependencies);
 
     const friendlyName = createSelector(formFields, formFields => {
         if (formFields === undefined) {
@@ -1191,11 +902,11 @@ export const selectors = (() => {
         return isShared;
     });
 
-    const config = createSelector(readyLauncher, state => state?.["~internal"].config);
+    const config = createSelector(readyState, state => state?.config);
 
     function createIsFieldHidden(params: {
         formFields: FormField[];
-        infosAboutWhenFieldsShouldBeHidden: State.Ready["~internal"]["infosAboutWhenFieldsShouldBeHidden"];
+        infosAboutWhenFieldsShouldBeHidden: State.Ready["infosAboutWhenFieldsShouldBeHidden"];
     }) {
         const { formFields, infosAboutWhenFieldsShouldBeHidden } = params;
 
@@ -1485,11 +1196,11 @@ export const selectors = (() => {
     );
 
     const pathOfFormFieldsWhoseValuesAreDifferentFromDefault = createSelector(
-        readyLauncher,
-        state => state?.["~internal"].pathOfFormFieldsWhoseValuesAreDifferentFromDefault
+        readyState,
+        state => state?.pathOfFormFieldsWhoseValuesAreDifferentFromDefault
     );
 
-    const catalogId = createSelector(readyLauncher, state => state?.catalogId);
+    const catalogId = createSelector(readyState, state => state?.catalogId);
 
     const restorablePackageConfig = createSelector(
         catalogId,
@@ -1533,7 +1244,96 @@ export const selectors = (() => {
         }
     );
 
+    const icon = createSelector(readyState, state => {
+        if (state === undefined) {
+            return undefined;
+        }
+        return state.icon;
+    });
+
+    const helmReleaseName = createSelector(friendlyName, friendlyName => {
+        if (friendlyName === undefined) {
+            return undefined;
+        }
+
+        // Replace spaces with hyphens
+        let releaseName = friendlyName.replace(/ /g, "-");
+
+        // Convert all characters to lowercase
+        releaseName = releaseName.toLowerCase();
+
+        // Remove any invalid characters
+        releaseName = releaseName.replace(/[^a-zA-Z0-9-]/g, "");
+
+        // Ensure the release name starts with an alphanumeric character
+        if (!/^[a-z0-9]/.test(releaseName)) {
+            releaseName = "release-" + releaseName;
+        }
+
+        // Ensure the release name ends with an alphanumeric character
+        if (!/[a-z0-9]$/.test(releaseName)) {
+            if (releaseName.endsWith("-")) {
+                releaseName = releaseName.slice(0, -1);
+            } else {
+                releaseName = releaseName + "-end";
+            }
+        }
+
+        return releaseName;
+    });
+
+    const launchCommands = createSelector(
+        readyState,
+        helmReleaseName,
+        projectConfigs.selectors.selectedProject,
+        (state, helmReleaseName, project) => {
+            if (state === undefined) {
+                return undefined;
+            }
+
+            assert(helmReleaseName !== undefined);
+
+            return [
+                `helm repo add ${state.catalogId} ${state.catalogLocation}`,
+                [
+                    "cat << EOF > ./values.yaml",
+                    yaml.stringify(formFieldsValueToObject(state.formFields)),
+                    "EOF"
+                ].join("\n"),
+                `helm install ${helmReleaseName} ${state.catalogId}/${state.packageName} --namespace ${project.namespace} -f values.yaml`
+            ];
+        }
+    );
+
+    const launchScript = createSelector(
+        launchCommands,
+        helmReleaseName,
+        (launchCommands, helmReleaseName) => {
+            if (launchCommands === undefined) {
+                return undefined;
+            }
+            assert(helmReleaseName !== undefined);
+            return {
+                "fileBasename": `launch-${helmReleaseName}.sh`,
+                "content": launchCommands.join("\n\n")
+            };
+        }
+    );
+
+    const apiLogsEntries = createSelector(launchCommands, launchCommands => {
+        if (launchCommands === undefined) {
+            return undefined;
+        }
+
+        return launchCommands.map((cmd, i) => ({
+            "cmdId": i,
+            cmd,
+            "resp": ""
+        }));
+    });
+
     return {
+        isReady,
         friendlyName,
         isShared,
         indexedFormFields,
@@ -1542,56 +1342,43 @@ export const selectors = (() => {
         restorablePackageConfig,
         areAllFieldsDefault,
         sources,
-        packageName
+        packageName,
+        icon,
+        launchScript,
+        apiLogsEntries
     };
 })();
 
-function formFieldValueChangedReducer(params: {
-    state: WritableDraft<State.Ready>;
-    formFieldValue: FormFieldValue;
-}): void {
-    const {
-        state,
-        formFieldValue: { path, value }
-    } = params;
+export const createEvt = (({ evtAction }) => {
+    const evtOut = Evt.create<
+        | {
+              actionName: "initialized";
+              sensitiveConfigurations: FormFieldValue[];
+          }
+        | {
+              actionName: "launchStarted";
+          }
+        | {
+              actionName: "launchCompleted";
+              serviceId: string;
+          }
+    >();
 
-    {
-        const formField = state["~internal"].formFields.find(formField =>
-            same(formField.path, path)
-        )!;
+    evtAction
+        .pipe(action => (action.sliceName !== name ? null : [action]))
+        .$attach(
+            action => (action.actionName === "initialized" ? [action.payload] : null),
+            ({ sensitiveConfigurations }) =>
+                evtOut.post({ "actionName": "initialized", sensitiveConfigurations })
+        )
+        .attach(
+            action => action.actionName === "launchStarted",
+            () => evtOut.post({ "actionName": "launchStarted" })
+        )
+        .$attach(
+            action => (action.actionName === "launchCompleted" ? [action.payload] : null),
+            ({ serviceId }) => evtOut.post({ "actionName": "launchCompleted", serviceId })
+        );
 
-        if (same(formField.value, value)) {
-            return;
-        }
-
-        formField.value = value;
-    }
-
-    {
-        const { pathOfFormFieldsWhoseValuesAreDifferentFromDefault } = state["~internal"];
-
-        if (
-            state["~internal"].defaultFormFieldsValue.find(formField =>
-                same(formField.path, path)
-            )!.value !== value
-        ) {
-            if (
-                !pathOfFormFieldsWhoseValuesAreDifferentFromDefault.find(
-                    ({ path: path_i }) => same(path_i, path)
-                )
-            ) {
-                pathOfFormFieldsWhoseValuesAreDifferentFromDefault.push({
-                    path
-                });
-            }
-        } else {
-            const index = pathOfFormFieldsWhoseValuesAreDifferentFromDefault.findIndex(
-                ({ path: path_i }) => same(path_i, path)
-            );
-
-            if (index >= 0) {
-                pathOfFormFieldsWhoseValuesAreDifferentFromDefault.splice(index, 1);
-            }
-        }
-    }
-}
+    return evtOut;
+}) satisfies CreateEvt;

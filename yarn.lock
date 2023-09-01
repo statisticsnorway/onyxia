@@ -4164,6 +4164,11 @@
   dependencies:
     source-map "^0.6.1"
 
+"@types/ungap__structured-clone@^0.3.0":
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/@types/ungap__structured-clone/-/ungap__structured-clone-0.3.0.tgz#39ef89de1f04bb1920ed99e549b885331295c47d"
+  integrity sha512-eBWREUhVUGPze+bUW22AgUr05k8u+vETzuYdLYSvWqGTUe0KOf+zVnOB1qER5wMcw8V6D9Ar4DfJmVvD1yu0kQ==
+
 "@types/unist@*", "@types/unist@^2.0.0", "@types/unist@^2.0.2", "@types/unist@^2.0.3":
   version "2.0.6"
   resolved "https://registry.yarnpkg.com/@types/unist/-/unist-2.0.6.tgz#250a7b16c3b91f672a24552ec64678eeb1d3a08d"
@@ -4318,6 +4323,11 @@
   dependencies:
     "@typescript-eslint/types" "5.59.0"
     eslint-visitor-keys "^3.3.0"
+
+"@ungap/structured-clone@^1.2.0":
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/@ungap/structured-clone/-/structured-clone-1.2.0.tgz#756641adb587851b5ccb3e095daf27ae581c8406"
+  integrity sha512-zuVdFrMJiuCDQUMCzQaD6KL28MjnqqN8XnAqiEq9PNm/hCPTSGfrXCOfwj1ow4LFb/tNymJPwsNbVePc1xFqrQ==
 
 "@webassemblyjs/ast@1.11.5", "@webassemblyjs/ast@^1.11.5":
   version "1.11.5"
@@ -7791,10 +7801,10 @@ eslint-plugin-testing-library@^5.0.1:
   dependencies:
     "@typescript-eslint/utils" "^5.58.0"
 
-eslint-plugin-tss-unused-classes@^1.0.1:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/eslint-plugin-tss-unused-classes/-/eslint-plugin-tss-unused-classes-1.0.1.tgz#6f13ea33817e38d734d4de76a181a89e28d30f40"
-  integrity sha512-SVmf+J7JOdFUwwZs2IcRAtWhDIkLuzOMb71ZVecu2udMFdtqu0H1SAzAKqdGn8yQ3oy9WZQJrwLcpBjBEdZlzQ==
+eslint-plugin-tss-unused-classes@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/eslint-plugin-tss-unused-classes/-/eslint-plugin-tss-unused-classes-1.0.2.tgz#d4bc6ca40c1748bea1aaf3bc48271b96d7a1cd77"
+  integrity sha512-9Fs8Qs7G3cDAOBKqVhPw64Q/qRHeglu0Bm30OGWr+0Nd/2dRMD3zV5g65X/k2Y54aPvP7yVYjIl6Ql+o284ttA==
 
 eslint-scope@5.1.1, eslint-scope@^5.1.1:
   version "5.1.1"
@@ -12036,10 +12046,10 @@ onetime@^5.1.0, onetime@^5.1.2:
   dependencies:
     mimic-fn "^2.1.0"
 
-onyxia-ui@^0.58.0:
-  version "0.58.0"
-  resolved "https://registry.yarnpkg.com/onyxia-ui/-/onyxia-ui-0.58.0.tgz#85d03942d9e088df42b225a5234426353c53d537"
-  integrity sha512-of3LLoN9ZMsmu09Qvro7nnewQ1Jm1EBcGpzUC7UAS0To4KQE4fW05hOLiyl9lacrDNAB5bkRMPOgnp/XJt+hjg==
+onyxia-ui@^0.58.1:
+  version "0.58.1"
+  resolved "https://registry.yarnpkg.com/onyxia-ui/-/onyxia-ui-0.58.1.tgz#c1766f62c34baab64102e25e21ee88293c5abef3"
+  integrity sha512-tIMRsCRZh7VHXsunPEuGirNQqWwQjfbU4/DI1MpmyICsI+Il09i87HPCC7BDmwMZyTJ9I5Fe5U4QHZroisWM7g==
   dependencies:
     "@mui/icons-material" "^5.11.16"
     color "3.1.3"
@@ -13859,10 +13869,10 @@ redent@^1.0.0:
     indent-string "^2.1.0"
     strip-indent "^1.0.1"
 
-redux-clean-architecture@^3.6.0:
-  version "3.6.0"
-  resolved "https://registry.yarnpkg.com/redux-clean-architecture/-/redux-clean-architecture-3.6.0.tgz#539b39306bff7ae2dadbb090a6dc6960b23ff3f7"
-  integrity sha512-/4Tny1QbZxL7MmJYAOjMCN7YN7e6bhJTcQDsez2wuo2ubL632ohInv1BB6J8QxQ6SW9CttxS8Wn2rqGfVQIJIA==
+redux-clean-architecture@^3.7.0:
+  version "3.7.0"
+  resolved "https://registry.yarnpkg.com/redux-clean-architecture/-/redux-clean-architecture-3.7.0.tgz#6a74e31fb49d10b68bc585744a6acf52463d2941"
+  integrity sha512-K1EwWPKZfEJ00szn8Yi9Eh5xgHNJadgm8MGRL/O3koiFo3yKlZgHSN8/sZYc21Opw57hDPgwvxiGMpGsB5rkug==
   dependencies:
     minimal-polyfills "^2.2.3"
     tsafe "^1.6.4"
