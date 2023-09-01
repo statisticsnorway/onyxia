@@ -1,12 +1,12 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState, memo } from "react";
 import type { RefObject } from "react";
-import { tss, Button, Text } from "ui/theme";
+import { tss, useStyles as useDefaultStyles, Button, Text } from "ui/theme";
 import { routes, getPreviousRouteName } from "ui/routes";
 import type { Route } from "type-route";
 import { CatalogLauncherMainCard } from "./CatalogLauncherMainCard";
 import { CatalogLauncherConfigurationCard } from "./CatalogLauncherConfigurationCard";
-import { useCoreState, selectors, useCoreFunctions } from "core";
+import { useCoreState, selectors, useCoreFunctions, useCoreEvts } from "core";
 import { useConstCallback } from "powerhooks/useConstCallback";
 import { assert } from "tsafe/assert";
 import { useSplashScreen } from "onyxia-ui";
@@ -15,7 +15,7 @@ import { useTranslation } from "ui/i18n";
 import { useCallbackFactory } from "powerhooks/useCallbackFactory";
 import { Deferred } from "evt/tools/Deferred";
 import type { NonPostableEvt } from "evt";
-import type { FormFieldValue } from "core/usecases/sharedDataModel/FormFieldValue";
+import type { FormFieldValue } from "core/usecases/launcher/FormField";
 import { useEvt } from "evt/hooks/useEvt";
 import { useConst } from "powerhooks/useConst";
 import { Evt } from "evt";
@@ -24,6 +24,7 @@ import { Markdown } from "onyxia-ui/Markdown";
 import { declareComponentKeys } from "i18nifty";
 import { symToStr } from "tsafe/symToStr";
 import { getIsAutoLaunchDisabled } from "ui/env";
+import { ApiLogsBar } from "ui/shared/ApiLogsBar";
 
 export type Props = {
     className?: string;
@@ -37,6 +38,8 @@ export const CatalogLauncher = memo((props: Props) => {
     const { launcher, restorablePackageConfig: restorablePackageConfigFunctions } =
         useCoreFunctions();
 
+    const { showSplashScreen, hideSplashScreen } = useSplashScreen();
+
     useEffect(() => {
         const { catalogId, packageName, formFieldsValueDifferentFromDefault } =
             route.params;
@@ -47,7 +50,61 @@ export const CatalogLauncher = memo((props: Props) => {
             formFieldsValueDifferentFromDefault
         });
 
+        showSplashScreen({ "enableTransparency": true });
+
         return () => launcher.reset();
+    }, []);
+
+    const { evtLauncher } = useCoreEvts();
+
+    useEvt(ctx => {
+        evtLauncher.$attach(
+            action => (action.actionName === "initialized" ? [action] : null),
+            ctx,
+            ({ sensitiveConfigurations }) => {
+                auto_launch: {
+                    if (!route.params.autoLaunch) {
+                        break auto_launch;
+                    }
+
+                    if (
+                        getIsAutoLaunchDisabled() &&
+                        //If auto launch from myServices the user is launching one of his service, it's safe
+                        getPreviousRouteName() !== "myServices"
+                    ) {
+                        evtAutoLaunchDisabledDialogOpen.post();
+                        break auto_launch;
+                    }
+
+                    if (sensitiveConfigurations.length !== 0) {
+                        evtSensitiveConfigurationDialogOpen.post({
+                            sensitiveConfigurations
+                        });
+
+                        break auto_launch;
+                    }
+
+                    launcher.launch();
+                }
+
+                hideSplashScreen();
+            }
+        );
+
+        evtLauncher.attach(
+            action => action.actionName === "launchStarted",
+            ctx,
+            () => showSplashScreen({ "enableTransparency": true })
+        );
+
+        evtLauncher.$attach(
+            action => (action.actionName === "launchCompleted" ? [action] : null),
+            ctx,
+            ({ serviceId }) => {
+                hideSplashScreen();
+                routes.myServices({ "autoLaunchServiceId": serviceId }).push();
+            }
+        );
     }, []);
 
     const { restorablePackageConfig } = useCoreState(
@@ -74,7 +131,7 @@ export const CatalogLauncher = memo((props: Props) => {
                 "autoLaunch": route.params.autoLaunch
             })
             .replace();
-    }, [restorablePackageConfig ?? Object]);
+    }, [restorablePackageConfig]);
 
     const [isBookmarked, setIsBookmarked] = useState(false);
 
@@ -133,8 +190,6 @@ export const CatalogLauncher = memo((props: Props) => {
         setIsBookmarked(isBookmarkedNew);
     }, [restorablePackageConfigs, restorablePackageConfig]);
 
-    const { classes, cx } = useStyles();
-
     const onRequestCancel = useConstCallback(() =>
         routes.catalogExplorer({ "catalogId": route.params.catalogId }).push()
     );
@@ -167,70 +222,21 @@ export const CatalogLauncher = memo((props: Props) => {
     const { isShared } = useCoreState(selectors.launcher.isShared);
     const { areAllFieldsDefault } = useCoreState(selectors.launcher.areAllFieldsDefault);
 
-    const state = useCoreState(state => state.launcher);
-
-    const { showSplashScreen, hideSplashScreen } = useSplashScreen();
-
-    useEffect(() => {
-        switch (state.stateDescription) {
-            case "not initialized":
-                showSplashScreen({ "enableTransparency": true });
-                break;
-            case "ready":
-                switch (state.launchState) {
-                    case "not launching":
-                        auto_launch: {
-                            if (!route.params.autoLaunch) {
-                                break auto_launch;
-                            }
-
-                            if (
-                                getIsAutoLaunchDisabled() &&
-                                //If auto launch from myServices the user is launching one of his service, it's safe
-                                getPreviousRouteName() !== "myServices"
-                            ) {
-                                evtAutoLaunchDisabledDialogOpen.post();
-                                break auto_launch;
-                            }
-
-                            const { sensitiveConfigurations } = state;
-
-                            if (sensitiveConfigurations.length !== 0) {
-                                evtSensitiveConfigurationDialogOpen.post({
-                                    sensitiveConfigurations
-                                });
-
-                                break auto_launch;
-                            }
-
-                            launcher.launch();
-                        }
-
-                        hideSplashScreen();
-                        break;
-                    case "launching":
-                        showSplashScreen({ "enableTransparency": true });
-                        break;
-                    case "launched":
-                        hideSplashScreen();
-                        routes
-                            .myServices({ "autoLaunchServiceId": state.serviceId })
-                            .push();
-                        break;
-                }
-                break;
-        }
-    }, [
-        state.stateDescription === "not initialized"
-            ? state.stateDescription
-            : state.launchState
-    ]);
-
     const { indexedFormFields } = useCoreState(selectors.launcher.indexedFormFields);
     const { isLaunchable } = useCoreState(selectors.launcher.isLaunchable);
     const { formFieldsIsWellFormed } = useCoreState(
         selectors.launcher.formFieldsIsWellFormed
     );
+    const { isReady } = useCoreState(selectors.launcher.isReady);
+    const { icon } = useCoreState(selectors.launcher.icon);
+    const { packageName } = useCoreState(selectors.launcher.packageName);
+    const { apiLogsEntries } = useCoreState(selectors.launcher.apiLogsEntries);
+
+    const { userConfigs } = useCoreState(selectors.userConfigs.userConfigs);
+
+    const { classes, cx } = useStyles({
+        "isApiBarVisible": userConfigs.isDevModeEnabled
+    });
 
     const { t } = useTranslation({ CatalogLauncher });
 
@@ -249,7 +255,7 @@ export const CatalogLauncher = memo((props: Props) => {
         launcher.launch();
     });
 
-    if (state.stateDescription !== "ready") {
+    if (!isReady) {
         return null;
     }
 
@@ -259,17 +265,24 @@ export const CatalogLauncher = memo((props: Props) => {
     assert(friendlyName !== undefined);
     assert(isShared !== undefined);
     assert(formFieldsIsWellFormed !== undefined);
+    assert(icon !== undefined);
+    assert(packageName !== undefined);
+    assert(apiLogsEntries !== undefined);
 
     return (
         <>
-            <div
-                className={cx(classes.wrapperForScroll, className)}
-                ref={scrollableDivRef}
-            >
+            <div className={cx(classes.root, className)} ref={scrollableDivRef}>
+                {userConfigs.isDevModeEnabled && (
+                    <ApiLogsBar
+                        className={classes.apiLogBar}
+                        maxHeight={800}
+                        entries={apiLogsEntries}
+                    />
+                )}
                 <div className={classes.wrapperForMawWidth}>
                     <CatalogLauncherMainCard
-                        packageName={state.packageName}
-                        packageIconUrl={state.icon}
+                        packageName={packageName}
+                        packageIconUrl={icon}
                         isBookmarked={isBookmarked}
                         onIsBookmarkedValueChange={onIsBookmarkedValueChange}
                         friendlyName={friendlyName}
@@ -368,18 +381,35 @@ export const { i18n } = declareComponentKeys<
       }
 >()({ CatalogLauncher });
 
-const useStyles = tss.withName({ CatalogLauncher }).create(({ theme }) => ({
-    "wrapperForScroll": {
-        "height": "100%",
-        "overflow": "auto"
-    },
-    "wrapperForMawWidth": {
-        "maxWidth": 1200,
-        "& > *": {
-            "marginBottom": theme.spacing(3)
+const useStyles = tss
+    .withName({ CatalogLauncher })
+    .withParams<{ isApiBarVisible: boolean }>()
+    .create(({ theme, isApiBarVisible }) => ({
+        "root": {
+            "height": "100%",
+            "overflow": "auto",
+            "paddingTop": !isApiBarVisible
+                ? 0
+                : theme.typography.rootFontSizePx * 1.7 +
+                  2 * theme.spacing(2) +
+                  theme.spacing(2),
+            "position": "relative"
+        },
+        "wrapperForMawWidth": {
+            "maxWidth": 1200,
+            "& > *": {
+                "marginBottom": theme.spacing(3)
+            }
+        },
+        "apiLogBar": {
+            "position": "absolute",
+            "right": 0,
+            "width": "60%",
+            "top": 0,
+            "zIndex": 1,
+            "transition": "opacity 750ms linear"
         }
-    }
-}));
+    }));
 
 type SensitiveConfigurationDialogProps = {
     evtOpen: NonPostableEvt<{ sensitiveConfigurations: FormFieldValue[] }>;
@@ -449,7 +479,7 @@ const AutoLaunchDisabledDialog = memo((props: AutoLaunchDisabledDialogProps) => 
 
     const [isOpen, setIsOpen] = useState(false);
 
-    const { css, theme } = useStyles();
+    const { css, theme } = useDefaultStyles();
 
     useEvt(ctx => evtOpen.attach(ctx, () => setIsOpen(true)), [evtOpen]);
 

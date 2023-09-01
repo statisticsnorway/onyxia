@@ -4,13 +4,13 @@ import { useState, useEffect, useMemo, memo } from "react";
 import type { RefObject } from "react";
 import { useConstCallback } from "powerhooks/useConstCallback";
 import type { ExplorerItemsProps as ItemsProps } from "./ExplorerItems/ExplorerItems";
-import { Breadcrump } from "onyxia-ui/Breadcrump";
-import type { BreadcrumpProps } from "onyxia-ui/Breadcrump";
+import { Breadcrumb } from "onyxia-ui/Breadcrumb";
+import type { BreadcrumbProps } from "onyxia-ui/Breadcrumb";
 import { Props as ButtonBarProps } from "./ExplorerButtonBar";
 import { Evt } from "evt";
 import { join as pathJoin, basename as pathBasename } from "path";
 import { useTranslation } from "ui/i18n";
-import { ApiLogsBar } from "./ApiLogsBar";
+import { ApiLogsBar, type ApiLogsBarProps } from "ui/shared/ApiLogsBar";
 import {
     generateUniqDefaultName,
     buildNameFactory
@@ -29,7 +29,6 @@ import { getFormattedDate } from "ui/useMoment";
 import { Dialog } from "onyxia-ui/Dialog";
 import { useCallbackFactory } from "powerhooks/useCallbackFactory";
 import { Deferred } from "evt/tools/Deferred";
-import type { ApiLogs } from "core/tools/apiLogger";
 import { useConst } from "powerhooks/useConst";
 import type { Param0 } from "tsafe";
 import { useLang } from "ui/i18n";
@@ -40,6 +39,7 @@ import { useRerenderOnStateChange } from "evt/hooks/useRerenderOnStateChange";
 import { ExplorerUploadModal } from "./ExplorerUploadModal";
 import type { ExplorerUploadModalProps } from "./ExplorerUploadModal";
 import { declareComponentKeys } from "i18nifty";
+import { CircularProgress } from "onyxia-ui/CircularProgress";
 
 export type ExplorerProps = {
     /**
@@ -51,7 +51,7 @@ export type ExplorerProps = {
 
     directoryPath: string;
     isNavigating: boolean;
-    apiLogs: ApiLogs;
+    apiLogsEntries: ApiLogsBarProps.Entry[];
     evtAction: NonPostableEvt<"TRIGGER COPY PATH">;
     files: string[];
     directories: string[];
@@ -93,7 +93,7 @@ export const Explorer = memo((props: ExplorerProps) => {
         doShowHidden,
         directoryPath,
         isNavigating,
-        apiLogs,
+        apiLogsEntries,
         evtAction,
         onNavigate,
         onRefresh,
@@ -140,8 +140,8 @@ export const Explorer = memo((props: ExplorerProps) => {
             setSelectedItemKind(selectedItemKind)
     );
 
-    const onBreadcrumpNavigate = useConstCallback(
-        ({ upCount }: Param0<BreadcrumpProps["onNavigate"]>) => {
+    const onBreadcrumbNavigate = useConstCallback(
+        ({ upCount }: Param0<BreadcrumbProps["onNavigate"]>) => {
             onNavigate({
                 "directoryPath": pathJoin(
                     directoryPath,
@@ -166,13 +166,13 @@ export const Explorer = memo((props: ExplorerProps) => {
         }
     );
 
-    const evtBreadcrumpAction = useConst(() =>
-        Evt.create<UnpackEvt<BreadcrumpProps["evtAction"]>>()
+    const evtBreadcrumbAction = useConst(() =>
+        Evt.create<UnpackEvt<BreadcrumbProps["evtAction"]>>()
     );
 
     const itemsOnCopyPath = useConstCallback(
         ({ basename }: Parameters<ItemsProps["onCopyPath"]>[0]) => {
-            evtBreadcrumpAction.post({
+            evtBreadcrumbAction.post({
                 "action": "DISPLAY COPY FEEDBACK",
                 basename
             });
@@ -207,7 +207,7 @@ export const Explorer = memo((props: ExplorerProps) => {
                 break;
             case "copy path":
                 if (props.isFileOpen) {
-                    evtBreadcrumpAction.post({ "action": "DISPLAY COPY FEEDBACK" });
+                    evtBreadcrumbAction.post({ "action": "DISPLAY COPY FEEDBACK" });
 
                     onCopyPath({
                         "path": pathJoin(directoryPath, props.openFileBasename)
@@ -342,7 +342,7 @@ export const Explorer = memo((props: ExplorerProps) => {
                 </div>
                 <ApiLogsBar
                     className={classes.apiLogBar}
-                    apiLogs={apiLogs}
+                    entries={apiLogsEntries}
                     maxHeight={apiLogBarMaxHeight}
                 />
                 {(() => {
@@ -367,17 +367,26 @@ export const Explorer = memo((props: ExplorerProps) => {
                         />
                     );
                 })()}
-                <Breadcrump
-                    className={classes.breadcrump}
-                    minDepth={pathMinDepth}
-                    path={[
-                        ...directoryPath.split("/"),
-                        ...(props.isFileOpen ? [props.openFileBasename] : [])
-                    ]}
-                    isNavigationDisabled={isNavigating}
-                    onNavigate={onBreadcrumpNavigate}
-                    evtAction={evtBreadcrumpAction}
-                />
+
+                <div className={classes.breadcrumpWrapper}>
+                    <Breadcrumb
+                        minDepth={pathMinDepth}
+                        path={[
+                            ...directoryPath.split("/"),
+                            ...(props.isFileOpen ? [props.openFileBasename] : [])
+                        ]}
+                        isNavigationDisabled={isNavigating}
+                        onNavigate={onBreadcrumbNavigate}
+                        evtAction={evtBreadcrumbAction}
+                    />
+                    {isNavigating && (
+                        <CircularProgress
+                            color="textPrimary"
+                            size={theme.typography.rootFontSizePx}
+                            className={classes.circularProgress}
+                        />
+                    )}
+                </div>
                 <div
                     ref={scrollableDivRef}
                     className={cx(
@@ -500,9 +509,14 @@ const useStyles = tss
                 "transition": opacity === 0 ? undefined : "opacity 500ms linear"
             };
         })(),
-        "breadcrump": {
+        "breadcrumpWrapper": {
             "marginTop": theme.spacing(3),
-            "marginBottom": theme.spacing(4)
+            "marginBottom": theme.spacing(4),
+            "display": "flex",
+            "alignItems": "center"
+        },
+        "circularProgress": {
+            "marginLeft": theme.spacing(2)
         },
         "fileOrDirectoryIcon": {
             "height": "unset",

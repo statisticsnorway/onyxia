@@ -1,7 +1,7 @@
 {
     "homepage": "https://datalab.sspcloud.fr",
     "name": "onyxia-web",
-    "version": "2.25.0",
+    "version": "2.26.8",
     "license": "MIT",
     "devDependencies": {
         "@emotion/css": "^11.10.0",
@@ -25,11 +25,12 @@
         "@types/react-dom": "^18.0.6",
         "@types/react-router-dom": "^5.1.5",
         "@types/shell-quote": "^1.7.0",
+        "@types/ungap__structured-clone": "^0.3.0",
         "@typescript-eslint/eslint-plugin": "^5.36.2",
         "@typescript-eslint/parser": "^5.36.2",
         "circular-dependency-plugin": "^5.2.2",
         "eslint-config-prettier": "^8.5.0",
-        "eslint-plugin-tss-unused-classes": "^1.0.1",
+        "eslint-plugin-tss-unused-classes": "^1.0.2",
         "events": "^3.2.0",
         "husky": "^4.3.8",
         "lint-staged": "^11.0.0",
@@ -64,7 +65,7 @@
         "minio": "^7.1.1",
         "moment": "^2.29.1",
         "mustache": "^4.2.0",
-        "onyxia-ui": "^0.58.0",
+        "onyxia-ui": "^0.58.1",
         "path": "^0.12.7",
         "path-browserify": "^1.0.1",
         "powerhooks": "^0.26.14",
@@ -74,7 +75,7 @@
         "react-code-blocks": "^0.0.9-0",
         "react-dom": "^18.2.0",
         "react-scripts": "5.0.1",
-        "redux-clean-architecture": "^3.6.0",
+        "redux-clean-architecture": "^3.7.0",
         "run-exclusive": "^2.2.19",
         "shell-quote": "^1.7.2",
         "stream-browserify": "^3.0.0",
@@ -83,7 +84,8 @@
         "type-route": "^0.6.0",
         "url-join-ts": "^1.0.5",
         "yaml": "^2.0.1",
-        "zod": "^3.19.0"
+        "zod": "^3.19.0",
+        "@ungap/structured-clone": "^1.2.0"
     },
     "scripts": {
         "start": "react-app-rewired start",
