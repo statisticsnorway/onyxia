@@ -220,8 +220,11 @@ export const thunks = {
             const { catalogId, packageName, formFieldsValueDifferentFromDefault } =
                 params;
 
-            const [dispatch, getState, { onyxiaApi, oidc, secretsManager, s3Client }] =
-                args;
+            const [
+                dispatch,
+                getState,
+                { onyxiaApi, oidc, secretsManager, s3Client, coreParams }
+            ] = args;
 
             assert(
                 getState().launcher.stateDescription === "not initialized",
@@ -266,13 +269,17 @@ export const thunks = {
 
                     const project = projectConfigs.selectors.selectedProject(getState());
 
+                    const doInjectPersonalInfos =
+                        project.group === undefined ||
+                        !coreParams.disablePersonalInfosInjectionInGroup;
+
                     const onyxiaValues: OnyxiaValues = {
                         "user": {
                             "idep": user.username,
                             "name": `${user.familyName} ${user.firstName}`,
                             "email": user.email,
                             "password": servicePassword,
-                            "ip": publicIp
+                            "ip": !doInjectPersonalInfos ? "0.0.0.0" : publicIp
                         },
                         "project": {
                             "id": project.id,
@@ -283,13 +290,21 @@ export const thunks = {
                                 )
                             )
                         },
-                        "git": {
-                            "name": userConfigs.gitName,
-                            "email": userConfigs.gitEmail,
-                            "credentials_cache_duration":
-                                userConfigs.gitCredentialCacheDuration,
-                            "token": userConfigs.githubPersonalAccessToken ?? undefined
-                        },
+                        "git": !doInjectPersonalInfos
+                            ? {
+                                  "name": "",
+                                  "email": "",
+                                  "credentials_cache_duration": 0,
+                                  "token": undefined
+                              }
+                            : {
+                                  "name": userConfigs.gitName,
+                                  "email": userConfigs.gitEmail,
+                                  "credentials_cache_duration":
+                                      userConfigs.gitCredentialCacheDuration,
+                                  "token":
+                                      userConfigs.githubPersonalAccessToken ?? undefined
+                              },
                         "vault": await (async () => {
                             const { vault } = region;
 
@@ -304,14 +319,18 @@ export const thunks = {
 
                             return {
                                 "VAULT_ADDR": vault.url,
-                                "VAULT_TOKEN": (await secretsManager.getToken()).token,
+                                "VAULT_TOKEN": !doInjectPersonalInfos
+                                    ? ""
+                                    : (await secretsManager.getToken()).token,
                                 "VAULT_MOUNT": vault.kvEngine,
                                 "VAULT_TOP_DIR": dispatch(
                                     secretExplorer.protectedThunks.getHomeDirectoryPath()
                                 )
                             };
                         })(),
-                        "kaggleApiToken": userConfigs.kaggleApiToken ?? undefined,
+                        "kaggleApiToken": !doInjectPersonalInfos
+                            ? undefined
+                            : userConfigs.kaggleApiToken ?? undefined,
                         "s3": await (async () => {
                             const project = projectConfigs.selectors.selectedProject(
                                 getState()
@@ -319,18 +338,25 @@ export const thunks = {
 
                             const { accessKeyId, secretAccessKey, sessionToken } =
                                 await s3Client.getToken({
-                                    "restrictToBucketName": project.isDefault
-                                        ? undefined
-                                        : project.bucket
+                                    "restrictToBucketName":
+                                        project.group === undefined
+                                            ? undefined
+                                            : project.bucket
                                 });
 
                             s3Client.createBucketIfNotExist(project.bucket);
 
                             return {
-                                "AWS_ACCESS_KEY_ID": accessKeyId,
+                                "AWS_ACCESS_KEY_ID": !doInjectPersonalInfos
+                                    ? ""
+                                    : accessKeyId,
                                 "AWS_BUCKET_NAME": project.bucket,
-                                "AWS_SECRET_ACCESS_KEY": secretAccessKey,
-                                "AWS_SESSION_TOKEN": sessionToken,
+                                "AWS_SECRET_ACCESS_KEY": !doInjectPersonalInfos
+                                    ? ""
+                                    : secretAccessKey,
+                                "AWS_SESSION_TOKEN": !doInjectPersonalInfos
+                                    ? ""
+                                    : sessionToken,
                                 ...(() => {
                                     const { s3: s3Params } =
                                         deploymentRegion.selectors.selectedDeploymentRegion(

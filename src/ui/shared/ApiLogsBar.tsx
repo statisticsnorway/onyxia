@@ -1,16 +1,30 @@
 import { tss } from "ui/theme";
-import { useReducer, useEffect, memo } from "react";
+import { useReducer, useEffect, memo, useState, type ReactNode } from "react";
 import { useDomRect } from "onyxia-ui";
 import { CircularProgress } from "onyxia-ui/CircularProgress";
-import { IconButton, Icon } from "ui/theme";
+import { IconButton, Icon, Button } from "ui/theme";
 import { assert } from "tsafe/assert";
 import { useStateRef } from "powerhooks/useStateRef";
+import { Tooltip } from "onyxia-ui/Tooltip";
+import { Dialog } from "onyxia-ui/Dialog";
+import { useConstCallback } from "powerhooks/useConstCallback";
+import { declareComponentKeys } from "i18nifty";
+import { useTranslation } from "ui/i18n";
 
 export type ApiLogsBarProps = {
     className?: string;
+    classes?: Partial<ReturnType<typeof useStyles>["classes"]>;
     entries: ApiLogsBarProps.Entry[];
     /** In pixel */
     maxHeight: number;
+    downloadButton?: {
+        tooltipTitle: NonNullable<ReactNode>;
+        onClick: () => void;
+    };
+    helpDialog?: {
+        title?: NonNullable<ReactNode>;
+        body: NonNullable<ReactNode>;
+    };
 };
 
 export namespace ApiLogsBarProps {
@@ -22,7 +36,7 @@ export namespace ApiLogsBarProps {
 }
 
 export const ApiLogsBar = memo((props: ApiLogsBarProps) => {
-    const { className, entries, maxHeight } = props;
+    const { className, entries, maxHeight, downloadButton, helpDialog } = props;
 
     const {
         domRect: { height: headerHeight },
@@ -31,79 +45,143 @@ export const ApiLogsBar = memo((props: ApiLogsBarProps) => {
 
     const panelRef = useStateRef<HTMLDivElement>(null);
 
-    const [isExpended, toggleIsExpended] = useReducer(isExpended => !isExpended, false);
+    const [{ isExpended, expendCount }, toggleIsExpended] = useReducer(
+        ({ isExpended, expendCount }) => ({
+            "isExpended": !isExpended,
+            "expendCount": expendCount + 1
+        }),
+        {
+            "isExpended": false,
+            "expendCount": 0
+        }
+    );
 
     useEffect(() => {
         if (!isExpended) {
             return;
         }
 
-        const { current: element } = panelRef!;
+        const panelElement = panelRef.current;
 
-        assert(element !== null);
+        assert(panelElement !== null);
 
-        element.scroll({
-            "top": element.scrollHeight,
+        panelElement.scroll({
+            "top": panelElement.scrollHeight,
             "behavior": "smooth"
         });
     }, [
-        isExpended,
-        JSON.stringify(entries.map(({ resp }) => (resp === undefined ? "x" : "o"))),
-        panelRef.current
+        expendCount >= 1,
+        JSON.stringify(entries.map(({ resp }) => (resp === undefined ? "x" : "o")))
     ]);
 
-    //TODO: see if classes are recomputed every time because ref object changes
-    const { classes } = useStyles({ maxHeight, headerHeight, isExpended });
+    const { cx, classes } = useStyles({
+        maxHeight,
+        headerHeight,
+        isExpended,
+        "classesOverrides": props.classes
+    });
+
+    const [isHelpDialogOpen, setIsHelpDialogOpen] = useState(false);
+
+    const onHelpDialogClose = useConstCallback(() => setIsHelpDialogOpen(false));
+
+    const { t } = useTranslation({ ApiLogsBar });
 
     return (
-        <div className={className}>
-            <div ref={headerRef} className={classes.header}>
-                <div className={classes.dollarContainer}>
-                    <Icon className="dollarSign" iconId="attachMoney" size="small" />
-                </div>
-
-                <div className={classes.lastTranslatedCmd}>
-                    {entries.slice(-1)[0]?.cmd.replace(/\\\n/g, " ")}
-                </div>
-
-                <IconButton
-                    iconId="expandMore"
-                    className={classes.iconButton}
-                    onClick={toggleIsExpended}
-                />
-            </div>
+        <>
             <div
-                ref={panelRef}
-                className={isExpended ? classes.expandedPanel : classes.collapsedPanel}
+                className={cx(
+                    classes.root,
+                    isExpended ? classes.rootWhenExpended : classes.rootWhenCollapsed,
+                    className
+                )}
             >
-                {entries.map(({ cmdId, cmd, resp }) => (
-                    <div key={cmdId} className={classes.entryRoot}>
-                        <div className={classes.dollarContainer}>
-                            <Icon
-                                iconId="attachMoney"
-                                size="small"
-                                className={classes.dollarIcon}
-                            />
-                        </div>
-                        <div className={classes.preWrapper}>
-                            <pre>{cmd}</pre>
-                            <pre>
-                                {resp === undefined ? (
-                                    <CircularProgress
-                                        className={classes.circularLoading}
-                                        size={10}
-                                    />
-                                ) : (
-                                    resp
-                                )}
-                            </pre>
-                        </div>
+                <div ref={headerRef} className={classes.header}>
+                    <div className={classes.dollarContainer}>
+                        <Icon className="dollarSign" iconId="attachMoney" size="small" />
                     </div>
-                ))}
+
+                    <div className={classes.lastTranslatedCmd}>
+                        {entries.slice(-1)[0]?.cmd.replace(/\\\n/g, " ")}
+                    </div>
+
+                    {helpDialog !== undefined && (
+                        <IconButton
+                            iconId="help"
+                            className={classes.iconButton}
+                            onClick={() => setIsHelpDialogOpen(true)}
+                        />
+                    )}
+
+                    {downloadButton !== undefined && (
+                        <Tooltip title={downloadButton.tooltipTitle}>
+                            <IconButton
+                                iconId="getApp"
+                                className={classes.iconButton}
+                                onClick={downloadButton.onClick}
+                            />
+                        </Tooltip>
+                    )}
+
+                    <IconButton
+                        iconId="expandMore"
+                        className={cx(classes.iconButton, classes.expandIconButton)}
+                        onClick={toggleIsExpended}
+                    />
+                </div>
+                <div
+                    ref={panelRef}
+                    className={
+                        isExpended ? classes.expandedPanel : classes.collapsedPanel
+                    }
+                >
+                    {entries.map(({ cmdId, cmd, resp }) => (
+                        <div key={cmdId} className={classes.entryRoot}>
+                            <div className={classes.dollarContainer}>
+                                <Icon
+                                    iconId="attachMoney"
+                                    size="small"
+                                    className={classes.dollarIcon}
+                                />
+                            </div>
+                            <div className={classes.preWrapper}>
+                                <pre>{cmd}</pre>
+                                <pre>
+                                    {resp === undefined ? (
+                                        <CircularProgress
+                                            className={classes.circularLoading}
+                                            size={10}
+                                        />
+                                    ) : (
+                                        resp
+                                    )}
+                                </pre>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
-        </div>
+            {helpDialog !== undefined && (
+                <Dialog
+                    classes={{
+                        "root": classes.helpDialog
+                    }}
+                    title={helpDialog.title}
+                    body={helpDialog.body}
+                    buttons={
+                        <Button onClick={onHelpDialogClose} autoFocus>
+                            {t("ok")}
+                        </Button>
+                    }
+                    isOpen={isHelpDialogOpen}
+                    onClose={onHelpDialogClose}
+                />
+            )}
+        </>
     );
 });
+
+export const { i18n } = declareComponentKeys<"ok">()({ ApiLogsBar });
 
 const useStyles = tss
     .withParams<{
@@ -120,13 +198,17 @@ const useStyles = tss
             : theme.colors.palette.limeGreen.main;
 
         return {
+            "root": {
+                "colorScheme": "dark"
+            },
+            "rootWhenExpended": {},
+            "rootWhenCollapsed": {},
             "iconButton": {
                 "& svg": {
                     "color": textColor,
                     "transition": theme.muiTheme.transitions.create(["transform"], {
                         "duration": theme.muiTheme.transitions.duration.short
-                    }),
-                    "transform": isExpended ? "rotate(-180deg)" : "rotate(0)"
+                    })
                 },
                 "&:hover": {
                     "& svg": {
@@ -139,20 +221,26 @@ const useStyles = tss
                     "color": textColor
                 }
             },
+            "expandIconButton": {
+                "& svg": {
+                    "transform": isExpended ? "rotate(-180deg)" : "rotate(0)"
+                }
+            },
             "circularLoading": {
                 "color": theme.colors.palette.light.main
             },
             "collapsedPanel": {
                 "maxHeight": 0,
                 "overflow": "hidden",
-                "transform": "scaleY(0)",
-                "transition": "all 150ms cubic-bezier(0.4, 0, 0.2, 1)"
+                "transform": "scaleY(0)"
             },
             "expandedPanel": {
                 "maxHeight": maxHeight - headerHeight,
                 "backgroundColor": theme.colors.palette.dark.light,
                 "overflow": "auto",
-                "transition": "transform 150ms cubic-bezier(0.4, 0, 0.2, 1)",
+                "transition": window.navigator.userAgent.includes("Firefox")
+                    ? undefined
+                    : "transform 150ms cubic-bezier(0.4, 0, 0.2, 1) 70ms",
                 "& pre": {
                     "whiteSpace": "pre-wrap",
                     "wordBreak": "break-all"
@@ -160,7 +248,12 @@ const useStyles = tss
                 "transform": "scaleY(1)",
                 "transformOrigin": "top",
                 borderRadius,
-                "paddingTop": theme.spacing(2)
+                "paddingTop": theme.spacing(2),
+                // Only work on Firefox when writing this
+                // Note this spec isn't great, we can't specify the hover color...
+                "scrollbarColor": `${theme.colors.palette.dark.greyVariant3} ${theme.colors.palette.dark.light}`,
+                // shadow
+                "boxShadow": theme.shadows[2]
             },
             "header": {
                 "backgroundColor": theme.isDarkModeEnabled
@@ -168,6 +261,7 @@ const useStyles = tss
                     : theme.colors.palette.dark.main,
                 ...(!isExpended ? {} : { borderRadius }),
                 "borderRadius": `0 0 0 ${isExpended ? 0 : 30}px`,
+                "transition": "border-radius 70ms ease",
                 "display": "flex",
                 "alignItems": "center",
                 "& .dollarSign": {
@@ -180,7 +274,8 @@ const useStyles = tss
                 "overflow": "hidden",
                 "textOverflow": "ellipsis",
                 "fontFamily": "monospace",
-                "color": textColor
+                "color": textColor,
+                "marginBottom": 1
             },
             "dollarContainer": {
                 "width": 70,
@@ -201,7 +296,9 @@ const useStyles = tss
                 }
             },
             "dollarIcon": {
+                "marginTop": 3,
                 "color": theme.colors.palette.limeGreen.main
-            }
+            },
+            "helpDialog": {}
         };
     });
