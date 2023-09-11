@@ -25,6 +25,7 @@ type CoreParams = {
               clientId: string;
           }
         | undefined;
+    disablePersonalInfosInjectionInGroup: boolean;
 };
 
 export async function createCore(params: CoreParams) {
@@ -99,7 +100,7 @@ export async function createCore(params: CoreParams) {
     })();
 
     const thunksExtraArgument = {
-        "createStoreParams": params,
+        "coreParams": params,
         oidc,
         onyxiaApi,
         /** prettier-ignore */
