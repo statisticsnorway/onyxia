@@ -8,7 +8,8 @@ import { useTranslation, useResolveLocalizedString } from "ui/i18n";
 import { useConstCallback } from "powerhooks/useConstCallback";
 import { useRoute, routes } from "ui/routes";
 import { useEffectOnValueChange } from "powerhooks/useEffectOnValueChange";
-import { useDomRect, useSplashScreen } from "onyxia-ui";
+import { useSplashScreen } from "onyxia-ui";
+import { useDomRect } from "powerhooks/useDomRect";
 import { id } from "tsafe/id";
 import { useIsDarkModeEnabled } from "onyxia-ui";
 import { keyframes } from "tss-react";
@@ -22,18 +23,18 @@ import { injectGlobalStatesInSearchParams } from "powerhooks/useGlobalState";
 import { evtLang } from "ui/i18n";
 import { getEnv } from "env";
 import { logoContainerWidthInPercent } from "./logoContainerWidthInPercent";
-import { ThemeProvider, splashScreen, createGetViewPortConfig } from "ui/theme";
+import { ThemeProvider, splashScreen, targetWindowInnerWidth } from "ui/theme";
 import { PortraitModeUnsupported } from "ui/shared/PortraitModeUnsupported";
 import { objectKeys } from "tsafe/objectKeys";
 import { pages } from "ui/pages";
 import { assert, type Equals } from "tsafe/assert";
-import { useIsI18nFetching } from "ui/i18n";
 import { useLang } from "ui/i18n";
 import { Alert } from "onyxia-ui/Alert";
 import { simpleHash } from "ui/tools/simpleHash";
 import { Markdown } from "onyxia-ui/Markdown";
-import { type LocalizedString } from "ui/i18n";
+import { type LocalizedString, useIsI18nFetching } from "ui/i18n";
 import { getGlobalAlert, getDisablePersonalInfosInjectionInGroup } from "ui/env";
+import { enableScreenScaler } from "screen-scaler/react";
 
 const { CoreProvider } = createCoreProvider({
     "apiUrl": getEnv().ONYXIA_API_URL,
@@ -54,22 +55,40 @@ const { CoreProvider } = createCoreProvider({
     "disablePersonalInfosInjectionInGroup": getDisablePersonalInfosInjectionInGroup()
 });
 
-const { getViewPortConfig } = createGetViewPortConfig({ PortraitModeUnsupported });
+const { ScreenScalerOutOfRangeFallbackProvider } = enableScreenScaler({
+    "rootDivId": "root",
+    "targetWindowInnerWidth": ({ zoomFactor, isPortraitOrientation }) =>
+        isPortraitOrientation ? undefined : targetWindowInnerWidth * zoomFactor
+});
 
 export default function App() {
-    const isI18nFetching = useIsI18nFetching();
-
-    console.log({ isI18nFetching });
+    if (useIsI18nFetching()) {
+        return null;
+    }
 
     return (
-        <ThemeProvider getViewPortConfig={getViewPortConfig} splashScreen={splashScreen}>
-            <RouteProvider>
-                <CoreProvider>
-                    <ContextualizedApp />
-                </CoreProvider>
-            </RouteProvider>
+        <ThemeProvider splashScreen={splashScreen}>
+            <ScreenScalerOutOfRangeFallbackProvider
+                fallback={<ScreenScalerOutOfRangeFallback />}
+            >
+                <RouteProvider>
+                    <CoreProvider>
+                        <ContextualizedApp />
+                    </CoreProvider>
+                </RouteProvider>
+            </ScreenScalerOutOfRangeFallbackProvider>
         </ThemeProvider>
     );
+}
+
+function ScreenScalerOutOfRangeFallback() {
+    const { hideRootSplashScreen } = useSplashScreen();
+
+    useEffect(() => {
+        hideRootSplashScreen();
+    }, []);
+
+    return <PortraitModeUnsupported />;
 }
 
 function ContextualizedApp() {
@@ -291,7 +310,7 @@ function ContextualizedApp() {
                 className={classes.footer}
                 //NOTE: Defined in ./config-overrides.js
                 packageJsonVersion={process.env.VERSION!}
-                contributeUrl={"https://github.com/InseeFrLab/onyxia-web"}
+                contributeUrl={"https://github.com/inseefrlab/onyxia"}
                 termsLink={routes.terms().link}
             />
         </div>
@@ -331,6 +350,7 @@ const useStyles = tss.withName({ App }).create(({ theme }) => {
     return {
         "root": {
             "height": "100%",
+            "overflow": "hidden",
             "display": "flex",
             "flexDirection": "column",
             "backgroundColor": theme.colors.useCases.surfaces.background,
