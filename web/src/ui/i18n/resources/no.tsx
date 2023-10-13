@@ -307,22 +307,21 @@ export const translations: Translations<"no"> = {
     "Home": {
         "welcome": ({ who }) => `Velkommen ${who}!`,
         "title": "Velkommen til Onyxia datalab",
-        "new user": "Ny på datalaben?",
+        "new user": "Ny på Dapla?",
         "login": "Logg inn",
         "subtitle":
-            "Arbeid med Python eller R, nyt all databehandlingskraften du trenger!",
-        "cardTitle1": "Et ergonomisk miljø og behovstilpassede tjenester",
-        "cardTitle2": "Et aktivt og entusiastisk fellesskap til din tjeneste",
-        "cardTitle3": "Rask, fleksibel og nettbasert dataoppbevaring",
-        "cardText1":
-            "Analyser data, utfør distribuert databehandling og dra nytte av en stor katalog med tjenester. Reserver den databehandlingskraften du trenger.",
+            "Her kan du arbeide med både Python og R, samtidig som du har tilgang til all den databehandlingskraften du behøver!",
+        "cardTitle1": "Kompetansetilbud og læringsressurser",
+        "cardTitle2": "Dapla's Viva Engage-fellesskap",
+        "cardTitle3": "Opprett Dapla-team",
+        "cardText1": "Utforsk SSBs utvalg av kompetansetilbud og læringsressurser.",
         "cardText2":
-            "Bruk og del tilgjengelige ressurser: opplæringsprogrammer, opplæring og utvekslingskanaler.",
+            "Alle Dapla-nyheter samlet på ett sted! Bli med i fellesskapet for å følge utviklingen, dele idéer og stille spørsmål.",
         "cardText3":
-            "Få enkel tilgang til dataene dine og de som er tilgjengelige for deg fra programmene dine - implementering av S3 API",
-        "cardButton1": "Se gjennom katalogen",
+            "Etabler et team for å administrere, jobbe med og dele ekte data på Dapla.",
+        "cardButton1": "Utforsk læringsmuligheter",
         "cardButton2": "Bli med i fellesskapet",
-        "cardButton3": "Se på dataene"
+        "cardButton3": "Opprette et team"
     },
     "CatalogExplorerCard": {
         "launch": "Start",
