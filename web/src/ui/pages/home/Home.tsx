@@ -41,9 +41,6 @@ export default function Home(props: Props) {
 
     const { t } = useTranslation({ Home });
 
-    const myFilesLink = useMemo(() => routes.myFiles().link, []);
-    const catalogExplorerLink = useMemo(() => routes.catalogExplorer().link, []);
-
     return (
         <div className={cx(classes.root, className)}>
             <div className={classes.hero}>
