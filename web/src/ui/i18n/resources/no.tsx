@@ -312,7 +312,7 @@ export const translations: Translations<"no"> = {
         "subtitle":
             "Her kan du arbeide med både Python og R, samtidig som du har tilgang til all den databehandlingskraften du behøver!",
         "cardTitle1": "Kompetansetilbud og læringsressurser",
-        "cardTitle2": "Dapla's Viva Engage-fellesskap",
+        "cardTitle2": "Daplas Viva Engage-fellesskap",
         "cardTitle3": "Opprett Dapla-team",
         "cardText1": "Utforsk SSBs utvalg av kompetansetilbud og læringsressurser.",
         "cardText2":
