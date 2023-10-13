@@ -1,4 +1,4 @@
-import { useEffect, useMemo, memo } from "react";
+import { useEffect, memo } from "react";
 import { Button } from "ui/theme";
 import { routes } from "ui/routes";
 import { tss, Text, useStyles as useClasslessStyles } from "ui/theme";
