@@ -8,7 +8,7 @@ import { useCoreFunctions } from "core";
 import { useTranslation } from "ui/i18n";
 import { ReactComponent as IconCommunitySvg } from "ui/assets/svg/IconCommunity.svg";
 import { ReactComponent as IconServiceSvg } from "ui/assets/svg/IconService.svg";
-import { ReactComponent as IconStorageSvg } from "ui/assets/svg/IconStorage.svg";
+import { ReactComponent as IconTeamAdd } from "ui/assets/svg/TeamAdd.svg";
 import { Card as OnyxiaUiCard } from "onyxia-ui/Card";
 import type { Link } from "type-route";
 import onyxiaNeumorphismDarkModeUrl from "ui/assets/svg/OnyxiaNeumorphismDarkMode.svg";
@@ -64,9 +64,7 @@ export default function Home(props: Props) {
                     <Text typo="subtitle" className={classes.heroSubtitle}>
                         {t("subtitle")}
                     </Text>
-                    {isUserLoggedIn && (
-                        <Button href="https://docs.sspcloud.fr/">{t("new user")}</Button>
-                    )}
+                    <Button href="https://manual.dapla.ssb.no">{t("new user")}</Button>
                 </div>
                 <img src={DaplaBeeLogo} className={classes.bee} alt="" />
             </div>
@@ -76,7 +74,7 @@ export default function Home(props: Props) {
                     title={t("cardTitle1")}
                     text={t("cardText1")}
                     buttonText={t("cardButton1")}
-                    link={catalogExplorerLink}
+                    link="https://ssbno.sharepoint.com/sites/Kompetanseogutvikling"
                 />
                 <Card
                     className={classes.middleCard}
@@ -84,14 +82,14 @@ export default function Home(props: Props) {
                     title={t("cardTitle2")}
                     text={t("cardText2")}
                     buttonText={t("cardButton2")}
-                    link="https://join.slack.com/t/3innovation/shared_invite/zt-1hnzukjcn-6biCSmVy4qvyDGwbNI~sWg"
+                    link="https://web.yammer.com/main/groups/eyJfdHlwZSI6Ikdyb3VwIiwiaWQiOiI5MDUzMjA2In0"
                 />
                 <Card
-                    Icon={IconStorageSvg}
+                    Icon={IconTeamAdd}
                     title={t("cardTitle3")}
                     text={t("cardText3")}
                     buttonText={t("cardButton3")}
-                    link={myFilesLink}
+                    link="https://start.dapla.ssb.no/"
                 />
             </div>
         </div>

@@ -308,21 +308,20 @@ export const translations: Translations<"en"> = {
     "Home": {
         "welcome": ({ who }) => `Welcome ${who}!`,
         "title": "Welcome to the Onyxia datalab",
-        "new user": "New to the datalab?",
+        "new user": "New to Dapla?",
         "login": "Login",
-        "subtitle": "Work with Python or R, enjoy all the computing power you need!",
-        "cardTitle1": "An ergonomic environment and on-demand services",
-        "cardTitle2": "An active and enthusiastic community at your service",
-        "cardTitle3": "Fast, flexible and online data storage",
-        "cardText1":
-            "Analyze data, perform distributed computing and take advantage of a large catalog of services. Reserve the computing power you need.",
+        "subtitle":
+            "Work with Python or R, enjoy all the data processing power you need!",
+        "cardTitle1": "Skills and learning resources",
+        "cardTitle2": "Dapla's Viva Engage community",
+        "cardTitle3": "Create a Dapla team",
+        "cardText1": "Discover SSB's selection of skills and learning resources.",
         "cardText2":
-            "Use and share the resources available to you: tutorials, training and exchange channels.",
-        "cardText3":
-            "To easily access your data and those made available to you from your programs - S3 API implementation",
-        "cardButton1": "Consult the catalog",
+            "All Dapla news in one place! Join our community to follow developments, share ideas and ask questions.",
+        "cardText3": "Create a team to manage, work with and share real data on Dapla.",
+        "cardButton1": "Explore learning opportunities",
         "cardButton2": "Join the community",
-        "cardButton3": "Consult the data"
+        "cardButton3": "Create a team"
     },
     "CatalogExplorerCard": {
         "launch": "Launch",
