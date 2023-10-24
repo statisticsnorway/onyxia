@@ -1,6 +1,7 @@
 import MuiLink from "@mui/material/Link";
 import type { Translations } from "../types";
 import { Markdown } from "onyxia-ui/Markdown";
+import { elementsToSentence } from "ui/tools/elementsToSentence";
 
 export const translations: Translations<"no"> = {
     "Account": {
@@ -56,12 +57,27 @@ export const translations: Translations<"no"> = {
         "expires in": ({ howMuchTime }) => `Utløper om ${howMuchTime}`
     },
     "AccountKubernetesTab": {
-        "credentials section title": "Koble til Kubernetes-klyngen",
-        "credentials section helper": "Credentials to manage the Kubernetes cluster",
-        "init script section title":
-            "To connect to the Kubernetes cluster via your local kubectl",
-        "init script section helper": "Download or copy the script",
-        "expires in": ({ howMuchTime }) => `The token expires in ${howMuchTime}`
+        "credentials section title": "Koble til Kubernetes-klusteret",
+        "credentials section helper":
+            "Legitimasjon for å direkte samhandle med Kubernetes API-serveren.",
+        "init script section title": "Shell-skript",
+        "init script section helper": ({ installKubectlUrl }) => (
+            <>
+                Dette skriptet gjør det mulig å bruke kubectl eller helm på din lokale
+                maskin. <br />
+                For å bruke det,{" "}
+                <MuiLink href={installKubectlUrl} target="_blank">
+                    installer kubectl på maskinen din
+                </MuiLink>{" "}
+                og kjør skriptet ved å kopiere og lime det inn i terminalen din.
+                <br />
+                Etter å ha gjort dette kan du bekrefte at det fungerer ved å kjøre
+                kommandoen&nbsp;
+                <code>kubectl get pods</code> eller <code>helm list</code>
+            </>
+        ),
+        "expires in": ({ howMuchTime }) =>
+            `Disse legitimasjonene er gyldige for de neste ${howMuchTime}`
     },
     "AccountVaultTab": {
         "credentials section title": "Vault credentials",
@@ -323,57 +339,56 @@ export const translations: Translations<"no"> = {
         "cardButton2": "Bli med i fellesskapet",
         "cardButton3": "Opprette et team"
     },
-    "CatalogExplorerCard": {
-        "launch": "Start",
-        "learn more": "Lær mer"
-    },
-    "CatalogExplorerCards": {
+    "Catalog": {
+        "header text1": "Tjenestekatalog",
+        "header text2": "Utforsk, start og konfigurer tjenester med noen få klikk.",
+        "header help": ({ catalogName, catalogDescription, repositoryUrl }) => (
+            <>
+                Du utforsker Helm Chart Repository{" "}
+                <MuiLink href={repositoryUrl} target="_blank">
+                    {catalogName}: {catalogDescription}
+                </MuiLink>
+            </>
+        ),
+        "here": "her",
         "show more": "Vis mer",
         "no service found": "Ingen tjeneste funnet",
         "no result found": ({ forWhat }) => `Ingen resultater funnet for ${forWhat}`,
         "check spelling": "Vennligst kontroller stavemåten eller prøv å utvide søket.",
         "go back": "Tilbake til hovedtjenester",
-        "main services": "Hovedtjenester",
-        "all services": "Alle tjenester",
         "search results": "Søkeresultat",
         "search": "Søk"
     },
-    "Catalog": {
+    "CatalogChartCard": {
+        "launch": "Start",
+        "learn more": "Lær mer"
+    },
+    "CatalogNoSearchMatches": {
+        "no service found": "Ingen tjeneste funnet",
+        "no result found": ({ forWhat }) => `Ingen resultater funnet for ${forWhat}`,
+        "check spelling": "Vennligst kontroller stavemåten eller prøv å utvide søket.",
+        "go back": "Tilbake til hovedtjenester"
+    },
+    "Launcher": {
         "header text1": "Tjenestekatalog",
         "header text2": "Utforsk, start og konfigurer tjenester med noen få klikk.",
-        "contribute to the catalog": ({ catalogName }) => (
-            <>Bidra til {catalogName} katalogen</>
-        ),
-        "contribute to the package": ({ packageName }) =>
-            `Finn kildekoden for ${packageName} pakken `,
-        "here": "her"
-    },
-    "CatalogLauncher": {
-        "no longer bookmarked dialog title": "Endringene dine vil ikke bli lagret",
-        "no longer bookmarked dialog body":
-            "Klikk på bokmerkeikonet igjen for å oppdatere den lagrede konfigurasjonen din",
-        "ok": "Ok",
-        "should overwrite configuration dialog title": "Ønsker du å erstatte den?",
-        "should overwrite configuration dialog subtitle": ({ friendlyName }) =>
-            `«${friendlyName}» finnes allerede i lagringen din.`,
-        "should overwrite configuration dialog body":
-            "Du har allerede en lagret tjeneste med dette navnet. Hvis du erstatter den, vil den forrige konfigurasjonen gå tapt",
-        "cancel": "Avbryt",
-        "replace": "Erstatt den",
-        "sensitive configuration dialog title":
-            "Å starte denne tjenesten kan være farlig",
-        "proceed to launch": "Fortsett til oppstart",
-        "auto launch disabled dialog title": "Tjenesten er ikke startet",
-        "auto launch disabled dialog body": (
-            <>
-                <b>ADVARSEL</b>: Noen kan prøve å lure deg til å starte en tjeneste som
-                kan kompromittere integriteten til ditt namespace.
-                <br />
-                Vennligst gjennomgå tjenestekonfigurasjonen nøye før du starter den.
-                <br />
-                Hvis du er i tvil, vennligst kontakt din administrator.
-            </>
-        ),
+        "chart sources": ({ chartName, urls }) =>
+            urls.length === 0 ? (
+                <></>
+            ) : (
+                <>
+                    Tilgang til kild{urls.length === 1 ? "en" : "ene"} for diagrammet{" "}
+                    {chartName}:&nbsp;
+                    {elementsToSentence({
+                        "elements": urls.map(source => (
+                            <MuiLink href={source} target="_blank" underline="hover">
+                                her
+                            </MuiLink>
+                        )),
+                        "language": "no"
+                    })}
+                </>
+            ),
         "download as script": "Last ned som skript",
         "api logs help body": ({
             k8CredentialsHref,
@@ -439,25 +454,78 @@ Føl deg fri til å utforske og ta kontroll over dine Kubernetes-implementeringe
         `}</Markdown>
         )
     },
-    "Footer": {
-        "contribute": "Bidra",
-        "terms of service": "Vilkår for bruk",
-        "change language": "Bytt språk",
-        "dark mode switch": "Mørk modus"
+    "AcknowledgeSharingOfConfigConfirmDialog": {
+        "acknowledge sharing of config confirm dialog title":
+            "Vær oppmerksom, konfigurasjoner deles",
+        "acknowledge sharing of config confirm dialog subtitle": ({
+            groupProjectName
+        }) => `Hvis du lagrer
+        denne konfigurasjonen, vil hvert medlem av prosjektet ${groupProjectName} være i stand til å starte det.`,
+        "acknowledge sharing of config confirm dialog body": `Selv om ingen personlig informasjon har blitt automatisk injisert
+        av Onyxia, vær forsiktig så du ikke deler sensitiv informasjon i den gjenopprettbare konfigurasjonen.`,
+        "cancel": "Avbryt",
+        "i understand, proceed": "Jeg forstår, fortsett"
     },
-    "CatalogLauncherMainCard": {
+    "AutoLaunchDisabledDialog": {
+        "ok": "Ok",
+        "auto launch disabled dialog title": "Tjenesten er ikke startet",
+        "auto launch disabled dialog body": (
+            <>
+                <b>ADVARSEL</b>: Noen kan prøve å lure deg til å starte en tjeneste som
+                kan kompromittere integriteten til ditt namespace.
+                <br />
+                Vennligst gjennomgå tjenestekonfigurasjonen nøye før du starter den.
+                <br />
+                Hvis du er i tvil, vennligst kontakt din administrator.
+            </>
+        )
+    },
+    "NoLongerBookmarkedDialog": {
+        "no longer bookmarked dialog title": "Endringene dine vil ikke bli lagret",
+        "no longer bookmarked dialog body":
+            "Klikk på bokmerkeikonet igjen for å oppdatere den lagrede konfigurasjonen din",
+        "ok": "Ok"
+    },
+    "SensitiveConfigurationDialog": {
+        "cancel": "Avbryt",
+        "sensitive configuration dialog title":
+            "Å starte denne tjenesten kan være farlig",
+        "proceed to launch": "Fortsett til oppstart"
+    },
+    "LauncherMainCard": {
         "card title": "Opprett dine personlige tjenester",
         "friendly name": "Vennlig navn",
         "launch": "Start",
         "cancel": "Avbryt",
         "copy url helper text": "Kopier URL for å gjenopprette denne konfigurasjonen",
-        "save configuration": "Lagre denne konfigurasjonen",
         "share the service": "Del tjenesten",
         "share the service - explain":
             "Gjør tjenesten tilgjengelig for prosjektmedlemmene",
-        "restore all default": "Gjenopprett standardkonfigurasjoner"
+        "restore all default": "Gjenopprett standardkonfigurasjoner",
+        "bookmark button": ({ isBookmarked }) =>
+            `${isBookmarked ? "Fjern" : "Lagre"} konfigurasjon`,
+        "bookmark button tooltip": ({ myServicesSavedConfigsExtendedLink }) => (
+            <>
+                Lagrede konfigurasjoner kan raskt startes på nytt fra siden&nbsp;
+                <MuiLink {...myServicesSavedConfigsExtendedLink} target="_blank">
+                    Mine Tjenester
+                </MuiLink>
+            </>
+        ),
+        "version select label": "Versjon",
+        "version select helper text": ({
+            chartName,
+            catalogRepositoryUrl,
+            catalogName
+        }) => (
+            <>
+                Versjon av Chart {chartName} i&nbsp;
+                <MuiLink href={catalogRepositoryUrl}>Helm depotet {catalogName}</MuiLink>
+            </>
+        ),
+        "save changes": "Lagre endringer"
     },
-    "CatalogLauncherConfigurationCard": {
+    "LauncherConfigurationCard": {
         "global config": "Global konfigurasjon",
         "configuration": ({ packageName }) => `${packageName} konfigurasjoner`,
         "dependency": ({ dependencyName }) => `${dependencyName} avhengighet`,
@@ -467,11 +535,19 @@ Føl deg fri til å utforske og ta kontroll over dine Kubernetes-implementeringe
         "Invalid YAML Object": "Ugyldig YAML-objekt",
         "Invalid YAML Array": "Ugyldig YAML-array"
     },
+    "Footer": {
+        "contribute": "Bidra",
+        "terms of service": "Vilkår for bruk",
+        "change language": "Bytt språk",
+        "dark mode switch": "Mørk modus"
+    },
     "MyServices": {
         "text1": "Mine tjenester",
         "text2": "Få tilgang til de kjørende tjenestene dine",
         "text3": "Tjenestene skal avsluttes så snart du slutter å bruke dem aktivt.",
-        "running services": "Kjørende tjenester",
+        "running services": "Kjørende tjenester"
+    },
+    "MyServicesConfirmDeleteDialog": {
         "confirm delete title": "Er du sikker?",
         "confirm delete subtitle":
             "Forsikre deg om at tjenestene dine er klare til å bli slettet",
@@ -485,7 +561,6 @@ Føl deg fri til å utforske og ta kontroll over dine Kubernetes-implementeringe
     "MyServicesButtonBar": {
         "refresh": "Oppdater",
         "launch": "Ny tjeneste",
-        "password": "Kopier passordet til tjenestene",
         "trash": "Slett alt",
         "trash my own": "Slett alle mine tjenester"
     },
@@ -504,16 +579,16 @@ Føl deg fri til å utforske og ta kontroll over dine Kubernetes-implementeringe
     "MyServicesRunningTime": {
         "launching": "Starter..."
     },
-    "MyServicesSavedConfigOptions": {
+    "MyServicesRestorableConfigOptions": {
         "edit": "Rediger",
         "copy link": "Kopier URL-lenke",
         "remove bookmark": "Slett"
     },
-    "MyServicesSavedConfig": {
+    "MyServicesRestorableConfig": {
         "edit": "Rediger",
         "launch": "Start"
     },
-    "MyServicesSavedConfigs": {
+    "MyServicesRestorableConfigs": {
         "saved": "Lagret",
         "show all": "Vis alle"
     },
@@ -522,7 +597,7 @@ Føl deg fri til å utforske og ta kontroll over dine Kubernetes-implementeringe
         "return": "Gå tilbake"
     },
     "CopyOpenButton": {
-        "first copy the password": "Først, kopier tjeneste...",
+        "first copy the password": "Klikk for å kopiere passordet...",
         "open the service": "Åpne tjenesten 🚀"
     },
     "MyServicesCards": {

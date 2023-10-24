@@ -29,7 +29,7 @@ export default function Home(props: Props) {
 
     useConst(() => {
         if (getIsHomePageDisabled()) {
-            routes.catalogExplorer().replace();
+            routes.catalog().replace();
         }
     });
 
