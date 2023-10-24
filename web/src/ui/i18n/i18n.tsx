@@ -1,12 +1,13 @@
-import { createI18nApi, declareComponentKeys } from "i18nifty";
-import { languages, fallbackLanguage, Language } from "./types";
+import {
+    createI18nApi,
+    declareComponentKeys,
+    LocalizedString as GenericLocalizedString
+} from "i18nifty";
+import { fallbackLanguage, type Language } from "./types";
 import { ComponentKey } from "./types";
-import { assert, type Equals } from "tsafe/assert";
 import { statefulObservableToStatefulEvt } from "powerhooks/tools/StatefulObservable/statefulObservableToStatefulEvt";
-import { z } from "zod";
+import { getEnabledLanguages } from "ui/env";
 export { declareComponentKeys };
-
-export type LocalizedString = Parameters<typeof resolveLocalizedString>[0];
 
 export const {
     useTranslation,
@@ -16,7 +17,10 @@ export const {
     useResolveLocalizedString,
     useIsI18nFetching
 } = createI18nApi<ComponentKey>()(
-    { languages, fallbackLanguage },
+    {
+        "languages": getEnabledLanguages(),
+        fallbackLanguage
+    },
     {
         "en": () => import("./resources/en").then(({ translations }) => translations),
         "fr": () => import("./resources/fr").then(({ translations }) => translations),
@@ -30,33 +34,8 @@ export const {
     }
 );
 
+export type LocalizedString = GenericLocalizedString<Language>;
+
 export const evtLang = statefulObservableToStatefulEvt({
     "statefulObservable": $lang
 });
-
-export const zLanguage = z.union([
-    z.literal("en"),
-    z.literal("fr"),
-    z.literal("zh-CN"),
-    z.literal("no"),
-    z.literal("fi"),
-    z.literal("nl"),
-    z.literal("it"),
-    z.literal("de")
-]);
-
-{
-    type Got = ReturnType<(typeof zLanguage)["parse"]>;
-    type Expected = Language;
-
-    assert<Equals<Got, Expected>>();
-}
-
-export const zLocalizedString = z.union([z.string(), z.record(zLanguage, z.string())]);
-
-{
-    type Got = ReturnType<(typeof zLocalizedString)["parse"]>;
-    type Expected = LocalizedString;
-
-    assert<Equals<Got, Expected>>();
-}
