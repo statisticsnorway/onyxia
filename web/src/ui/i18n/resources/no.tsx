@@ -322,7 +322,7 @@ export const translations: Translations<"no"> = {
     },
     "Home": {
         "welcome": ({ who }) => `Velkommen ${who}!`,
-        "title": "Velkommen til Onyxia datalab",
+        "title": "Velkommen til {Dapla}",
         "new user": "Ny på Dapla?",
         "login": "Logg inn",
         "subtitle":

@@ -31,14 +31,14 @@ export const translations: Translations<"en"> = {
     },
     "AccountIntegrationsTab": {
         "git section title": "Git configuration",
-        "git section helper": `To ensure that you appear from your services 
+        "git section helper": `To ensure that you appear from your services
             as the author of Git contributions`,
         "gitName": "Username for Git",
         "gitEmail": "Email for Git",
         "third party tokens section title":
             "Connect your Gitlab, Github and Kaggle accounts",
         "third party tokens section helper": `
-                Connect your services to external accounts using 
+                Connect your services to external accounts using
                 personal access tokens and environment variables
             `,
         "personal token": ({ serviceName }) => `${serviceName} personal access token`,
@@ -126,7 +126,7 @@ export const translations: Translations<"en"> = {
         "copy tooltip": "Copy in clipboard",
         "language": "Change language",
         "service password": "Password for your services",
-        "service password helper text": `This password is required to log in to all of your services. 
+        "service password helper text": `This password is required to log in to all of your services.
             It is generated automatically and renews itself regularly.`,
         "not yet defined": "Not yet defined",
         "reset helper dialogs": "Reset instructions windows",
@@ -256,8 +256,8 @@ export const translations: Translations<"en"> = {
         "value column name": "Value",
         "resolved value column name": "Resolved Value",
         "what's a resolved value": `
-            An environnement variable can reference another one. If for example you have defined 
-            FIRST_NAME=John you can set FULL_NAME="$FIRST_NAME"-Doe, the resolved value of 
+            An environnement variable can reference another one. If for example you have defined
+            FIRST_NAME=John you can set FULL_NAME="$FIRST_NAME"-Doe, the resolved value of
             FILL_NAME will be «John-Doe»
             `,
         "unavailable key": "Already used",
@@ -271,7 +271,7 @@ export const translations: Translations<"en"> = {
         "use secret dialog subtitle": "The path of the secret have been copied",
         "use secret dialog body": `
                 When you launch a service (RStudio, Jupyter, ect) go to the
-                secret tab and and paste the path of the secret provided for this 
+                secret tab and and paste the path of the secret provided for this
                 purpose.
                 The values will be injected as environnement variable.
             `,
@@ -322,7 +322,7 @@ export const translations: Translations<"en"> = {
     },
     "Home": {
         "welcome": ({ who }) => `Welcome ${who}!`,
-        "title": "Welcome to the Onyxia datalab",
+        "title": "Welcome to the {Dapla} Lab",
         "new user": "New to Dapla?",
         "login": "Login",
         "subtitle":
@@ -407,45 +407,45 @@ export const translations: Translations<"en"> = {
                             return false;
                     }
                 }}
-            >{`We've designed the command bar to empower you to take control over your Kubernetes deployments. 
+            >{`We've designed the command bar to empower you to take control over your Kubernetes deployments.
 Here's what you need to know:
 
-#### What are those Helm Commands?  
+#### What are those Helm Commands?
 
-Theses commands are the exact Helm command that Onyxia API will execute on your behalf in your Kubernetes namespace.  
-This enables you to know what's happening behind the scenes when you interact with the UI.  
+Theses commands are the exact Helm command that Onyxia API will execute on your behalf in your Kubernetes namespace.
+This enables you to know what's happening behind the scenes when you interact with the UI.
 
-#### Real-time Updates  
+#### Real-time Updates
 
-As you interact with the UI, the Helm commands will automatically update to reflect what you are doing.  
+As you interact with the UI, the Helm commands will automatically update to reflect what you are doing.
 
-#### Why Should I Care?  
+#### Why Should I Care?
 
-- **Transparency:** We believe you have the right to know what actions are being performed in your environment.  
-- **Learning:** Understanding these commands can provide insight into Kubernetes and Helm, deepening your knowledge.  
-- **Manual Execution:** You can copy and paste those commands into a terminal with write-access to Kubernetes, allowing you to launch the service manually.  
+- **Transparency:** We believe you have the right to know what actions are being performed in your environment.
+- **Learning:** Understanding these commands can provide insight into Kubernetes and Helm, deepening your knowledge.
+- **Manual Execution:** You can copy and paste those commands into a terminal with write-access to Kubernetes, allowing you to launch the service manually.
 
-#### How Can I Run Those Commands Manually?  
+#### How Can I Run Those Commands Manually?
 
-${k8CredentialsHref === undefined ? "" : "There are two ways to run theses commands:  "}  
+${k8CredentialsHref === undefined ? "" : "There are two ways to run theses commands:  "}
 
 ${
     k8CredentialsHref === undefined
         ? ""
         : `
-- **Local Terminal:** Go to [\`My Account -> Kubernetes tab\`](${k8CredentialsHref}).  
-  Here, you will find the credentials that allow you to run commands in your Kubernetes namespace from your local terminal.  
+- **Local Terminal:** Go to [\`My Account -> Kubernetes tab\`](${k8CredentialsHref}).
+  Here, you will find the credentials that allow you to run commands in your Kubernetes namespace from your local terminal.
 `
 }
 
-- If this instance of onyxia features services VSCode or Jupyter you can open a terminal within theses services and run command there.  
-  For constructive or destructive commands you will need to launch your service with Kubernetes role \`admin\` or \`edit\`.  
+- If this instance of onyxia features services VSCode or Jupyter you can open a terminal within theses services and run command there.
+  For constructive or destructive commands you will need to launch your service with Kubernetes role \`admin\` or \`edit\`.
 
-By executing the command manually, you will still be able to see the service in the [\`MyServices\`](${myServicesHref}) page as if it was launched via the UI.  
+By executing the command manually, you will still be able to see the service in the [\`MyServices\`](${myServicesHref}) page as if it was launched via the UI.
 
 You can disable the command bar in the [\`My Account -> Interface preference tab\`](${interfacePreferenceHref}).
 
-Feel free to explore and take charge of your Kubernetes deployments!  
+Feel free to explore and take charge of your Kubernetes deployments!
         `}</Markdown>
         )
     },
@@ -456,7 +456,7 @@ Feel free to explore and take charge of your Kubernetes deployments!
             groupProjectName
         }) => `If you save
         this configuration every member of the project ${groupProjectName} will be able to launch it.`,
-        "acknowledge sharing of config confirm dialog body": `Although no personal information have been automatically injected 
+        "acknowledge sharing of config confirm dialog body": `Although no personal information have been automatically injected
         by Onyxia, be aware not to share any sensitive information shared restorable configuration.`,
         "cancel": "Cancel",
         "i understand, proceed": "I understand, proceed"
