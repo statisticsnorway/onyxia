@@ -203,7 +203,12 @@ export function createOnyxiaApi(params: {
                     console.log(
                         [
                             `inseefrlab/onyxia-api version ${version}`,
-                            `https://github.com/InseeFrLab/onyxia-api/tree/${version}`
+                            `https://github.com/InseeFrLab/onyxia-api/tree/${version}`,
+                            `Swagger: ${
+                                url.startsWith("/")
+                                    ? `${window.location.origin}${url}`
+                                    : url
+                            }`
                         ].join("\n")
                     );
                     return data;
@@ -367,6 +372,7 @@ export function createOnyxiaApi(params: {
                                     {
                                         description?: string;
                                         version: string;
+                                        type: "library" | "application";
                                         icon?: string | undefined;
                                         home?: string | undefined;
                                     }[]
@@ -409,6 +415,7 @@ export function createOnyxiaApi(params: {
                                         ([name, versions]): Chart => ({
                                             name,
                                             "versions": versions
+                                                .filter(({ type }) => type !== "library")
                                                 .map(
                                                     ({
                                                         description,
@@ -428,6 +435,7 @@ export function createOnyxiaApi(params: {
                                                 )
                                         })
                                     )
+                                    .filter(({ versions }) => versions.length !== 0)
                                     .sort(
                                         (chartA, chartB) =>
                                             getChartWeight(chartB.name) -
@@ -467,20 +475,79 @@ export function createOnyxiaApi(params: {
                 })
                 .catch(onError)
                 .then(() => undefined),
-        "getHelmChartDetails": ({ catalogId, chartName, chartVersion }) =>
-            axiosInstance
+        "getHelmChartDetails": async ({ catalogId, chartName, chartVersion }) => {
+            const { chartsByCatalogId, catalogs } =
+                await onyxiaApi.getCatalogsAndCharts();
+
+            function getIsDependencyLibrary(params: {
+                catalogRepositoryUrl: string;
+                chartName: string;
+                chartVersion: string;
+            }): boolean {
+                const { catalogRepositoryUrl, chartName, chartVersion } = params;
+
+                const catalog = catalogs.find(
+                    catalog => catalog.repositoryUrl === catalogRepositoryUrl
+                );
+
+                if (catalog === undefined) {
+                    console.warn(
+                        [
+                            "Here we have a dependency that is not in any catalog, we can't tel if it's a library or not",
+                            "Please submit an issue about it on the onyxia repo"
+                        ].join(" ")
+                    );
+                    return false;
+                }
+
+                const charts = chartsByCatalogId[catalog.id];
+
+                assert(charts !== undefined);
+
+                const chart = charts.find(chart => chart.name === chartName);
+
+                if (chart === undefined) {
+                    // We've filtered it out, it's a library
+                    return true;
+                }
+
+                const version = chart.versions.find(
+                    version => version.version === chartVersion
+                );
+
+                if (version === undefined) {
+                    // We've filtered it out, it's a library
+                    return true;
+                }
+
+                return false;
+            }
+
+            return axiosInstance
                 .get<{
                     config: JSONSchemaObject;
                     sources?: string[];
                     dependencies?: {
                         name: string;
+                        repository: string;
+                        version: string;
                     }[];
                 }>(
                     `/public/catalogs/${catalogId}/charts/${chartName}/versions/${chartVersion}`
                 )
                 .then(
                     ({ data }) => ({
-                        "dependencies": data.dependencies?.map(({ name }) => name) ?? [],
+                        "nonLibraryDependencies":
+                            data.dependencies
+                                ?.filter(
+                                    ({ name, repository, version }) =>
+                                        !getIsDependencyLibrary({
+                                            "catalogRepositoryUrl": repository,
+                                            "chartName": name,
+                                            "chartVersion": version
+                                        })
+                                )
+                                .map(({ name }) => name) ?? [],
                         "sourceUrls": data.sources ?? [],
                         "getChartValuesSchemaJson": ({ xOnyxiaContext }) => {
                             //WARNING: The type is not exactly correct here. JSONSchemaFormFieldDescription["default"] can be undefined.
@@ -780,7 +847,8 @@ export function createOnyxiaApi(params: {
                         }
                     }),
                     onError
-                ),
+                );
+        },
         "helmInstall": (() => {
             const getMyLab_App = (params: { helmReleaseName: string }) => {
                 const { helmReleaseName } = params;

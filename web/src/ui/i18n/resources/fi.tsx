@@ -1,6 +1,6 @@
 import MuiLink from "@mui/material/Link";
 import type { Translations } from "../types";
-import { Markdown } from "onyxia-ui/Markdown";
+import { Markdown } from "ui/shared/Markdown";
 import { elementsToSentence } from "ui/tools/elementsToSentence";
 
 export const translations: Translations<"fi"> = {
@@ -294,7 +294,7 @@ export const translations: Translations<"fi"> = {
         "project": "Projekti",
         "region": "Alue"
     },
-    "App": {
+    "LeftBar": {
         "reduce": "Pienennä",
         "home": "Koti",
         "account": "Oma tili",
@@ -305,7 +305,9 @@ export const translations: Translations<"fi"> = {
         "divider: services features": "Palvelun ominaisuudet",
         "divider: external services features": "Ulkoisten palveluiden ominaisuudet",
         "divider: onyxia instance specific features":
-            "Onyxia-instanssin erityisominaisuudet"
+            "Onyxia-instanssin erityisominaisuudet",
+        "dataExplorer": "Data Explorer",
+        "sqlOlapShell": "SQL OLAP-kuori"
     },
     "Page404": {
         "not found": "Sivua ei löydy"
@@ -315,7 +317,7 @@ export const translations: Translations<"fi"> = {
             "Voit käyttää tätä sovellusta puhelimellasi ottamalla käyttöön kääntöanturin ja kääntämällä puhelimesi."
     },
     "Home": {
-        "welcome": ({ who }) => `Tervetuloa, ${who}!`,
+        "title authenticated": ({ userFirstname }) => `Tervetuloa, ${userFirstname}!`,
         "title": "Tervetuloa Onyxia datalabiin",
         "new user": "Uusi käyttäjä?",
         "login": "Kirjaudu sisään",
@@ -393,17 +395,26 @@ export const translations: Translations<"fi"> = {
             interfacePreferenceHref
         }) => (
             <Markdown
-                getDoesLinkShouldOpenNewTab={href => {
-                    switch (href) {
-                        case k8CredentialsHref:
-                            return true;
-                        case myServicesHref:
-                            return true;
-                        case interfacePreferenceHref:
-                            return false;
-                        default:
-                            return false;
-                    }
+                getLinkProps={({ href }) => {
+                    const doOpensNewTab = (() => {
+                        switch (href) {
+                            case k8CredentialsHref:
+                                return true;
+                            case myServicesHref:
+                                return true;
+                            case interfacePreferenceHref:
+                                return false;
+                            default:
+                                return false;
+                        }
+                    })();
+
+                    return {
+                        href,
+                        ...(doOpensNewTab
+                            ? { "target": "_blank", "onClick": undefined }
+                            : {})
+                    };
                 }}
             >{`Olemme suunnitelleet komentopalkin siten, että voit ottaa hallinnan Kubernetes-julkaisuistasi.
 Tässä on mitä sinun tarvitsee tietää:
@@ -490,7 +501,11 @@ Tutustu vapaasti ja ota hallintaan Kubernetes-julkaisusi!
         "friendly name": "Käyttäjäystävällinen nimi",
         "launch": "Käynnistä",
         "cancel": "Peruuta",
-        "copy url helper text": "Kopioi URL-osoite palauttaaksesi tämän konfiguraation",
+        "copy auto launch url": "Kopioi automaattisen käynnistyksen URL",
+        "copy auto launch url helper": ({
+            chartName
+        }) => `Kopioi URL, jonka avulla tämän Onyxia-instanssin käyttäjä voi 
+            käynnistää ${chartName} tässä konfiguraatiossa omassa Namespace:ssaan`,
         "share the service": "Jaa palvelu",
         "share the service - explain": "Tee palvelu saataville ryhmän jäsenille",
         "restore all default": "Palauta oletuskonfiguraatiot",
@@ -517,7 +532,8 @@ Tutustu vapaasti ja ota hallintaan Kubernetes-julkaisusi!
                 </MuiLink>
             </>
         ),
-        "save changes": "Tallenna muutokset"
+        "save changes": "Tallenna muutokset",
+        "copied to clipboard": "Kopioitu leikepöydälle!"
     },
     "LauncherConfigurationCard": {
         "global config": "Yleinen konfiguraatio",
@@ -602,7 +618,121 @@ Tutustu vapaasti ja ota hallintaan Kubernetes-julkaisusi!
         "launch one": "Käynnistä palvelu",
         "no services running": "Sinulla ei ole käynnissä olevia palveluita"
     },
+    "DataExplorer": {
+        "page header title": "Data Explorer",
+        "page header help title":
+            "Esikatsele Parquet- ja CSV-tiedostoja suoraan selaimessasi!",
+        "page header help content": ({ demoParquetFileLink }) => (
+            <>
+                Syötä vain <code>https://</code> tai <code>s3://</code> URL tiedostoon
+                päästäksesi esikatseluun.
+                <br />
+                Tiedostoa ei ladata kokonaan; sen sisältö virtaa, kun navigoit sivujen
+                läpi.
+                <br />
+                Voit jakaa pysyvän linkin tiedostoon tai jopa tiettyyn tiedoston riviin
+                kopioimalla URL:n osoitepalkista.
+                <br />
+                Etkö ole varma, mistä aloittaa? Kokeile tätä{" "}
+                <MuiLink {...demoParquetFileLink}>demotiedostoa</MuiLink>!
+            </>
+        ),
+        "column": "sarake",
+        "density": "tiheys",
+        "download file": "lataa tiedosto"
+    },
+    "UrlInput": {
+        "load": "Lataa"
+    },
     "CommandBar": {
         "ok": "ok"
+    },
+    "moment": {
+        "date format": ({ isSameYear }) =>
+            `dddd, Do MMMM${isSameYear ? "" : " YYYY"}, HH:mm`,
+        "past1": ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "now":
+                    return "juuri nyt";
+                case "second":
+                    return "sekunti sitten";
+                case "minute":
+                    return "minuutti sitten";
+                case "hour":
+                    return "tunti sitten";
+                case "day":
+                    return "eilen";
+                case "week":
+                    return "viime viikolla";
+                case "month":
+                    return "viime kuussa";
+                case "year":
+                    return "viime vuonna";
+            }
+        },
+        "pastN": ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "now":
+                    return "juuri nyt";
+                case "second":
+                    return "# sekuntia sitten";
+                case "minute":
+                    return "# minuuttia sitten";
+                case "hour":
+                    return "# tuntia sitten";
+                case "day":
+                    return "# päivää sitten";
+                case "week":
+                    return "# viikkoa sitten";
+                case "month":
+                    return "# kuukautta sitten";
+                case "year":
+                    return "# vuotta sitten";
+            }
+        },
+        "future1": ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "now":
+                    return "juuri nyt";
+                case "second":
+                    return "sekunnin kuluttua";
+                case "minute":
+                    return "minuutin kuluttua";
+                case "hour":
+                    return "tunnin kuluttua";
+                case "day":
+                    return "huomenna";
+                case "week":
+                    return "ensi viikolla";
+                case "month":
+                    return "ensi kuussa";
+                case "year":
+                    return "ensi vuonna";
+            }
+        },
+        "futureN": ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "now":
+                    return "juuri nyt";
+                case "second":
+                    return "# sekunnin kuluttua";
+                case "minute":
+                    return "# minuutin kuluttua";
+                case "hour":
+                    return "# tunnin kuluttua";
+                case "day":
+                    return "# päivän kuluttua";
+                case "week":
+                    return "# viikon kuluttua";
+                case "month":
+                    return "# kuukauden kuluttua";
+                case "year":
+                    return "# vuoden kuluttua";
+            }
+        }
+    },
+    "CopyToClipboardIconButton": {
+        "copied to clipboard": "Kopioitu!",
+        "copy to clipboard": "Kopioi leikepöydälle"
     }
 };

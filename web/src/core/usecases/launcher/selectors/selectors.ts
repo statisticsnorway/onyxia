@@ -1,6 +1,5 @@
 import "minimal-polyfills/Object.fromEntries";
-import type { State as RootState } from "../../../core";
-import { createSelector } from "@reduxjs/toolkit";
+import type { State as RootState } from "core/bootstrap";
 import { assert } from "tsafe/assert";
 import { same } from "evt/tools/inDepth/same";
 import { formFieldsValueToObject } from "../FormField";
@@ -13,10 +12,10 @@ import type { IndexedFormFields } from "../FormField";
 import { createGetIsFieldHidden } from "./getIsFieldHidden";
 import * as yaml from "yaml";
 import { name, type State } from "../state";
-import { symToStr } from "tsafe/symToStr";
 import * as restorableConfigManager from "core/usecases/restorableConfigManager";
 import * as projectConfigs from "core/usecases/projectConfigs";
 import { exclude } from "tsafe/exclude";
+import { createSelector } from "redux-clean-architecture";
 
 const readyState = (rootState: RootState): State.Ready | undefined => {
     const state = rootState[name];
@@ -39,12 +38,12 @@ const infosAboutWhenFieldsShouldBeHidden = createSelector(
     state => state?.infosAboutWhenFieldsShouldBeHidden
 );
 
-const chartDependencies = createSelector(readyState, state => {
+const nonLibraryChartDependencies = createSelector(readyState, state => {
     if (state === undefined) {
         return undefined;
     }
 
-    return state.chartDependencies.filter(dependency => dependency !== "library-chart");
+    return state.nonLibraryChartDependencies;
 });
 
 const friendlyName = createSelector(formFields, formFields => {
@@ -69,14 +68,14 @@ const indexedFormFields = createSelector(
     formFields,
     infosAboutWhenFieldsShouldBeHidden,
     chartName,
-    chartDependencies,
+    nonLibraryChartDependencies,
     (
         isReady,
         valuesSchema,
         formFields,
         infosAboutWhenFieldsShouldBeHidden,
         packageName,
-        dependencies
+        nonLibraryChartDependencies
     ): IndexedFormFields | undefined => {
         if (!isReady) {
             return undefined;
@@ -85,7 +84,7 @@ const indexedFormFields = createSelector(
         assert(valuesSchema !== undefined);
         assert(formFields !== undefined);
         assert(packageName !== undefined);
-        assert(dependencies !== undefined);
+        assert(nonLibraryChartDependencies !== undefined);
         assert(infosAboutWhenFieldsShouldBeHidden !== undefined);
 
         const indexedFormFields: IndexedFormFields.Scaffolding = {};
@@ -99,7 +98,7 @@ const indexedFormFields = createSelector(
             ({ path }) => !getIsFieldHidden({ path })
         );
 
-        [...dependencies, "global"].forEach(dependencyOrGlobal => {
+        [...nonLibraryChartDependencies, "global"].forEach(dependencyOrGlobal => {
             const formFieldsByTabName: IndexedFormFields.Scaffolding[string]["formFieldsByTabName"] =
                 {};
 
@@ -589,7 +588,7 @@ const isThereASavedConfigWithThisFriendlyName = createSelector(
     }
 );
 
-const wrap = createSelector(
+const main = createSelector(
     isReady,
     friendlyName,
     isThereASavedConfigWithThisFriendlyName,
@@ -635,25 +634,6 @@ const wrap = createSelector(
         if (!isReady) {
             return {
                 "isReady": false as const,
-                [symToStr({ friendlyName })]: undefined,
-                [symToStr({ isThereASavedConfigWithThisFriendlyName })]: undefined,
-                [symToStr({ isShared })]: undefined,
-                [symToStr({ indexedFormFields })]: undefined,
-                [symToStr({ isLaunchable })]: undefined,
-                [symToStr({ formFieldsIsWellFormed })]: undefined,
-                [symToStr({ restorableConfig })]: undefined,
-                [symToStr({ isRestorableConfigSaved })]: undefined,
-                [symToStr({ restorableConfig })]: undefined,
-                [symToStr({ areAllFieldsDefault })]: undefined,
-                [symToStr({ chartName })]: undefined,
-                [symToStr({ chartVersion })]: undefined,
-                [symToStr({ availableChartVersions })]: undefined,
-                [symToStr({ catalogName })]: undefined,
-                [symToStr({ catalogRepositoryUrl })]: undefined,
-                [symToStr({ chartIconUrl })]: undefined,
-                [symToStr({ launchScript })]: undefined,
-                [symToStr({ commandLogsEntries })]: undefined,
-                [symToStr({ chartSourceUrls })]: undefined,
                 groupProjectName
             };
         }
@@ -701,7 +681,7 @@ const wrap = createSelector(
     }
 );
 
-export const selectors = { wrap };
+export const selectors = { main };
 
 const formFieldsValueDifferentFromDefault = createSelector(
     isReady,

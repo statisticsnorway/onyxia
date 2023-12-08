@@ -1,4 +1,3 @@
-import { createSlice } from "@reduxjs/toolkit";
 import { id } from "tsafe/id";
 import { assert, type Equals } from "tsafe/assert";
 import { same } from "evt/tools/inDepth/same";
@@ -6,6 +5,7 @@ import { type FormFieldValue } from "./FormField";
 import { type JSONSchemaObject } from "core/ports/OnyxiaApi";
 import type { FormField } from "./FormField";
 import { type LocalizedString } from "core/ports/OnyxiaApi";
+import { createUsecaseActions } from "redux-clean-architecture";
 
 type State = State.NotInitialized | State.Ready;
 
@@ -36,7 +36,7 @@ export declare namespace State {
             isHidden: boolean | FormFieldValue;
         }[];
         defaultFormFieldsValue: FormFieldValue[];
-        chartDependencies: string[];
+        nonLibraryChartDependencies: string[];
         valuesSchema: JSONSchemaObject;
         k8sRandomSubdomain: string;
     };
@@ -44,7 +44,7 @@ export declare namespace State {
 
 export const name = "launcher";
 
-export const { reducer, actions } = createSlice({
+export const { reducer, actions } = createUsecaseActions({
     name,
     "initialState": id<State>(
         id<State.NotInitialized>({
@@ -76,7 +76,7 @@ export const { reducer, actions } = createSlice({
                         formFields: State.Ready["formFields"];
                         infosAboutWhenFieldsShouldBeHidden: State.Ready["infosAboutWhenFieldsShouldBeHidden"];
                         valuesSchema: State.Ready["valuesSchema"];
-                        chartDependencies: string[];
+                        nonLibraryChartDependencies: string[];
                         formFieldsValueDifferentFromDefault: FormFieldValue[];
                         sensitiveConfigurations: FormFieldValue[];
                         k8sRandomSubdomain: string;
@@ -96,7 +96,7 @@ export const { reducer, actions } = createSlice({
                     formFields,
                     infosAboutWhenFieldsShouldBeHidden,
                     valuesSchema,
-                    chartDependencies,
+                    nonLibraryChartDependencies,
                     formFieldsValueDifferentFromDefault,
                     k8sRandomSubdomain
                 } = payload;
@@ -120,7 +120,7 @@ export const { reducer, actions } = createSlice({
                             path,
                             value
                         })),
-                        chartDependencies,
+                        nonLibraryChartDependencies,
                         "pathOfFormFieldsWhoseValuesAreDifferentFromDefault": [],
                         valuesSchema,
                         k8sRandomSubdomain

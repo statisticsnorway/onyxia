@@ -1,19 +1,19 @@
 import { useState, type FormEventHandler } from "react";
 import { useConstCallback } from "keycloakify/tools/useConstCallback";
 import type { PageProps } from "keycloakify/login/pages/PageProps";
-import { tss, Text } from "keycloak-theme/login/theme";
+import { tss } from "tss";
+import { Text } from "onyxia-ui/Text";
 import type { KcContext } from "../kcContext";
 import type { I18n } from "../i18n";
 import Link from "@mui/material/Link";
 import { TextField } from "onyxia-ui/TextField";
-import { Button } from "keycloak-theme/login/theme";
+import { Button } from "onyxia-ui/Button";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import { Checkbox } from "onyxia-ui/Checkbox";
 import { ReactComponent as AgentconnectBtnPrincipal } from "ui/assets/svg/agentconnect-btn-principal.svg";
 import { ReactComponent as AgentconnectBtnPrincipalHover } from "ui/assets/svg/agentconnect-btn-principal-hover.svg";
 import { ReactComponent as AgentconnectBtnAlternatif } from "ui/assets/svg/agentconnect-btn-alternatif.svg";
 import { ReactComponent as AgentconnectBtnAlternatifHover } from "ui/assets/svg/agentconnect-btn-alternatif-hover.svg";
-import { useIsDarkModeEnabled } from "onyxia-ui";
 
 export default function Login(
     props: PageProps<Extract<KcContext, { pageId: "login.ftl" }>, I18n>
@@ -244,11 +244,9 @@ const { AgentConnectButton } = (() => {
 
         const [isMouseHover, setIsMouseHover] = useState(false);
 
-        const { classes, cx } = useStyles();
+        const { classes, cx, theme } = useStyles();
 
-        const { isDarkModeEnabled } = useIsDarkModeEnabled();
-
-        const AgentConnectSvg = isDarkModeEnabled
+        const AgentConnectSvg = theme.isDarkModeEnabled
             ? isMouseHover
                 ? AgentconnectBtnAlternatifHover
                 : AgentconnectBtnAlternatif

@@ -1,8 +1,9 @@
-import { tss, PageHeader } from "ui/theme";
+import { tss } from "tss";
+import { PageHeader } from "onyxia-ui/PageHeader";
 import { useEffect, useMemo } from "react";
 import { useConstCallback } from "powerhooks/useConstCallback";
 import { copyToClipboard } from "ui/tools/copyToClipboard";
-import { useCoreState, useCoreFunctions, useCoreEvts, selectors } from "core";
+import { useCoreState, useCore } from "core";
 import { Explorer } from "./Explorer";
 import { ExplorerProps } from "./Explorer";
 import { useTranslation } from "ui/i18n";
@@ -17,6 +18,7 @@ import { useConst } from "powerhooks/useConst";
 import type { Link } from "type-route";
 import type { PageRoute } from "./route";
 import { useEvt } from "evt/hooks";
+import { customIcons } from "ui/theme";
 
 export type Props = {
     route: PageRoute;
@@ -28,20 +30,18 @@ export default function MyFiles(props: Props) {
 
     const { t } = useTranslation({ MyFiles });
 
-    const { currentWorkingDirectoryView } = useCoreState(
-        selectors.fileExplorer.currentWorkingDirectoryView
+    const currentWorkingDirectoryView = useCoreState(
+        "fileExplorer",
+        "currentWorkingDirectoryView"
     );
 
-    const { commandLogsEntries } = useCoreState(
-        selectors.fileExplorer.commandLogsEntries
-    );
-    const {
-        userConfigs: { isCommandBarEnabled }
-    } = useCoreState(selectors.userConfigs.userConfigs);
+    const commandLogsEntries = useCoreState("fileExplorer", "commandLogsEntries");
 
-    const { fileExplorer } = useCoreFunctions();
+    const { isCommandBarEnabled } = useCoreState("userConfigs", "main");
 
-    const { evtProjectConfigs } = useCoreEvts();
+    const { fileExplorer } = useCore().functions;
+
+    const { evtProjectConfigs } = useCore().evts;
 
     useEvt(
         ctx => {
@@ -130,11 +130,22 @@ export default function MyFiles(props: Props) {
 
     const onOpenFile = useConstCallback<
         Extract<ExplorerProps, { isFileOpen: false }>["onOpenFile"]
-    >(({ basename }) => fileExplorer.getFileDownloadUrl({ basename }).then(window.open));
+    >(({ basename }) => {
+        if (basename.endsWith(".parquet") || basename.endsWith(".csv")) {
+            routes
+                .dataExplorer({
+                    "source": `s3:/${route.params.path}/${basename}`
+                })
+                .push();
+            return;
+        }
+
+        fileExplorer.getFileDownloadUrl({ basename }).then(window.open);
+    });
 
     const onFileSelected = useConstCallback<ExplorerProps["onFileSelected"]>(
         ({ files }) =>
-            files.map(file =>
+            files.forEach(file =>
                 fileExplorer.create({
                     "createWhat": "file",
                     "basename": file.name,
@@ -143,7 +154,7 @@ export default function MyFiles(props: Props) {
             )
     );
 
-    const { uploadProgress } = useCoreState(selectors.fileExplorer.uploadProgress);
+    const uploadProgress = useCoreState("fileExplorer", "uploadProgress");
 
     if (currentWorkingDirectoryView === undefined) {
         return null;
@@ -152,7 +163,7 @@ export default function MyFiles(props: Props) {
     return (
         <div className={cx(classes.root, className)}>
             <PageHeader
-                mainIcon="files"
+                mainIcon={customIcons.filesSvgUrl}
                 title={t("page title - my files")}
                 helpTitle={t("what this page is used for - my files")}
                 helpContent={t("help content", {

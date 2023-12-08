@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { useTranslation, useResolveLocalizedString } from "ui/i18n";
-import { PageHeader, tss } from "ui/theme";
-import { useCoreState, selectors, useCoreEvts, useCoreFunctions } from "core";
+import { PageHeader } from "onyxia-ui/PageHeader";
+import { tss } from "tss";
+import { useCoreState, useCore } from "core";
 import { useStateRef } from "powerhooks/useStateRef";
 import { declareComponentKeys } from "i18nifty";
 import type { PageRoute } from "./route";
 import { routes } from "ui/routes";
 import { breakpointsValues } from "onyxia-ui";
-import { Text } from "ui/theme";
+import { Text } from "onyxia-ui/Text";
 import { useEvt } from "evt/hooks";
 import { SearchBar, type SearchBarProps } from "onyxia-ui/SearchBar";
 import { Evt } from "evt";
@@ -17,6 +18,9 @@ import { CatalogNoSearchMatches } from "./CatalogNoSearchMatches";
 import { assert } from "tsafe/assert";
 import { useCallbackFactory } from "powerhooks/useCallbackFactory";
 import { CatalogChartCard } from "./CatalogChartCard";
+import { customIcons } from "ui/theme";
+import type { MuiIconComponentName } from "onyxia-ui/MuiIconComponentName";
+import { id } from "tsafe/id";
 
 export type Props = {
     route: PageRoute;
@@ -31,10 +35,11 @@ export default function Catalog(props: Props) {
     const scrollableDivRef = useStateRef<HTMLDivElement>(null);
 
     const { isReady, selectedCatalog, availableCatalogs, filteredCharts } = useCoreState(
-        selectors.catalog.wrap
-    ).wrap;
+        "catalog",
+        "main"
+    );
 
-    const { evtCatalog } = useCoreEvts();
+    const { evtCatalog } = useCore().evts;
 
     useEvt(
         ctx =>
@@ -47,7 +52,7 @@ export default function Catalog(props: Props) {
         [evtCatalog]
     );
 
-    const { catalog } = useCoreFunctions();
+    const { catalog } = useCore().functions;
 
     useEffect(() => {
         catalog.changeSelectedCatalogId({ "catalogId": route.params.catalogId });
@@ -100,7 +105,7 @@ export default function Catalog(props: Props) {
                 classes={{
                     "title": css({ "paddingBottom": 3 })
                 }}
-                mainIcon="catalog"
+                mainIcon={customIcons.catalogSvgUrl}
                 title={t("header text1")}
                 helpTitle={t("header text2")}
                 helpContent={t("header help", {
@@ -110,7 +115,7 @@ export default function Catalog(props: Props) {
                     "catalogName": resolveLocalizedString(selectedCatalog.name),
                     "repositoryUrl": selectedCatalog.repositoryUrl
                 })}
-                helpIcon="sentimentSatisfied"
+                helpIcon={id<MuiIconComponentName>("SentimentSatisfied")}
                 titleCollapseParams={{
                     "behavior": "collapses on scroll",
                     "scrollTopThreshold": 650,

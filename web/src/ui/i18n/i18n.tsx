@@ -6,7 +6,10 @@ import {
 import { fallbackLanguage, type Language } from "./types";
 import { ComponentKey } from "./types";
 import { statefulObservableToStatefulEvt } from "powerhooks/tools/StatefulObservable/statefulObservableToStatefulEvt";
-import { getEnabledLanguages } from "ui/env";
+import { env } from "env-parsed";
+import { objectEntries } from "tsafe/objectEntries";
+import { objectFromEntries } from "tsafe/objectFromEntries";
+import { pluginSystemInitI18n } from "pluginSystem";
 export { declareComponentKeys };
 
 export const {
@@ -15,10 +18,12 @@ export const {
     useLang,
     $lang,
     useResolveLocalizedString,
-    useIsI18nFetching
+    useIsI18nFetching,
+    getTranslation,
+    $readyLang
 } = createI18nApi<ComponentKey>()(
     {
-        "languages": getEnabledLanguages(),
+        "languages": env.ENABLED_LANGUAGES,
         fallbackLanguage
     },
     {
@@ -34,8 +39,31 @@ export const {
     }
 );
 
-export type LocalizedString = GenericLocalizedString<Language>;
-
 export const evtLang = statefulObservableToStatefulEvt({
     "statefulObservable": $lang
 });
+
+pluginSystemInitI18n({
+    "setLang": lang => (evtLang.state = lang),
+    "evtReadyLang": statefulObservableToStatefulEvt({
+        "statefulObservable": $readyLang
+    }),
+    getTranslation
+});
+
+export type LocalizedString = GenericLocalizedString<Language>;
+
+export const languagesPrettyPrint: Record<Language, string> = objectFromEntries(
+    objectEntries({
+        /* spell-checker: disable */
+        "en": "English",
+        "fr": "Français",
+        "de": "Deutsch",
+        "it": "Italiano",
+        "nl": "Nederlands",
+        "no": "Norsk",
+        "fi": "Suomi",
+        "zh-CN": "简体中文"
+        /* spell-checker: enable */
+    }).filter(([language]) => env.ENABLED_LANGUAGES.includes(language))
+);

@@ -5,16 +5,18 @@ import { AccountField } from "../AccountField";
 import { useCallbackFactory } from "powerhooks/useCallbackFactory";
 import { copyToClipboard } from "ui/tools/copyToClipboard";
 import Divider from "@mui/material/Divider";
-import { tss } from "ui/theme";
+import { tss } from "tss";
 import { assert, type Equals } from "tsafe/assert";
 import { saveAs } from "file-saver";
 import { smartTrim } from "ui/tools/smartTrim";
 import { declareComponentKeys } from "i18nifty";
 import { useConstCallback } from "powerhooks/useConstCallback";
-import { IconButton } from "ui/theme";
+import { IconButton } from "onyxia-ui/IconButton";
 import { CircularProgress } from "onyxia-ui/CircularProgress";
-import { useCoreState, selectors, useCoreFunctions } from "core";
-import { useFromNow } from "ui/useMoment";
+import { useCoreState, useCore } from "core";
+import { useFromNow } from "ui/shared/useMoment";
+import { id } from "tsafe/id";
+import type { MuiIconComponentName } from "onyxia-ui/MuiIconComponentName";
 
 const CodeBlock = lazy(() => import("ui/shared/CodeBlock"));
 
@@ -27,7 +29,7 @@ export const AccountKubernetesTab = memo((props: Props) => {
 
     const { classes, theme } = useStyles();
 
-    const { k8sCredentials } = useCoreFunctions();
+    const { k8sCredentials } = useCore().functions;
 
     const {
         isReady,
@@ -40,7 +42,7 @@ export const AccountKubernetesTab = memo((props: Props) => {
         expirationTime,
         isRefreshing,
         shellScript
-    } = useCoreState(selectors.k8sCredentials.wrap).wrap;
+    } = useCoreState("k8sCredentials", "main");
 
     const { fromNowText } = useFromNow({ "dateTime": expirationTime ?? 0 });
 
@@ -81,7 +83,7 @@ export const AccountKubernetesTab = memo((props: Props) => {
                         </strong>
                         <IconButton
                             size="extra small"
-                            iconId="refresh"
+                            icon={id<MuiIconComponentName>("Refresh")}
                             onClick={() => k8sCredentials.refresh()}
                             disabled={isRefreshing}
                         />
@@ -127,6 +129,9 @@ export const AccountKubernetesTab = memo((props: Props) => {
                             text
                         })}
                         onRequestCopy={onFieldRequestCopyFactory(text)}
+                        isSensitiveInformation={
+                            key === "refresh-token" || key === "id-token"
+                        }
                     />
                 );
             })}
@@ -140,7 +145,7 @@ export const AccountKubernetesTab = memo((props: Props) => {
             <div className={classes.codeBlockHeaderWrapper}>
                 <div style={{ "flex": 1 }} />
                 <IconButton
-                    iconId="getApp"
+                    icon={id<MuiIconComponentName>("GetApp")}
                     onClick={onGetAppIconButtonClick}
                     size="small"
                 />

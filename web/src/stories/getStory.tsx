@@ -3,9 +3,11 @@ import type { Meta, Story } from "@storybook/react";
 import type { ArgType } from "@storybook/addons";
 import { useEffect, useMemo } from "react";
 import { symToStr } from "tsafe/symToStr";
-import { useIsDarkModeEnabled, breakpointsValues } from "onyxia-ui";
+import { useDarkMode, breakpointsValues } from "onyxia-ui";
 import { useWindowInnerSize } from "powerhooks/useWindowInnerSize";
-import { ThemeProvider, Text, useStyles } from "ui/theme";
+import { OnyxiaUi } from "ui/theme";
+import { useStyles } from "tss";
+import { Text } from "onyxia-ui/Text";
 import { id } from "tsafe/id";
 import "onyxia-ui/assets/fonts/WorkSans/font.css";
 import { GlobalStyles } from "tss-react";
@@ -107,7 +109,7 @@ export function getStoryFactory<Props>(params: {
             templateProps
         ) as typeof templateProps;
 
-        const { setIsDarkModeEnabled } = useIsDarkModeEnabled();
+        const { setIsDarkModeEnabled } = useDarkMode();
 
         useEffect(() => {
             setIsDarkModeEnabled(darkMode);
@@ -136,7 +138,7 @@ export function getStoryFactory<Props>(params: {
                         }}
                     />
                 }
-                <ThemeProvider>
+                <OnyxiaUi>
                     <ScreenSize />
                     <div
                         style={{
@@ -152,7 +154,7 @@ export function getStoryFactory<Props>(params: {
                             </RouteProvider>
                         </StoreProviderOrFragment>
                     </div>
-                </ThemeProvider>
+                </OnyxiaUi>
             </>
         );
     };

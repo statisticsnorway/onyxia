@@ -5,12 +5,12 @@ import { AccountField } from "../AccountField";
 import { useCallbackFactory } from "powerhooks/useCallbackFactory";
 import { copyToClipboard } from "ui/tools/copyToClipboard";
 import Divider from "@mui/material/Divider";
-import { tss } from "ui/theme";
+import { tss } from "tss";
 import { assert } from "tsafe/assert";
 import { saveAs } from "file-saver";
 import { smartTrim } from "ui/tools/smartTrim";
-import { useFromNow } from "ui/useMoment";
-import { useCoreFunctions, useCoreState, selectors } from "core";
+import { useFromNow } from "ui/shared/useMoment";
+import { useCoreState, useCore } from "core";
 import { declareComponentKeys } from "i18nifty";
 import { useConstCallback } from "powerhooks/useConstCallback";
 import Select from "@mui/material/Select";
@@ -19,9 +19,11 @@ import FormControl from "@mui/material/FormControl";
 import type { Technology } from "core/usecases/s3Credentials";
 import type { SelectChangeEvent } from "@mui/material/Select";
 import type { Equals } from "tsafe";
-import { IconButton } from "ui/theme";
+import { IconButton } from "onyxia-ui/IconButton";
 import { CircularProgress } from "onyxia-ui/CircularProgress";
 import { capitalize } from "tsafe/capitalize";
+import { id } from "tsafe/id";
+import type { MuiIconComponentName } from "onyxia-ui/MuiIconComponentName";
 
 const CodeBlock = lazy(() => import("ui/shared/CodeBlock"));
 
@@ -30,7 +32,7 @@ const technologies = [
     "R (paws)",
     "Python (s3fs)",
     "Python (boto3)",
-    "shell environnement variables",
+    "shell environment variables",
     "MC client",
     "s3cmd",
     "rclone"
@@ -49,20 +51,18 @@ export const AccountStorageTab = memo((props: Props) => {
 
     const { t } = useTranslation({ AccountStorageTab });
 
-    const { s3Credentials } = useCoreFunctions();
+    const { s3Credentials } = useCore().functions;
 
     useEffect(() => {
         s3Credentials.refresh({ "doForceRenewToken": false });
     }, []);
 
-    const { isReady } = useCoreState(selectors.s3Credentials.isReady);
-    const { credentials } = useCoreState(selectors.s3Credentials.credentials);
-    const { expirationTime } = useCoreState(selectors.s3Credentials.expirationTime);
-    const { initScript } = useCoreState(selectors.s3Credentials.initScript);
-    const { selectedTechnology } = useCoreState(
-        selectors.s3Credentials.selectedTechnology
-    );
-    const { isRefreshing } = useCoreState(selectors.s3Credentials.isRefreshing);
+    const isReady = useCoreState("s3Credentials", "isReady");
+    const credentials = useCoreState("s3Credentials", "credentials");
+    const expirationTime = useCoreState("s3Credentials", "expirationTime");
+    const initScript = useCoreState("s3Credentials", "initScript");
+    const selectedTechnology = useCoreState("s3Credentials", "selectedTechnology");
+    const isRefreshing = useCoreState("s3Credentials", "isRefreshing");
 
     const { fromNowText } = useFromNow({ "dateTime": expirationTime ?? 0 });
 
@@ -113,7 +113,7 @@ export const AccountStorageTab = memo((props: Props) => {
                         </strong>
                         <IconButton
                             size="extra small"
-                            iconId="refresh"
+                            icon={id<MuiIconComponentName>("Refresh")}
                             onClick={onRefreshIconButtonClick}
                             disabled={isRefreshing}
                         />
@@ -148,6 +148,9 @@ export const AccountStorageTab = memo((props: Props) => {
                         </>
                     }
                     onRequestCopy={onFieldRequestCopyFactory(credentials[key])}
+                    isSensitiveInformation={
+                        key === "AWS_SECRET_ACCESS_KEY" || key === "AWS_SESSION_TOKEN"
+                    }
                 />
             ))}
             <Divider className={classes.divider} variant="middle" />
@@ -170,7 +173,7 @@ export const AccountStorageTab = memo((props: Props) => {
                 </FormControl>
                 <div style={{ "flex": 1 }} />
                 <IconButton
-                    iconId="getApp"
+                    icon={id<MuiIconComponentName>("GetApp")}
                     onClick={onGetAppIconButtonClick}
                     size="small"
                 />

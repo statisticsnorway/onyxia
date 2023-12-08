@@ -1,6 +1,6 @@
 import type { Translations } from "../types";
 import MuiLink from "@mui/material/Link";
-import { Markdown } from "onyxia-ui/Markdown";
+import { Markdown } from "ui/shared/Markdown";
 import { elementsToSentence } from "ui/tools/elementsToSentence";
 
 export const translations: Translations<"fr"> = {
@@ -302,7 +302,7 @@ export const translations: Translations<"fr"> = {
         "project": "Projet",
         "region": "Région"
     },
-    "App": {
+    "LeftBar": {
         "reduce": "Réduire",
         "home": "Accueil",
         "account": "Mon compte",
@@ -314,7 +314,9 @@ export const translations: Translations<"fr"> = {
         "divider: external services features":
             "Fonctionnalités relative aux services externes",
         "divider: onyxia instance specific features":
-            "Fonctionnalités spécifiques à cette instance d'Onyxia"
+            "Fonctionnalités spécifiques à cette instance d'Onyxia",
+        "dataExplorer": "Explorateur de Données",
+        "sqlOlapShell": "Coquille SQL OLAP"
     },
     "Page404": {
         "not found": "Page non trouvée"
@@ -324,7 +326,7 @@ export const translations: Translations<"fr"> = {
             "Pour utiliser cette application depuis votre mobile, veuillez activer le capteur de rotation et tourner votre téléphone."
     },
     "Home": {
-        "welcome": ({ who }) => `Bienvenue ${who}!`,
+        "title authenticated": ({ userFirstname }) => `Bienvenue ${userFirstname}!`,
         "title": "Bienvenue sur le datalab",
         "login": "Connexion",
         "new user": "Nouvel utilisateur du datalab ?",
@@ -404,17 +406,26 @@ export const translations: Translations<"fr"> = {
             interfacePreferenceHref
         }) => (
             <Markdown
-                getDoesLinkShouldOpenNewTab={href => {
-                    switch (href) {
-                        case k8CredentialsHref:
-                            return true;
-                        case myServicesHref:
-                            return true;
-                        case interfacePreferenceHref:
-                            return false;
-                        default:
-                            return false;
-                    }
+                getLinkProps={({ href }) => {
+                    const doOpensNewTab = (() => {
+                        switch (href) {
+                            case k8CredentialsHref:
+                                return true;
+                            case myServicesHref:
+                                return true;
+                            case interfacePreferenceHref:
+                                return false;
+                            default:
+                                return false;
+                        }
+                    })();
+
+                    return {
+                        href,
+                        ...(doOpensNewTab
+                            ? { "target": "_blank", "onClick": undefined }
+                            : {})
+                    };
                 }}
             >{`Nous avons conçu la barre de commande pour vous permettre de prendre le contrôle de vos déploiements Kubernetes.
 Voici ce que vous devez savoir :
@@ -506,8 +517,11 @@ N'hésitez pas à explorer et à prendre en main vos déploiements Kubernetes !
         "friendly name": "Nom personnalisé",
         "launch": "Lancer",
         "cancel": "Annuler",
-        "copy url helper text":
-            "Copier l'URL permettant de restaurer cette configuration",
+        "copy auto launch url": "Copier l'URL de lancement automatique",
+        "copy auto launch url helper": ({
+            chartName
+        }) => `Copier l'URL qui permettra à tout utilisateur de cette instance Onyxia de 
+            lancer un ${chartName} dans cette configuration dans leur namespace`,
         "share the service": "Partager le service",
         "share the service - explain":
             "Rendre accessible le service aux collaborateurs du groupe",
@@ -534,7 +548,8 @@ N'hésitez pas à explorer et à prendre en main vos déploiements Kubernetes !
                 <MuiLink href={catalogRepositoryUrl}>dépôt Helm {catalogName}</MuiLink>
             </>
         ),
-        "save changes": "Enregistrer les modifications"
+        "save changes": "Enregistrer les modifications",
+        "copied to clipboard": "Copié dans le presse-papiers !"
     },
     "LauncherConfigurationCard": {
         "global config": "Configurations globales",
@@ -622,8 +637,122 @@ N'hésitez pas à explorer et à prendre en main vos déploiements Kubernetes !
         "no services running":
             "Vous n'avez actuellement aucun service en cours d'exécution"
     },
+    "DataExplorer": {
+        "page header title": "Explorateur de Données",
+        "page header help title":
+            "Prévisualisez vos fichiers Parquet et CSV directement depuis votre navigateur !",
+        "page header help content": ({ demoParquetFileLink }) => (
+            <>
+                Entrez simplement l'URL <code>https://</code> ou <code>s3://</code> d'un
+                fichier de données pour le prévisualiser.
+                <br />
+                Le fichier n'est pas entièrement téléchargé ; son contenu est diffusé au
+                fur et à mesure que vous naviguez à travers les pages.
+                <br />
+                Vous pouvez partager un permalien vers le fichier ou même vers une ligne
+                spécifique du fichier en copiant l'URL de la barre d'adresse.
+                <br />
+                Vous ne savez pas par où commencer ? Essayez ce{" "}
+                <MuiLink {...demoParquetFileLink}>fichier de démonstration</MuiLink> !
+            </>
+        ),
+        "column": "colonne",
+        "density": "densité",
+        "download file": "télécharger le fichier"
+    },
+    "UrlInput": {
+        "load": "Charger"
+    },
     "CommandBar": {
         "ok": "ok"
+    },
+    "moment": {
+        "date format": ({ isSameYear }) =>
+            `dddd Do MMMM${isSameYear ? "" : " YYYY"} à H[h]mm`,
+        "past1": ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "now":
+                    return "à l'instant";
+                case "second":
+                    return "il y a une seconde";
+                case "minute":
+                    return "il y a une minute";
+                case "hour":
+                    return "il y a une heure";
+                case "day":
+                    return "hier";
+                case "week":
+                    return "la semaine dernière";
+                case "month":
+                    return "le mois dernier";
+                case "year":
+                    return "l'année dernière";
+            }
+        },
+        "pastN": ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "now":
+                    return "à l'instant";
+                case "second":
+                    return "il y a # secondes";
+                case "minute":
+                    return "il y a # minutes";
+                case "hour":
+                    return "il y a # heures";
+                case "day":
+                    return "il y a # jours";
+                case "week":
+                    return "il y a # semaines";
+                case "month":
+                    return "il y a # mois";
+                case "year":
+                    return "il y a # ans";
+            }
+        },
+        "future1": ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "now":
+                    return "à l'instant";
+                case "second":
+                    return "dans une seconde";
+                case "minute":
+                    return "dans une minute";
+                case "hour":
+                    return "dans une heure";
+                case "day":
+                    return "demain";
+                case "week":
+                    return "la semaine prochaine";
+                case "month":
+                    return "le mois prochain";
+                case "year":
+                    return "l'année prochaine";
+            }
+        },
+        "futureN": ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "now":
+                    return "à l'instant";
+                case "second":
+                    return "dans # secondes";
+                case "minute":
+                    return "dans # minutes";
+                case "hour":
+                    return "dans # heures";
+                case "day":
+                    return "dans # jours";
+                case "week":
+                    return "dans # semaines";
+                case "month":
+                    return "dans # mois";
+                case "year":
+                    return "dans # ans";
+            }
+        }
+    },
+    "CopyToClipboardIconButton": {
+        "copied to clipboard": "Copié !",
+        "copy to clipboard": "Copier dans le presse-papiers"
     }
     /* spell-checker: enable */
 };

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { tss, Button } from "ui/theme";
+import { tss } from "tss";
+import { Button } from "onyxia-ui/Button";
 import { useState, useEffect, useMemo, memo } from "react";
 import type { RefObject } from "react";
 import { useConstCallback } from "powerhooks/useConstCallback";
@@ -25,7 +26,7 @@ import { SecretsExplorerButtonBar } from "./SecretsExplorerButtonBar";
 import { DirectoryHeader } from "onyxia-ui/DirectoryHeader";
 import { useDomRect } from "powerhooks/useDomRect";
 import { ExplorerIcon } from "./ExplorerIcon";
-import { getFormattedDate } from "ui/useMoment";
+import { getFormattedDate } from "ui/shared/useMoment";
 import { Dialog } from "onyxia-ui/Dialog";
 import { useCallbackFactory } from "powerhooks/useCallbackFactory";
 import { Deferred } from "evt/tools/Deferred";
@@ -299,13 +300,14 @@ export const SecretsExplorer = memo((props: ExplorerProps) => {
     });
 
     const { formattedDate } = (function useClosure() {
-        const { lang } = useLang();
+        // NOTE: For enforcing refresh if lang is changed
+        useLang();
 
         const formattedDate = !props.isFileOpen ? undefined : props.openFileTime ===
           undefined ? (
             <>&nbsp;</>
         ) : (
-            getFormattedDate({ "time": props.openFileTime, lang })
+            getFormattedDate({ "time": props.openFileTime })
         );
 
         return { formattedDate };
