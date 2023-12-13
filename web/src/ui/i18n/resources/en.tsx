@@ -1,12 +1,12 @@
 import MuiLink from "@mui/material/Link";
-import { Markdown } from "onyxia-ui/Markdown";
+import { Markdown } from "ui/shared/Markdown";
 import type { Translations } from "../types";
 import { elementsToSentence } from "ui/tools/elementsToSentence";
 
 export const translations: Translations<"en"> = {
     "Account": {
         "infos": "Account infos",
-        "third-party-integration": "external services",
+        "third-party-integration": "External services",
         "storage": "Connect to storage",
         "k8sCredentials": "Kubernetes",
         "user-interface": "Interface preferences",
@@ -31,14 +31,14 @@ export const translations: Translations<"en"> = {
     },
     "AccountIntegrationsTab": {
         "git section title": "Git configuration",
-        "git section helper": `To ensure that you appear from your services
+        "git section helper": `To ensure that you appear from your services 
             as the author of Git contributions`,
         "gitName": "Username for Git",
         "gitEmail": "Email for Git",
         "third party tokens section title":
             "Connect your Gitlab, Github and Kaggle accounts",
         "third party tokens section helper": `
-                Connect your services to external accounts using
+                Connect your services to external accounts using 
                 personal access tokens and environment variables
             `,
         "personal token": ({ serviceName }) => `${serviceName} personal access token`,
@@ -126,7 +126,7 @@ export const translations: Translations<"en"> = {
         "copy tooltip": "Copy in clipboard",
         "language": "Change language",
         "service password": "Password for your services",
-        "service password helper text": `This password is required to log in to all of your services.
+        "service password helper text": `This password is required to log in to all of your services. 
             It is generated automatically and renews itself regularly.`,
         "not yet defined": "Not yet defined",
         "reset helper dialogs": "Reset instructions windows",
@@ -256,8 +256,8 @@ export const translations: Translations<"en"> = {
         "value column name": "Value",
         "resolved value column name": "Resolved Value",
         "what's a resolved value": `
-            An environnement variable can reference another one. If for example you have defined
-            FIRST_NAME=John you can set FULL_NAME="$FIRST_NAME"-Doe, the resolved value of
+            An environnement variable can reference another one. If for example you have defined 
+            FIRST_NAME=John you can set FULL_NAME="$FIRST_NAME"-Doe, the resolved value of 
             FILL_NAME will be «John-Doe»
             `,
         "unavailable key": "Already used",
@@ -271,7 +271,7 @@ export const translations: Translations<"en"> = {
         "use secret dialog subtitle": "The path of the secret have been copied",
         "use secret dialog body": `
                 When you launch a service (RStudio, Jupyter, ect) go to the
-                secret tab and and paste the path of the secret provided for this
+                secret tab and and paste the path of the secret provided for this 
                 purpose.
                 The values will be injected as environnement variable.
             `,
@@ -301,7 +301,7 @@ export const translations: Translations<"en"> = {
         "project": "Project",
         "region": "Region"
     },
-    "App": {
+    "LeftBar": {
         "reduce": "Reduce",
         "home": "Home",
         "account": "My account",
@@ -311,7 +311,9 @@ export const translations: Translations<"en"> = {
         "myFiles": "My Files",
         "divider: services features": "Services features",
         "divider: external services features": "External services features",
-        "divider: onyxia instance specific features": "Onyxia instance specific features"
+        "divider: onyxia instance specific features": "Onyxia instance specific features",
+        "dataExplorer": "Data Explorer",
+        "sqlOlapShell": "SQL Olap Shell"
     },
     "Page404": {
         "not found": "Page not found"
@@ -321,22 +323,23 @@ export const translations: Translations<"en"> = {
             "To use this app on your phone please enable the rotation sensor and turn your phone."
     },
     "Home": {
-        "welcome": ({ who }) => `Welcome ${who}!`,
-        "title": "Welcome to the {Dapla} Lab",
-        "new user": "New to Dapla?",
+        "title authenticated": ({ userFirstname }) => `Welcome ${userFirstname}!`,
+        "title": "Welcome to the Onyxia datalab",
+        "new user": "New to the datalab?",
         "login": "Login",
-        "subtitle":
-            "Work with Python or R, enjoy all the data processing power you need!",
-        "cardTitle1": "Skills and learning resources",
-        "cardTitle2": "Dapla's Viva Engage community",
-        "cardTitle3": "Create a Dapla team",
-        "cardText1": "Discover SSB's selection of skills and learning resources.",
+        "subtitle": "Work with Python or R, enjoy all the computing power you need!",
+        "cardTitle1": "An ergonomic environment and on-demand services",
+        "cardTitle2": "An active and enthusiastic community at your service",
+        "cardTitle3": "Fast, flexible and online data storage",
+        "cardText1":
+            "Analyze data, perform distributed computing and take advantage of a large catalog of services. Reserve the computing power you need.",
         "cardText2":
-            "All Dapla news in one place! Join our community to follow developments, share ideas and ask questions.",
-        "cardText3": "Create a team to manage, work with and share real data on Dapla.",
-        "cardButton1": "Explore learning opportunities",
+            "Use and share the resources available to you: tutorials, training and exchange channels.",
+        "cardText3":
+            "To easily access your data and those made available to you from your programs - S3 API implementation",
+        "cardButton1": "Consult the catalog",
         "cardButton2": "Join the community",
-        "cardButton3": "Create a team"
+        "cardButton3": "Consult the data"
     },
     "Catalog": {
         "header text1": "Service catalog",
@@ -395,57 +398,66 @@ export const translations: Translations<"en"> = {
             interfacePreferenceHref
         }) => (
             <Markdown
-                getDoesLinkShouldOpenNewTab={href => {
-                    switch (href) {
-                        case k8CredentialsHref:
-                            return true;
-                        case myServicesHref:
-                            return true;
-                        case interfacePreferenceHref:
-                            return false;
-                        default:
-                            return false;
-                    }
+                getLinkProps={({ href }) => {
+                    const doOpensNewTab = (() => {
+                        switch (href) {
+                            case k8CredentialsHref:
+                                return true;
+                            case myServicesHref:
+                                return true;
+                            case interfacePreferenceHref:
+                                return false;
+                            default:
+                                return false;
+                        }
+                    })();
+
+                    return {
+                        href,
+                        ...(doOpensNewTab
+                            ? { "target": "_blank", "onClick": undefined }
+                            : {})
+                    };
                 }}
-            >{`We've designed the command bar to empower you to take control over your Kubernetes deployments.
+            >{`We've designed the command bar to empower you to take control over your Kubernetes deployments. 
 Here's what you need to know:
 
-#### What are those Helm Commands?
+#### What are those Helm Commands?  
 
-Theses commands are the exact Helm command that Onyxia API will execute on your behalf in your Kubernetes namespace.
-This enables you to know what's happening behind the scenes when you interact with the UI.
+Theses commands are the exact Helm command that Onyxia API will execute on your behalf in your Kubernetes namespace.  
+This enables you to know what's happening behind the scenes when you interact with the UI.  
 
-#### Real-time Updates
+#### Real-time Updates  
 
-As you interact with the UI, the Helm commands will automatically update to reflect what you are doing.
+As you interact with the UI, the Helm commands will automatically update to reflect what you are doing.  
 
-#### Why Should I Care?
+#### Why Should I Care?  
 
-- **Transparency:** We believe you have the right to know what actions are being performed in your environment.
-- **Learning:** Understanding these commands can provide insight into Kubernetes and Helm, deepening your knowledge.
-- **Manual Execution:** You can copy and paste those commands into a terminal with write-access to Kubernetes, allowing you to launch the service manually.
+- **Transparency:** We believe you have the right to know what actions are being performed in your environment.  
+- **Learning:** Understanding these commands can provide insight into Kubernetes and Helm, deepening your knowledge.  
+- **Manual Execution:** You can copy and paste those commands into a terminal with write-access to Kubernetes, allowing you to launch the service manually.  
 
-#### How Can I Run Those Commands Manually?
+#### How Can I Run Those Commands Manually?  
 
-${k8CredentialsHref === undefined ? "" : "There are two ways to run theses commands:  "}
+${k8CredentialsHref === undefined ? "" : "There are two ways to run theses commands:  "}  
 
 ${
     k8CredentialsHref === undefined
         ? ""
         : `
-- **Local Terminal:** Go to [\`My Account -> Kubernetes tab\`](${k8CredentialsHref}).
-  Here, you will find the credentials that allow you to run commands in your Kubernetes namespace from your local terminal.
+- **Local Terminal:** Go to [\`My Account -> Kubernetes tab\`](${k8CredentialsHref}).  
+  Here, you will find the credentials that allow you to run commands in your Kubernetes namespace from your local terminal.  
 `
 }
 
-- If this instance of onyxia features services VSCode or Jupyter you can open a terminal within theses services and run command there.
-  For constructive or destructive commands you will need to launch your service with Kubernetes role \`admin\` or \`edit\`.
+- If this instance of onyxia features services VSCode or Jupyter you can open a terminal within theses services and run command there.  
+  For constructive or destructive commands you will need to launch your service with Kubernetes role \`admin\` or \`edit\`.  
 
-By executing the command manually, you will still be able to see the service in the [\`MyServices\`](${myServicesHref}) page as if it was launched via the UI.
+By executing the command manually, you will still be able to see the service in the [\`MyServices\`](${myServicesHref}) page as if it was launched via the UI.  
 
 You can disable the command bar in the [\`My Account -> Interface preference tab\`](${interfacePreferenceHref}).
 
-Feel free to explore and take charge of your Kubernetes deployments!
+Feel free to explore and take charge of your Kubernetes deployments!  
         `}</Markdown>
         )
     },
@@ -456,7 +468,7 @@ Feel free to explore and take charge of your Kubernetes deployments!
             groupProjectName
         }) => `If you save
         this configuration every member of the project ${groupProjectName} will be able to launch it.`,
-        "acknowledge sharing of config confirm dialog body": `Although no personal information have been automatically injected
+        "acknowledge sharing of config confirm dialog body": `Although no personal information have been automatically injected 
         by Onyxia, be aware not to share any sensitive information shared restorable configuration.`,
         "cancel": "Cancel",
         "i understand, proceed": "I understand, proceed"
@@ -492,7 +504,11 @@ Feel free to explore and take charge of your Kubernetes deployments!
         "friendly name": "Friendly name",
         "launch": "Launch",
         "cancel": "Cancel",
-        "copy url helper text": "Copy url to restore this configuration",
+        "copy auto launch url": "Copy auto launch URL",
+        "copy auto launch url helper": ({
+            chartName
+        }) => `Copy the URL that will enable any user of this Onyxia instance to 
+            launch a ${chartName} in this configuration on their namespace`,
         "share the service": "Share the service",
         "share the service - explain": "Make the service accessible to the group members",
         "restore all default": "Restore default configurations",
@@ -520,7 +536,8 @@ Feel free to explore and take charge of your Kubernetes deployments!
                 </MuiLink>
             </>
         ),
-        "save changes": "Save changes"
+        "save changes": "Save changes",
+        "copied to clipboard": "Copied to clipboard!"
     },
     "LauncherConfigurationCard": {
         "global config": "Global configuration",
@@ -604,7 +621,121 @@ Feel free to explore and take charge of your Kubernetes deployments!
         "launch one": "Click here to launch one",
         "no services running": "You don't have any service running"
     },
+    "DataExplorer": {
+        "page header title": "Data Explorer",
+        "page header help title":
+            "Preview your Parquet and CSV files right from your browser!",
+        "page header help content": ({ demoParquetFileLink }) => (
+            <>
+                Simply pass the <code>https://</code> or <code>s3://</code> URL of a data
+                file to preview it.
+                <br />
+                The file isn't fully downloaded; its content is streamed as you navigate
+                through the pages.
+                <br />
+                You can share a permalink to the file or even to a specific row of the
+                file by copying the URL from the address bar.
+                <br />
+                Not sure where to start? Try this{" "}
+                <MuiLink {...demoParquetFileLink}>demo file</MuiLink>!
+            </>
+        ),
+        "column": "column",
+        "density": "density",
+        "download file": "Download file"
+    },
+    "UrlInput": {
+        "load": "Load"
+    },
     "CommandBar": {
         "ok": "Ok"
+    },
+    "moment": {
+        "date format": ({ isSameYear }) =>
+            `dddd, MMMM Do${isSameYear ? "" : " YYYY"}, h:mm a`,
+        "past1": ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "now":
+                    return "just now";
+                case "second":
+                    return "a second ago";
+                case "minute":
+                    return "a minute ago";
+                case "hour":
+                    return "an hour ago";
+                case "day":
+                    return "yesterday";
+                case "week":
+                    return "last week";
+                case "month":
+                    return "last month";
+                case "year":
+                    return "last year";
+            }
+        },
+        "pastN": ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "now":
+                    return "just now";
+                case "second":
+                    return "# seconds ago";
+                case "minute":
+                    return "# minutes ago";
+                case "hour":
+                    return "# hours ago";
+                case "day":
+                    return "# days ago";
+                case "week":
+                    return "# weeks ago";
+                case "month":
+                    return "# months ago";
+                case "year":
+                    return "# years ago";
+            }
+        },
+        "future1": ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "now":
+                    return "just now";
+                case "second":
+                    return "in a second";
+                case "minute":
+                    return "in a minute";
+                case "hour":
+                    return "in an hour";
+                case "day":
+                    return "in a day";
+                case "week":
+                    return "in a week";
+                case "month":
+                    return "in a month";
+                case "year":
+                    return "in a year";
+            }
+        },
+        "futureN": ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "now":
+                    return "just now";
+                case "second":
+                    return "in # seconds";
+                case "minute":
+                    return "in # minutes";
+                case "hour":
+                    return "in # hours";
+                case "day":
+                    return "in # days";
+                case "week":
+                    return "in # weeks";
+                case "month":
+                    return "in # months";
+                case "year":
+                    return "in # years";
+            }
+        }
+    },
+    "CopyToClipboardIconButton": {
+        "copied to clipboard": "Copied!",
+        "copy to clipboard": "Copy to clipboard"
     }
 };

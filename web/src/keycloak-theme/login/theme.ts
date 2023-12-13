@@ -1,26 +1,28 @@
-import { themeProviderWithoutSplashScreen } from "ui/theme";
-import { componentByIconId } from "ui/theme/icons";
-import { createTss } from "tss-react";
-import { createIcon } from "onyxia-ui/Icon";
-import { createIconButton } from "onyxia-ui/IconButton";
-import { createButton } from "onyxia-ui/Button";
-import { createText } from "onyxia-ui/Text";
+import { createOnyxiaUi, defaultGetTypographyDesc } from "onyxia-ui";
+import { palette } from "ui/theme/palette";
+import { targetWindowInnerWidth } from "ui/theme/targetWindowInnerWidth";
+import { env } from "env-parsed";
+import { loadThemedFavicon as loadThemedFavicon_base } from "ui/theme/loadThemedFavicon";
+import { Evt } from "evt";
 
-const { ThemeProvider, useTheme } = themeProviderWithoutSplashScreen;
-
-export { ThemeProvider };
-
-export const { tss } = createTss({
-    "useContext": function useContext() {
-        const theme = useTheme();
-        return { theme };
-    }
+const { OnyxiaUi, evtTheme } = createOnyxiaUi({
+    "getTypographyDesc": params => ({
+        ...defaultGetTypographyDesc({
+            ...params,
+            // NOTE: Prevent the font from being responsive.
+            "windowInnerWidth": targetWindowInnerWidth
+        }),
+        "fontFamily": `'${env.FONT.fontFamily}', 'Roboto', sans-serif`
+    }),
+    palette,
+    "splashScreenParams": undefined,
+    // NOTE: Equivalent to join(env.CUSTOM_RESOURCES_URL, "..")
+    "BASE_URL": env.CUSTOM_RESOURCES_URL.replace(/\/[^/]*\/?$/, "")
 });
 
-export const useStyles = tss.create({});
+export { OnyxiaUi };
 
-/** @see: <https://next.material-ui.com/components/material-icons/> */
-export const { Icon } = createIcon(componentByIconId);
-export const { IconButton } = createIconButton({ Icon });
-export const { Button } = createButton({ Icon });
-export const { Text } = createText({ useTheme });
+export const loadThemedFavicon = () =>
+    loadThemedFavicon_base({
+        "evtTheme": Evt.loosenType(evtTheme)
+    });

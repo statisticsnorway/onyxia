@@ -1,6 +1,6 @@
 import type { Translations } from "../types";
 import MuiLink from "@mui/material/Link";
-import { Markdown } from "onyxia-ui/Markdown";
+import { Markdown } from "ui/shared/Markdown";
 import { elementsToSentence } from "ui/tools/elementsToSentence";
 
 export const translations: Translations<"de"> = {
@@ -301,7 +301,7 @@ export const translations: Translations<"de"> = {
         "project": "Projekt",
         "region": "Region"
     },
-    "App": {
+    "LeftBar": {
         "reduce": "Reduzieren",
         "home": "Startseite",
         "account": "Mein Konto",
@@ -313,7 +313,9 @@ export const translations: Translations<"de"> = {
         "divider: external services features":
             "Funktionen im Zusammenhang mit externen Diensten",
         "divider: onyxia instance specific features":
-            "Funktionen spezifisch für diese Onyxia-Instanz"
+            "Funktionen spezifisch für diese Onyxia-Instanz",
+        "dataExplorer": "Daten-Explorer",
+        "sqlOlapShell": "SQL OLAP-Shell"
     },
     "Page404": {
         "not found": "Seite nicht gefunden"
@@ -323,7 +325,7 @@ export const translations: Translations<"de"> = {
             "Um diese App auf Ihrem Handy zu nutzen, aktivieren Sie bitte den Rotationssensor und drehen Sie Ihr Telefon."
     },
     "Home": {
-        "welcome": ({ who }) => `Willkommen ${who}!`,
+        "title authenticated": ({ userFirstname }) => `Willkommen ${userFirstname}!`,
         "title": "Willkommen im Datalab",
         "login": "Login",
         "new user": "Neuer Datalab User?",
@@ -403,17 +405,26 @@ export const translations: Translations<"de"> = {
             interfacePreferenceHref
         }) => (
             <Markdown
-                getDoesLinkShouldOpenNewTab={href => {
-                    switch (href) {
-                        case k8CredentialsHref:
-                            return true;
-                        case myServicesHref:
-                            return true;
-                        case interfacePreferenceHref:
-                            return false;
-                        default:
-                            return false;
-                    }
+                getLinkProps={({ href }) => {
+                    const doOpensNewTab = (() => {
+                        switch (href) {
+                            case k8CredentialsHref:
+                                return true;
+                            case myServicesHref:
+                                return true;
+                            case interfacePreferenceHref:
+                                return false;
+                            default:
+                                return false;
+                        }
+                    })();
+
+                    return {
+                        href,
+                        ...(doOpensNewTab
+                            ? { "target": "_blank", "onClick": undefined }
+                            : {})
+                    };
                 }}
             >{`Wir haben die Befehlsleiste so gestaltet, dass Sie die Kontrolle über Ihre Kubernetes-Bereitstellungen übernehmen können.
 Was Sie wissen müssen:
@@ -504,8 +515,11 @@ Fühlen Sie sich frei, Ihre Kubernetes-Bereitstellungen zu erkunden und die Kont
         "friendly name": "Personalisierter Name",
         "launch": "Starten",
         "cancel": "Abbrechen",
-        "copy url helper text":
-            "Kopieren Sie die URL, um diese Konfiguration wiederherzustellen",
+        "copy auto launch url": "URL für automatisches Starten kopieren",
+        "copy auto launch url helper": ({
+            chartName
+        }) => `Kopieren Sie die URL, die es jedem Benutzer dieser Onyxia-Instanz ermöglicht, 
+            ein ${chartName} in dieser Konfiguration in ihrem Namespace zu starten`,
         "share the service": "Den Dienst teilen",
         "share the service - explain":
             "Machen Sie den Dienst für Projektmitglieder zugänglich",
@@ -534,7 +548,8 @@ Fühlen Sie sich frei, Ihre Kubernetes-Bereitstellungen zu erkunden und die Kont
                 </MuiLink>
             </>
         ),
-        "save changes": "Änderungen speichern"
+        "save changes": "Änderungen speichern",
+        "copied to clipboard": "In die Zwischenablage kopiert!"
     },
     "LauncherConfigurationCard": {
         "global config": "Globale Konfigurationen",
@@ -619,8 +634,122 @@ Fühlen Sie sich frei, Ihre Kubernetes-Bereitstellungen zu erkunden und die Kont
         "launch one": "Klicken Sie hier, um einen zu starten",
         "no services running": "Sie haben derzeit keine laufenden Dienste"
     },
+    "DataExplorer": {
+        "page header title": "Daten-Explorer",
+        "page header help title":
+            "Vorschau Ihrer Parquet- und CSV-Dateien direkt in Ihrem Browser!",
+        "page header help content": ({ demoParquetFileLink }) => (
+            <>
+                Geben Sie einfach die <code>https://</code> oder <code>s3://</code> URL
+                einer Daten-Datei ein, um sie zu betrachten.
+                <br />
+                Die Datei wird nicht vollständig heruntergeladen; ihr Inhalt wird
+                gestreamt, während Sie durch die Seiten navigieren.
+                <br />
+                Sie können einen Permalink zur Datei oder sogar zu einer bestimmten Zeile
+                der Datei teilen, indem Sie die URL aus der Adressleiste kopieren.
+                <br />
+                Nicht sicher, wo Sie anfangen sollen? Probieren Sie diese{" "}
+                <MuiLink {...demoParquetFileLink}>Demodatei</MuiLink>!
+            </>
+        ),
+        "column": "Spalte",
+        "density": "Dichte",
+        "download file": "Datei herunterladen"
+    },
+    "UrlInput": {
+        "load": "Laden"
+    },
     "CommandBar": {
         "ok": "Ok"
+    },
+    "moment": {
+        "date format": ({ isSameYear }) =>
+            `dddd, Do MMMM${isSameYear ? "" : " YYYY"}, HH:mm`,
+        "past1": ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "now":
+                    return "gerade eben";
+                case "second":
+                    return "vor einer Sekunde";
+                case "minute":
+                    return "vor einer Minute";
+                case "hour":
+                    return "vor einer Stunde";
+                case "day":
+                    return "gestern";
+                case "week":
+                    return "letzte Woche";
+                case "month":
+                    return "letzten Monat";
+                case "year":
+                    return "letztes Jahr";
+            }
+        },
+        "pastN": ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "now":
+                    return "gerade eben";
+                case "second":
+                    return "vor # Sekunden";
+                case "minute":
+                    return "vor # Minuten";
+                case "hour":
+                    return "vor # Stunden";
+                case "day":
+                    return "vor # Tagen";
+                case "week":
+                    return "vor # Wochen";
+                case "month":
+                    return "vor # Monaten";
+                case "year":
+                    return "vor # Jahren";
+            }
+        },
+        "future1": ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "now":
+                    return "gerade eben";
+                case "second":
+                    return "in einer Sekunde";
+                case "minute":
+                    return "in einer Minute";
+                case "hour":
+                    return "in einer Stunde";
+                case "day":
+                    return "morgen";
+                case "week":
+                    return "nächste Woche";
+                case "month":
+                    return "nächsten Monat";
+                case "year":
+                    return "nächstes Jahr";
+            }
+        },
+        "futureN": ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "now":
+                    return "gerade eben";
+                case "second":
+                    return "in # Sekunden";
+                case "minute":
+                    return "in # Minuten";
+                case "hour":
+                    return "in # Stunden";
+                case "day":
+                    return "in # Tagen";
+                case "week":
+                    return "in # Wochen";
+                case "month":
+                    return "in # Monaten";
+                case "year":
+                    return "in # Jahren";
+            }
+        }
+    },
+    "CopyToClipboardIconButton": {
+        "copied to clipboard": "Kopiert!",
+        "copy to clipboard": "In die Zwischenablage kopieren"
     }
     /* spell-checker: enable */
 };

@@ -1,6 +1,6 @@
 import type { Translations } from "../types";
 import MuiLink from "@mui/material/Link";
-import { Markdown } from "onyxia-ui/Markdown";
+import { Markdown } from "ui/shared/Markdown";
 import { elementsToSentence } from "ui/tools/elementsToSentence";
 
 export const translations: Translations<"nl"> = {
@@ -298,7 +298,7 @@ export const translations: Translations<"nl"> = {
         "project": "Project",
         "region": "Regio"
     },
-    "App": {
+    "LeftBar": {
         "reduce": "Verkleinen",
         "home": "Onthaal",
         "account": "Mijn account",
@@ -310,7 +310,9 @@ export const translations: Translations<"nl"> = {
         "divider: external services features":
             "Functionaliteiten met betrekking tot de externe diensten",
         "divider: onyxia instance specific features":
-            "Functionaliteiten die specifiek zijn voor deze instantie van Onyxia"
+            "Functionaliteiten die specifiek zijn voor deze instantie van Onyxia",
+        "dataExplorer": "Data Verkenner",
+        "sqlOlapShell": "SQL OLAP Shell"
     },
     "Page404": {
         "not found": "Pagina niet gevonden"
@@ -320,7 +322,7 @@ export const translations: Translations<"nl"> = {
             "Om deze applicatie op uw mobiele telefoon te gebruiken, activeert u de rotatiesensor en draait u uw telefoon."
     },
     "Home": {
-        "welcome": ({ who }) => `Welkom ${who}!`,
+        "title authenticated": ({ userFirstname }) => `Welkom ${userFirstname}!`,
         "title": "Welkom in het datalab",
         "login": "Inloggen",
         "new user": "Nieuwe gebruiker van het datalab ?",
@@ -399,17 +401,26 @@ export const translations: Translations<"nl"> = {
             interfacePreferenceHref
         }) => (
             <Markdown
-                getDoesLinkShouldOpenNewTab={href => {
-                    switch (href) {
-                        case k8CredentialsHref:
-                            return true;
-                        case myServicesHref:
-                            return true;
-                        case interfacePreferenceHref:
-                            return false;
-                        default:
-                            return false;
-                    }
+                getLinkProps={({ href }) => {
+                    const doOpensNewTab = (() => {
+                        switch (href) {
+                            case k8CredentialsHref:
+                                return true;
+                            case myServicesHref:
+                                return true;
+                            case interfacePreferenceHref:
+                                return false;
+                            default:
+                                return false;
+                        }
+                    })();
+
+                    return {
+                        href,
+                        ...(doOpensNewTab
+                            ? { "target": "_blank", "onClick": undefined }
+                            : {})
+                    };
                 }}
             >{`We hebben de commandobalk ontworpen om jou volledige controle te geven over je Kubernetes-implementaties.
 Hier is wat je moet weten:
@@ -501,7 +512,11 @@ Voel je vrij om te verkennen en de controle over je Kubernetes-implementaties te
         "friendly name": "Gepersonaliseerde naam",
         "launch": "Opstarten",
         "cancel": "Annuleren",
-        "copy url helper text": "URL kopiëren om deze configuratie te herstellen",
+        "copy auto launch url": "URL voor automatisch starten kopiëren",
+        "copy auto launch url helper": ({
+            chartName
+        }) => `Kopieer de URL waarmee elke gebruiker van deze Onyxia-instantie 
+            een ${chartName} in deze configuratie in hun namespace kan starten`,
         "share the service": "De dienst delen",
         "share the service - explain":
             "De dienst beschikbaar maken voor de medewerkers van de groep",
@@ -530,7 +545,8 @@ Voel je vrij om te verkennen en de controle over je Kubernetes-implementaties te
                 </MuiLink>
             </>
         ),
-        "save changes": "Wijzigingen opslaan"
+        "save changes": "Wijzigingen opslaan",
+        "copied to clipboard": "Gekopieerd naar klembord!"
     },
     "LauncherConfigurationCard": {
         "global config": "Globale configuraties",
@@ -616,8 +632,122 @@ Voel je vrij om te verkennen en de controle over je Kubernetes-implementaties te
         "launch one": "Klik hier om er een te starten",
         "no services running": "You don't have any service running"
     },
+    "DataExplorer": {
+        "page header title": "Data Verkenner",
+        "page header help title":
+            "Bekijk uw Parquet en CSV-bestanden direct vanuit uw browser!",
+        "page header help content": ({ demoParquetFileLink }) => (
+            <>
+                Voer gewoon de <code>https://</code> of <code>s3://</code> URL van een
+                databestand in om een voorvertoning te krijgen.
+                <br />
+                Het bestand wordt niet volledig gedownload; de inhoud ervan wordt
+                gestreamd terwijl u door de pagina's navigeert.
+                <br />
+                U kunt een permanente link naar het bestand of zelfs naar een specifieke
+                rij van het bestand delen door de URL uit de adresbalk te kopiëren.
+                <br />
+                Weet u niet waar u moet beginnen? Probeer dit{" "}
+                <MuiLink {...demoParquetFileLink}>demobestand</MuiLink>!
+            </>
+        ),
+        "column": "kolom",
+        "density": "dichtheid",
+        "download file": "bestand downloaden"
+    },
+    "UrlInput": {
+        "load": "Laden"
+    },
     "CommandBar": {
         "ok": "ok"
+    },
+    "moment": {
+        "date format": ({ isSameYear }) =>
+            `dddd, Do MMMM${isSameYear ? "" : " YYYY"}, HH:mm`,
+        "past1": ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "now":
+                    return "zojuist";
+                case "second":
+                    return "een seconde geleden";
+                case "minute":
+                    return "een minuut geleden";
+                case "hour":
+                    return "een uur geleden";
+                case "day":
+                    return "gisteren";
+                case "week":
+                    return "vorige week";
+                case "month":
+                    return "vorige maand";
+                case "year":
+                    return "vorig jaar";
+            }
+        },
+        "pastN": ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "now":
+                    return "zojuist";
+                case "second":
+                    return "# seconden geleden";
+                case "minute":
+                    return "# minuten geleden";
+                case "hour":
+                    return "# uren geleden";
+                case "day":
+                    return "# dagen geleden";
+                case "week":
+                    return "# weken geleden";
+                case "month":
+                    return "# maanden geleden";
+                case "year":
+                    return "# jaar geleden";
+            }
+        },
+        "future1": ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "now":
+                    return "zojuist";
+                case "second":
+                    return "over een seconde";
+                case "minute":
+                    return "over een minuut";
+                case "hour":
+                    return "over een uur";
+                case "day":
+                    return "morgen";
+                case "week":
+                    return "volgende week";
+                case "month":
+                    return "volgende maand";
+                case "year":
+                    return "volgend jaar";
+            }
+        },
+        "futureN": ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "now":
+                    return "zojuist";
+                case "second":
+                    return "over # seconden";
+                case "minute":
+                    return "over # minuten";
+                case "hour":
+                    return "over # uren";
+                case "day":
+                    return "over # dagen";
+                case "week":
+                    return "over # weken";
+                case "month":
+                    return "over # maanden";
+                case "year":
+                    return "over # jaar";
+            }
+        }
+    },
+    "CopyToClipboardIconButton": {
+        "copied to clipboard": "Gekopieerd!",
+        "copy to clipboard": "Kopiëren naar klembord"
     }
     /* spell-checker: enable */
 };

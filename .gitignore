@@ -1,3 +1,7 @@
 .DS_Store
 /ui
 .vscode
+
+/onyxia-ui
+/cra-envs
+/screen-scaler

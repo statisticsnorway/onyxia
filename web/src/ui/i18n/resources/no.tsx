@@ -1,6 +1,6 @@
 import MuiLink from "@mui/material/Link";
 import type { Translations } from "../types";
-import { Markdown } from "onyxia-ui/Markdown";
+import { Markdown } from "ui/shared/Markdown";
 import { elementsToSentence } from "ui/tools/elementsToSentence";
 
 export const translations: Translations<"no"> = {
@@ -300,7 +300,7 @@ export const translations: Translations<"no"> = {
         "project": "Prosjekt",
         "region": "Region"
     },
-    "App": {
+    "LeftBar": {
         "reduce": "Reduser",
         "home": "Hjem",
         "account": "Min konto",
@@ -311,7 +311,9 @@ export const translations: Translations<"no"> = {
         "divider: services features": "Tjenestefunksjoner",
         "divider: external services features": "Eksterne tjenestefunksjoner",
         "divider: onyxia instance specific features":
-            "Onyxia-instansspesifikke funksjoner"
+            "Onyxia-instansspesifikke funksjoner",
+        "dataExplorer": "Datautforsker",
+        "sqlOlapShell": "SQL OLAP-Skall"
     },
     "Page404": {
         "not found": "Side ikke funnet"
@@ -321,23 +323,24 @@ export const translations: Translations<"no"> = {
             "For å bruke denne appen på telefonen din, må du aktivere rotasjonssensoren og snu telefonen."
     },
     "Home": {
-        "welcome": ({ who }) => `Velkommen ${who}!`,
-        "title": "Velkommen til {Dapla}",
-        "new user": "Ny på Dapla?",
+        "title authenticated": ({ userFirstname }) => `Velkommen ${userFirstname}!`,
+        "title": "Velkommen til Onyxia datalab",
+        "new user": "Ny på datalaben?",
         "login": "Logg inn",
         "subtitle":
-            "Her kan du arbeide med både Python og R, samtidig som du har tilgang til all den databehandlingskraften du behøver!",
-        "cardTitle1": "Kompetansetilbud og læringsressurser",
-        "cardTitle2": "Daplas Viva Engage-fellesskap",
-        "cardTitle3": "Opprett Dapla-team",
-        "cardText1": "Utforsk SSBs utvalg av kompetansetilbud og læringsressurser.",
+            "Arbeid med Python eller R, nyt all databehandlingskraften du trenger!",
+        "cardTitle1": "Et ergonomisk miljø og behovstilpassede tjenester",
+        "cardTitle2": "Et aktivt og entusiastisk fellesskap til din tjeneste",
+        "cardTitle3": "Rask, fleksibel og nettbasert dataoppbevaring",
+        "cardText1":
+            "Analyser data, utfør distribuert databehandling og dra nytte av en stor katalog med tjenester. Reserver den databehandlingskraften du trenger.",
         "cardText2":
-            "Alle Dapla-nyheter samlet på ett sted! Bli med i fellesskapet for å følge utviklingen, dele idéer og stille spørsmål.",
+            "Bruk og del tilgjengelige ressurser: opplæringsprogrammer, opplæring og utvekslingskanaler.",
         "cardText3":
-            "Etabler et team for å administrere, jobbe med og dele ekte data på Dapla.",
-        "cardButton1": "Utforsk læringsmuligheter",
+            "Få enkel tilgang til dataene dine og de som er tilgjengelige for deg fra programmene dine - implementering av S3 API",
+        "cardButton1": "Se gjennom katalogen",
         "cardButton2": "Bli med i fellesskapet",
-        "cardButton3": "Opprette et team"
+        "cardButton3": "Se på dataene"
     },
     "Catalog": {
         "header text1": "Tjenestekatalog",
@@ -396,17 +399,26 @@ export const translations: Translations<"no"> = {
             interfacePreferenceHref
         }) => (
             <Markdown
-                getDoesLinkShouldOpenNewTab={href => {
-                    switch (href) {
-                        case k8CredentialsHref:
-                            return true;
-                        case myServicesHref:
-                            return true;
-                        case interfacePreferenceHref:
-                            return false;
-                        default:
-                            return false;
-                    }
+                getLinkProps={({ href }) => {
+                    const doOpensNewTab = (() => {
+                        switch (href) {
+                            case k8CredentialsHref:
+                                return true;
+                            case myServicesHref:
+                                return true;
+                            case interfacePreferenceHref:
+                                return false;
+                            default:
+                                return false;
+                        }
+                    })();
+
+                    return {
+                        href,
+                        ...(doOpensNewTab
+                            ? { "target": "_blank", "onClick": undefined }
+                            : {})
+                    };
                 }}
             >{`Vi har designet kommandolinjen for å gi deg full kontroll over dine Kubernetes-implementeringer.
 Her er det du trenger å vite:
@@ -497,7 +509,11 @@ Føl deg fri til å utforske og ta kontroll over dine Kubernetes-implementeringe
         "friendly name": "Vennlig navn",
         "launch": "Start",
         "cancel": "Avbryt",
-        "copy url helper text": "Kopier URL for å gjenopprette denne konfigurasjonen",
+        "copy auto launch url": "Kopier URL for automatisk oppstart",
+        "copy auto launch url helper": ({
+            chartName
+        }) => `Kopier URL-en som gjør at enhver bruker av denne Onyxia-instansen kan 
+            starte en ${chartName} i denne konfigurasjonen i sitt namespace`,
         "share the service": "Del tjenesten",
         "share the service - explain":
             "Gjør tjenesten tilgjengelig for prosjektmedlemmene",
@@ -523,7 +539,8 @@ Føl deg fri til å utforske og ta kontroll over dine Kubernetes-implementeringe
                 <MuiLink href={catalogRepositoryUrl}>Helm depotet {catalogName}</MuiLink>
             </>
         ),
-        "save changes": "Lagre endringer"
+        "save changes": "Lagre endringer",
+        "copied to clipboard": "Kopiert til utklippstavlen!"
     },
     "LauncherConfigurationCard": {
         "global config": "Global konfigurasjon",
@@ -607,7 +624,121 @@ Føl deg fri til å utforske og ta kontroll over dine Kubernetes-implementeringe
         "launch one": "Klikk her for å starte en",
         "no services running": "Du har ingen kjørende tjenester"
     },
+    "DataExplorer": {
+        "page header title": "Datautforsker",
+        "page header help title":
+            "Forhåndsvis dine Parquet og CSV-filer direkte fra nettleseren din!",
+        "page header help content": ({ demoParquetFileLink }) => (
+            <>
+                Skriv inn URL-en <code>https://</code> eller <code>s3://</code> til en
+                datafil for å forhåndsvise den.
+                <br />
+                Filen blir ikke lastet ned i sin helhet; innholdet blir strømmet etter
+                hvert som du navigerer gjennom sidene.
+                <br />
+                Du kan dele en permanent lenke til filen, eller til og med til en
+                spesifikk rad i filen, ved å kopiere URL-en fra adresselinjen.
+                <br />
+                Usikker på hvor du skal starte? Prøv denne{" "}
+                <MuiLink {...demoParquetFileLink}>demofilen</MuiLink>!
+            </>
+        ),
+        "column": "kolonne",
+        "density": "tetthet",
+        "download file": "last ned fil"
+    },
+    "UrlInput": {
+        "load": "Last"
+    },
     "CommandBar": {
         "ok": "ok"
+    },
+    "moment": {
+        "date format": ({ isSameYear }) =>
+            `dddd, Do MMMM${isSameYear ? "" : " YYYY"}, HH:mm`,
+        "past1": ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "now":
+                    return "akkurat nå";
+                case "second":
+                    return "et sekund siden";
+                case "minute":
+                    return "et minutt siden";
+                case "hour":
+                    return "en time siden";
+                case "day":
+                    return "i går";
+                case "week":
+                    return "forrige uke";
+                case "month":
+                    return "forrige måned";
+                case "year":
+                    return "i fjor";
+            }
+        },
+        "pastN": ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "now":
+                    return "akkurat nå";
+                case "second":
+                    return "# sekunder siden";
+                case "minute":
+                    return "# minutter siden";
+                case "hour":
+                    return "# timer siden";
+                case "day":
+                    return "# dager siden";
+                case "week":
+                    return "# uker siden";
+                case "month":
+                    return "# måneder siden";
+                case "year":
+                    return "# år siden";
+            }
+        },
+        "future1": ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "now":
+                    return "akkurat nå";
+                case "second":
+                    return "om et sekund";
+                case "minute":
+                    return "om et minutt";
+                case "hour":
+                    return "om en time";
+                case "day":
+                    return "i morgen";
+                case "week":
+                    return "neste uke";
+                case "month":
+                    return "neste måned";
+                case "year":
+                    return "neste år";
+            }
+        },
+        "futureN": ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "now":
+                    return "akkurat nå";
+                case "second":
+                    return "om # sekunder";
+                case "minute":
+                    return "om # minutter";
+                case "hour":
+                    return "om # timer";
+                case "day":
+                    return "om # dager";
+                case "week":
+                    return "om # uker";
+                case "month":
+                    return "om # måneder";
+                case "year":
+                    return "om # år";
+            }
+        }
+    },
+    "CopyToClipboardIconButton": {
+        "copied to clipboard": "Kopiert!",
+        "copy to clipboard": "Kopier til utklippstavlen"
     }
 };

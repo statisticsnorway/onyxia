@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { tss, PageHeader } from "ui/theme";
+import { tss } from "tss";
+import { PageHeader } from "onyxia-ui/PageHeader";
 import { useTranslation } from "ui/i18n";
 import { MyServicesButtonBar } from "./MyServicesButtonBar";
 import { MyServicesCards } from "./MyServicesCards";
@@ -10,7 +11,7 @@ import {
 } from "./MyServicesRestorableConfigs";
 import { ButtonId } from "./MyServicesButtonBar";
 import { useConstCallback } from "powerhooks/useConstCallback";
-import { useCoreFunctions, useCoreState, selectors } from "core";
+import { useCoreState, useCore } from "core";
 import { routes } from "ui/routes";
 import { useConst } from "powerhooks/useConst";
 import { Evt } from "evt";
@@ -24,6 +25,7 @@ import {
     type Props as MyServicesConfirmDeleteDialogProps
 } from "./MyServicesConfirmDeleteDialog";
 import { Deferred } from "evt/tools/Deferred";
+import { customIcons } from "ui/theme";
 
 export type Props = {
     route: PageRoute;
@@ -37,28 +39,28 @@ export default function MyServices(props: Props) {
     const { t: tCatalogLauncher } = useTranslation("Launcher");
 
     /* prettier-ignore */
-    const { serviceManager, restorableConfigManager, k8sCredentials, projectConfigs } = useCoreFunctions();
+    const { serviceManager, restorableConfigManager, k8sCredentials, projectConfigs } = useCore().functions;
     /* prettier-ignore */
     const { restorableConfigs, chartIconAndFriendlyNameByRestorableConfigIndex } = useCoreState(
-        selectors.restorableConfigManager.wrap
-    ).wrap;
-    /* prettier-ignore */
-    const { isUpdating } = useCoreState(selectors.serviceManager.isUpdating);
-    const { runningServices } = useCoreState(selectors.serviceManager.runningServices);
-    /* prettier-ignore */
-    const { deletableRunningServiceHelmReleaseNames } = useCoreState(selectors.serviceManager.deletableRunningServiceHelmReleaseNames);
-    /* prettier-ignore */
-    const { isThereOwnedSharedServices } = useCoreState(selectors.serviceManager.isThereOwnedSharedServices);
-    /* prettier-ignore */
-    const { isThereNonOwnedServices } = useCoreState(selectors.serviceManager.isThereNonOwnedServices);
-
-    const { commandLogsEntries } = useCoreState(
-        selectors.serviceManager.commandLogsEntries
+        "restorableConfigManager", "main"
     );
+    const isUpdating = useCoreState("serviceManager", "isUpdating");
+    const runningServices = useCoreState("serviceManager", "runningServices");
+    const deletableRunningServiceHelmReleaseNames = useCoreState(
+        "serviceManager",
+        "deletableRunningServiceHelmReleaseNames"
+    );
+    const isThereOwnedSharedServices = useCoreState(
+        "serviceManager",
+        "isThereOwnedSharedServices"
+    );
+    const isThereNonOwnedServices = useCoreState(
+        "serviceManager",
+        "isThereNonOwnedServices"
+    );
+    const commandLogsEntries = useCoreState("serviceManager", "commandLogsEntries");
 
-    const {
-        userConfigs: { isCommandBarEnabled }
-    } = useCoreState(selectors.userConfigs.userConfigs);
+    const { isCommandBarEnabled } = useCoreState("userConfigs", "main");
 
     const onButtonBarClick = useConstCallback(async (buttonId: ButtonId) => {
         switch (buttonId) {
@@ -254,7 +256,7 @@ export default function MyServices(props: Props) {
     return (
         <div className={cx(classes.root, className)}>
             <PageHeader
-                mainIcon="services"
+                mainIcon={customIcons.servicesSvgUrl}
                 title={t("text1")}
                 helpTitle={t("text2")}
                 helpContent={t("text3")}

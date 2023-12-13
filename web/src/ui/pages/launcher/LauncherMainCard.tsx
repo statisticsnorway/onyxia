@@ -1,13 +1,15 @@
-import { useId, memo } from "react";
-import { tss } from "ui/theme";
+import { useId, useState, memo } from "react";
+import { tss } from "tss";
 import { RoundLogo } from "ui/shared/RoundLogo";
 import { useTranslation } from "ui/i18n";
-import { IconButton, Button, Text } from "ui/theme";
+import { IconButton } from "onyxia-ui/IconButton";
+import { Button } from "onyxia-ui/Button";
+import { Text } from "onyxia-ui/Text";
 import { useConstCallback } from "powerhooks/useConstCallback";
 import { TextField } from "onyxia-ui/TextField";
 import type { TextFieldProps } from "onyxia-ui/TextField";
 import { Tooltip } from "onyxia-ui/Tooltip";
-import { Icon } from "ui/theme";
+import { Icon } from "onyxia-ui/Icon";
 import { capitalize } from "tsafe/capitalize";
 import FormControl from "@mui/material/FormControl";
 import FormControlLabel from "@mui/material/FormControlLabel";
@@ -21,6 +23,8 @@ import { symToStr } from "tsafe/symToStr";
 import type { Link } from "type-route";
 import { assert } from "tsafe/assert";
 import { useResolveLocalizedString, type LocalizedString } from "ui/i18n";
+import { id } from "tsafe/id";
+import type { MuiIconComponentName } from "onyxia-ui/MuiIconComponentName";
 
 export type Props = {
     className?: string;
@@ -101,6 +105,17 @@ export const LauncherMainCard = memo((props: Props) => {
 
     const chartVersionInputLabelId = `chart-version-input-label-${useId()}`;
 
+    const { isCopyFeedbackOn, triggerCopyFeedback } = (function useClosure() {
+        const [isCopyFeedbackOn, setIsCopyFeedbackOn] = useState(false);
+
+        const triggerCopyFeedback = useConstCallback(() => {
+            setIsCopyFeedbackOn(true);
+            setTimeout(() => setIsCopyFeedbackOn(false), 1000);
+        });
+
+        return { isCopyFeedbackOn, triggerCopyFeedback };
+    })();
+
     return (
         <div className={cx(classes.root, className)}>
             <div className={classes.aboveDivider}>
@@ -109,15 +124,41 @@ export const LauncherMainCard = memo((props: Props) => {
                 </Text>
                 <div style={{ "flex": 1 }} />
 
-                {onRequestCopyLaunchUrl !== undefined && (
-                    <Tooltip title={t("copy url helper text")}>
-                        <IconButton iconId="link" onClick={onRequestCopyLaunchUrl} />
-                    </Tooltip>
-                )}
                 {onRequestRestoreAllDefault !== undefined && (
                     <Button variant="ternary" onClick={onRequestRestoreAllDefault}>
                         {t("restore all default")}
                     </Button>
+                )}
+                {onRequestCopyLaunchUrl !== undefined && (
+                    <Tooltip
+                        title={
+                            isCopyFeedbackOn ? (
+                                <>
+                                    <Icon
+                                        icon={id<MuiIconComponentName>("Check")}
+                                        size="extra small"
+                                        className={classes.copyCheckmark}
+                                    />
+                                    &nbsp;
+                                    {t("copied to clipboard")}
+                                </>
+                            ) : (
+                                t("copy auto launch url helper", { chartName })
+                            )
+                        }
+                    >
+                        <Button
+                            className={classes.copyAutoLaunchButton}
+                            startIcon={id<MuiIconComponentName>("Link")}
+                            onClick={() => {
+                                onRequestCopyLaunchUrl();
+                                triggerCopyFeedback();
+                            }}
+                            variant="ternary"
+                        >
+                            {t("copy auto launch url")}
+                        </Button>
+                    </Tooltip>
                 )}
                 <Tooltip
                     title={t("bookmark button tooltip", {
@@ -126,12 +167,16 @@ export const LauncherMainCard = memo((props: Props) => {
                 >
                     {onRequestRestoreAllDefault === undefined && !isBookmarked ? (
                         <IconButton
-                            iconId={isBookmarked ? "delete" : "save"}
+                            icon={
+                                isBookmarked
+                                    ? id<MuiIconComponentName>("Delete")
+                                    : id<MuiIconComponentName>("Save")
+                            }
                             onClick={onRequestToggleBookmark}
                         />
                     ) : isThereASavedConfigWithThisFriendlyName && !isBookmarked ? (
                         <Button
-                            className={classes.bookmarkButton}
+                            className={classes.saveButton}
                             variant="ternary"
                             startIcon="save"
                             onClick={onRequestToggleBookmark}
@@ -140,7 +185,7 @@ export const LauncherMainCard = memo((props: Props) => {
                         </Button>
                     ) : (
                         <Button
-                            className={classes.bookmarkButton}
+                            className={classes.saveButton}
                             variant="ternary"
                             startIcon={isBookmarked ? "delete" : "save"}
                             onClick={onRequestToggleBookmark}
@@ -183,7 +228,7 @@ export const LauncherMainCard = memo((props: Props) => {
                             >
                                 <Icon
                                     className={classes.versionSelectHelpIcon}
-                                    iconId="help"
+                                    icon={id<MuiIconComponentName>("Help")}
                                     size="small"
                                 />
                             </Tooltip>
@@ -256,7 +301,13 @@ export const { i18n } = declareComponentKeys<
     | "cancel"
     | "launch"
     | "friendly name"
-    | "copy url helper text"
+    | "copy auto launch url"
+    | {
+          K: "copy auto launch url helper";
+          P: {
+              chartName: string;
+          };
+      }
     | "share the service"
     | "share the service - explain"
     | "restore all default"
@@ -285,6 +336,7 @@ export const { i18n } = declareComponentKeys<
           R: JSX.Element;
       }
     | "save changes"
+    | "copied to clipboard"
 >()({ LauncherMainCard });
 
 const useStyles = tss.withName({ LauncherMainCard }).create(({ theme }) => ({
@@ -344,7 +396,13 @@ const useStyles = tss.withName({ LauncherMainCard }).create(({ theme }) => ({
     "launchButton": {
         "marginLeft": theme.spacing(2)
     },
-    "bookmarkButton": {
+    "copyCheckmark": {
+        "color": theme.colors.useCases.alertSeverity.success.main
+    },
+    "copyAutoLaunchButton": {
+        "marginLeft": theme.spacing(2)
+    },
+    "saveButton": {
         "marginLeft": theme.spacing(2)
     }
 }));

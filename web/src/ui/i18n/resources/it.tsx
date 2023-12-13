@@ -1,6 +1,6 @@
 import type { Translations } from "../types";
 import MuiLink from "@mui/material/Link";
-import { Markdown } from "onyxia-ui/Markdown";
+import { Markdown } from "ui/shared/Markdown";
 import { elementsToSentence } from "ui/tools/elementsToSentence";
 
 export const translations: Translations<"it"> = {
@@ -299,7 +299,7 @@ export const translations: Translations<"it"> = {
         "project": "Proggetto",
         "region": "Regione"
     },
-    "App": {
+    "LeftBar": {
         "reduce": "Ridurre",
         "home": "Home",
         "account": "Il mio account",
@@ -310,7 +310,9 @@ export const translations: Translations<"it"> = {
         "divider: services features": "Funzioni relative ai servizi",
         "divider: external services features": "Funzioni relative ai servizi esterni",
         "divider: onyxia instance specific features":
-            "Funzioni specifiche di questa istanza di Onyxia"
+            "Funzioni specifiche di questa istanza di Onyxia",
+        "dataExplorer": "Esploratore di Dati",
+        "sqlOlapShell": "Guscio SQL OLAP"
     },
     "Page404": {
         "not found": "Pagina non trovata"
@@ -320,7 +322,7 @@ export const translations: Translations<"it"> = {
             "Per utilizzare questa applicazione dal tuo cellulare, attiva il sensore di rotazione e ruota il tuo telefono."
     },
     "Home": {
-        "welcome": ({ who }) => `Benvenuto ${who}!`,
+        "title authenticated": ({ userFirstname }) => `Benvenuto ${userFirstname}!`,
         "title": "Benvenuto sul datalab",
         "login": "Connessione",
         "new user": "Nuovo utente del datalab?",
@@ -395,17 +397,26 @@ export const translations: Translations<"it"> = {
             interfacePreferenceHref
         }) => (
             <Markdown
-                getDoesLinkShouldOpenNewTab={href => {
-                    switch (href) {
-                        case k8CredentialsHref:
-                            return true;
-                        case myServicesHref:
-                            return true;
-                        case interfacePreferenceHref:
-                            return false;
-                        default:
-                            return false;
-                    }
+                getLinkProps={({ href }) => {
+                    const doOpensNewTab = (() => {
+                        switch (href) {
+                            case k8CredentialsHref:
+                                return true;
+                            case myServicesHref:
+                                return true;
+                            case interfacePreferenceHref:
+                                return false;
+                            default:
+                                return false;
+                        }
+                    })();
+
+                    return {
+                        href,
+                        ...(doOpensNewTab
+                            ? { "target": "_blank", "onClick": undefined }
+                            : {})
+                    };
                 }}
             >{`Abbiamo progettato la barra dei comandi per darti il controllo completo sui tuoi deployment Kubernetes.
 Ecco cosa devi sapere:
@@ -497,7 +508,11 @@ Sentiti libero di esplorare e prendere il controllo dei tuoi deployment Kubernet
         "friendly name": "Nome personalizzato",
         "launch": "Avviare",
         "cancel": "Annullare",
-        "copy url helper text": "Copiare l'URL per ripristinare questa configurazione",
+        "copy auto launch url": "Copia URL di avvio automatico",
+        "copy auto launch url helper": ({
+            chartName
+        }) => `Copia l'URL che consentirà a qualsiasi utente di questa istanza Onyxia di 
+            lanciare un ${chartName} in questa configurazione nel loro namespace`,
         "share the service": "Condividire il servizio",
         "share the service - explain":
             "Rendere il servizio accessibile ai membri del gruppo",
@@ -526,7 +541,8 @@ Sentiti libero di esplorare e prendere il controllo dei tuoi deployment Kubernet
                 </MuiLink>
             </>
         ),
-        "save changes": "Salva modifiche"
+        "save changes": "Salva modifiche",
+        "copied to clipboard": "Copiato negli appunti!"
     },
     "LauncherConfigurationCard": {
         "global config": "Configurazioni globali",
@@ -612,8 +628,122 @@ Sentiti libero di esplorare e prendere il controllo dei tuoi deployment Kubernet
         "launch one": "Clicca qui per avviarne uno",
         "no services running": "You don't have any service running"
     },
+    "DataExplorer": {
+        "page header title": "Esploratore di Dati",
+        "page header help title":
+            "Anteprima dei tuoi file Parquet e CSV direttamente dal tuo browser!",
+        "page header help content": ({ demoParquetFileLink }) => (
+            <>
+                Inserisci semplicemente l'URL <code>https://</code> o <code>s3://</code>{" "}
+                di un file di dati per visualizzarne l'anteprima.
+                <br />
+                Il file non viene scaricato completamente; il suo contenuto viene
+                trasmesso man mano che navighi tra le pagine.
+                <br />
+                Puoi condividere un link permanente al file o anche a una specifica riga
+                del file copiando l'URL dalla barra degli indirizzi.
+                <br />
+                Non sai da dove iniziare? Prova questo{" "}
+                <MuiLink {...demoParquetFileLink}>file dimostrativo</MuiLink>!
+            </>
+        ),
+        "column": "colonna",
+        "density": "densità",
+        "download file": "scarica file"
+    },
+    "UrlInput": {
+        "load": "Carica"
+    },
     "CommandBar": {
         "ok": "ok"
+    },
+    "moment": {
+        "date format": ({ isSameYear }) =>
+            `dddd, Do MMMM${isSameYear ? "" : " YYYY"}, HH:mm`,
+        "past1": ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "now":
+                    return "proprio ora";
+                case "second":
+                    return "un secondo fa";
+                case "minute":
+                    return "un minuto fa";
+                case "hour":
+                    return "un'ora fa";
+                case "day":
+                    return "ieri";
+                case "week":
+                    return "la settimana scorsa";
+                case "month":
+                    return "il mese scorso";
+                case "year":
+                    return "l'anno scorso";
+            }
+        },
+        "pastN": ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "now":
+                    return "proprio ora";
+                case "second":
+                    return "# secondi fa";
+                case "minute":
+                    return "# minuti fa";
+                case "hour":
+                    return "# ore fa";
+                case "day":
+                    return "# giorni fa";
+                case "week":
+                    return "# settimane fa";
+                case "month":
+                    return "# mesi fa";
+                case "year":
+                    return "# anni fa";
+            }
+        },
+        "future1": ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "now":
+                    return "proprio ora";
+                case "second":
+                    return "tra un secondo";
+                case "minute":
+                    return "tra un minuto";
+                case "hour":
+                    return "tra un'ora";
+                case "day":
+                    return "domani";
+                case "week":
+                    return "la prossima settimana";
+                case "month":
+                    return "il prossimo mese";
+                case "year":
+                    return "il prossimo anno";
+            }
+        },
+        "futureN": ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "now":
+                    return "proprio ora";
+                case "second":
+                    return "tra # secondi";
+                case "minute":
+                    return "tra # minuti";
+                case "hour":
+                    return "tra # ore";
+                case "day":
+                    return "tra # giorni";
+                case "week":
+                    return "tra # settimane";
+                case "month":
+                    return "tra # mesi";
+                case "year":
+                    return "tra # anni";
+            }
+        }
+    },
+    "CopyToClipboardIconButton": {
+        "copied to clipboard": "Copiato!",
+        "copy to clipboard": "Copia negli appunti"
     }
     /* spell-checker: enable */
 };

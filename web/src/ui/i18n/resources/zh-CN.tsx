@@ -1,6 +1,6 @@
 import type { Translations } from "../types";
 import MuiLink from "@mui/material/Link";
-import { Markdown } from "onyxia-ui/Markdown";
+import { Markdown } from "ui/shared/Markdown";
 import { elementsToSentence } from "ui/tools/elementsToSentence";
 
 export const translations: Translations<"zh-CN"> = {
@@ -280,7 +280,7 @@ export const translations: Translations<"zh-CN"> = {
         "project": "项目",
         "region": "区域"
     },
-    "App": {
+    "LeftBar": {
         "reduce": "缩小",
         "home": "我的主页",
         "account": "我的账号",
@@ -290,7 +290,9 @@ export const translations: Translations<"zh-CN"> = {
         "myFiles": "我的文档",
         "divider: services features": "服务功能",
         "divider: external services features": "外部服务功能",
-        "divider: onyxia instance specific features": "Onyxia实例特定功能"
+        "divider: onyxia instance specific features": "Onyxia实例特定功能",
+        "dataExplorer": "数据浏览器",
+        "sqlOlapShell": "SQL OLAP 外壳"
     },
     "Page404": {
         "not found": "网页未找到"
@@ -299,7 +301,7 @@ export const translations: Translations<"zh-CN"> = {
         "instructions": "要在您的手机中使用此应用程序，请激活旋转传感器并转动您的手机"
     },
     "Home": {
-        "welcome": ({ who }) => `你好 ${who}!`,
+        "title authenticated": ({ userFirstname }) => `你好 ${userFirstname}!`,
         "title": "欢迎来到 datalab",
         "login": "登录",
         "new user": "您是datalab的新用户?",
@@ -371,17 +373,26 @@ export const translations: Translations<"zh-CN"> = {
             interfacePreferenceHref
         }) => (
             <Markdown
-                getDoesLinkShouldOpenNewTab={href => {
-                    switch (href) {
-                        case k8CredentialsHref:
-                            return true;
-                        case myServicesHref:
-                            return true;
-                        case interfacePreferenceHref:
-                            return false;
-                        default:
-                            return false;
-                    }
+                getLinkProps={({ href }) => {
+                    const doOpensNewTab = (() => {
+                        switch (href) {
+                            case k8CredentialsHref:
+                                return true;
+                            case myServicesHref:
+                                return true;
+                            case interfacePreferenceHref:
+                                return false;
+                            default:
+                                return false;
+                        }
+                    })();
+
+                    return {
+                        href,
+                        ...(doOpensNewTab
+                            ? { "target": "_blank", "onClick": undefined }
+                            : {})
+                    };
                 }}
             >{`我们设计了命令栏，目的是让您能够全面掌控您的 Kubernetes 部署。
 以下是您需要了解的信息：
@@ -465,7 +476,11 @@ ${
         "friendly name": "自定义名称",
         "launch": "启动",
         "cancel": "取消",
-        "copy url helper text": "复制 URL 以恢复此配置",
+        "copy auto launch url": "复制自动启动 URL",
+        "copy auto launch url helper": ({
+            chartName
+        }) => `复制 URL，使任何这个 Onyxia 实例的用户都能够
+            在他们的 namespace 中以这种配置启动一个 ${chartName}`,
         "share the service": "分享服务",
         "share the service - explain": "让其他组员可以访问该服务",
         "restore all default": "恢复默认配置",
@@ -490,7 +505,8 @@ ${
                 <MuiLink href={catalogRepositoryUrl}>{catalogName} Helm 仓库</MuiLink>
             </>
         ),
-        "save changes": "保存更改"
+        "save changes": "保存更改",
+        "copied to clipboard": "已复制到剪贴板！"
     },
     "LauncherConfigurationCard": {
         "global config": "全局配置",
@@ -572,8 +588,120 @@ ${
         "launch one": "点击来启动此服务",
         "no services running": "You don't have any service running"
     },
+    "DataExplorer": {
+        "page header title": "数据浏览器",
+        "page header help title": "直接在您的浏览器中预览您的 Parquet 和 CSV 文件！",
+        "page header help content": ({ demoParquetFileLink }) => (
+            <>
+                只需输入数据文件的 <code>https://</code> 或 <code>s3://</code> URL
+                即可预览。
+                <br />
+                文件不会完全下载；您在翻阅页面时，其内容会实时流式传输。
+                <br />
+                您可以复制地址栏中的
+                URL，分享文件的永久链接，甚至是文件中某个特定行的链接。
+                <br />
+                不知道从哪里开始？尝试这个{" "}
+                <MuiLink {...demoParquetFileLink}>演示文件</MuiLink>！
+            </>
+        ),
+        "column": "列",
+        "density": "密度",
+        "download file": "下载文件"
+    },
+    "UrlInput": {
+        "load": "加载"
+    },
     "CommandBar": {
         "ok": "是"
+    },
+    "moment": {
+        "date format": ({ isSameYear }) =>
+            `dddd, MMMM Do${isSameYear ? "" : " YYYY"}, h:mm a`,
+        "past1": ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "now":
+                    return "刚刚";
+                case "second":
+                    return "一秒前";
+                case "minute":
+                    return "一分钟前";
+                case "hour":
+                    return "一小时前";
+                case "day":
+                    return "昨天";
+                case "week":
+                    return "上周";
+                case "month":
+                    return "上个月";
+                case "year":
+                    return "去年";
+            }
+        },
+        "pastN": ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "now":
+                    return "刚刚";
+                case "second":
+                    return "# 秒前";
+                case "minute":
+                    return "# 分钟前";
+                case "hour":
+                    return "# 小时前";
+                case "day":
+                    return "# 天前";
+                case "week":
+                    return "# 周前";
+                case "month":
+                    return "# 个月前";
+                case "year":
+                    return "# 年前";
+            }
+        },
+        "future1": ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "now":
+                    return "刚刚";
+                case "second":
+                    return "一秒后";
+                case "minute":
+                    return "一分钟后";
+                case "hour":
+                    return "一小时后";
+                case "day":
+                    return "明天";
+                case "week":
+                    return "下周";
+                case "month":
+                    return "下个月";
+                case "year":
+                    return "明年";
+            }
+        },
+        "futureN": ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "now":
+                    return "刚刚";
+                case "second":
+                    return "# 秒后";
+                case "minute":
+                    return "# 分钟后";
+                case "hour":
+                    return "# 小时后";
+                case "day":
+                    return "# 天后";
+                case "week":
+                    return "# 周后";
+                case "month":
+                    return "# 个月后";
+                case "year":
+                    return "# 年后";
+            }
+        }
+    },
+    "CopyToClipboardIconButton": {
+        "copied to clipboard": "已复制！",
+        "copy to clipboard": "复制到剪贴板"
     }
     /* spell-checker: enable */
 };
