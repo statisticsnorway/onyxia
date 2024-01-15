@@ -8188,6 +8188,24 @@ evt@^2.5.3:
     run-exclusive "^2.2.19"
     tsafe "^1.6.5"
 
+evt@^2.5.6:
+  version "2.5.6"
+  resolved "https://registry.yarnpkg.com/evt/-/evt-2.5.6.tgz#292a99d00d81fa04f659f72d8e24ebe7818f1cdb"
+  integrity sha512-8wxqQ5HQWn+C2RghLL07Q4mPqOqixNnKl3lEajx7hRth+/OqyZ7wfr9smASgG3yB7UUOqcpTKYBCEXzBa/1hPw==
+  dependencies:
+    minimal-polyfills "^2.2.3"
+    run-exclusive "^2.2.19"
+    tsafe "^1.6.5"
+
+evt@^2.5.7:
+  version "2.5.7"
+  resolved "https://registry.yarnpkg.com/evt/-/evt-2.5.7.tgz#55c5f8ff910f4b7531bfac91e963d4cb3231f253"
+  integrity sha512-dr7Wd16ry5F8WNU1xXLKpFpO3HsoAGg8zC48e08vDdzMzGWCP9/QFGt1PQptEEDh8SwYP3EL8M+d/Gb0kgUp6g==
+  dependencies:
+    minimal-polyfills "^2.2.3"
+    run-exclusive "^2.2.19"
+    tsafe "^1.6.6"
+
 exec-sh@^0.3.2:
   version "0.3.6"
   resolved "https://registry.yarnpkg.com/exec-sh/-/exec-sh-0.3.6.tgz#ff264f9e325519a60cb5e273692943483cca63bc"
@@ -9559,10 +9577,10 @@ husky@^4.3.8:
     slash "^3.0.0"
     which-pm-runs "^1.0.0"
 
-i18nifty@^3.1.2:
-  version "3.1.2"
-  resolved "https://registry.yarnpkg.com/i18nifty/-/i18nifty-3.1.2.tgz#f82bdb9b6b40a038997790d82492db7d4cc72b67"
-  integrity sha512-QsHrFzH0DEEW2WPXKLyVjFEnEaL3n1W+9P9Ul7jCiyrRxdY1tGaBxNjZSoOYCoaZOMP5t2a6KRCuYa50gNUI/A==
+i18nifty@^3.2.0:
+  version "3.2.0"
+  resolved "https://registry.yarnpkg.com/i18nifty/-/i18nifty-3.2.0.tgz#277676d20893b12fad9199e71aa5564f81b66f41"
+  integrity sha512-6+WgmW4oZOoUiQp9Hik4d+uDeO9LBeTrcEvOIuIYOkIo7W/s/BVKlDtpXn1JGaH3thy9iEtZ9sxx/fhxDo2aUQ==
   dependencies:
     powerhooks "^1.0.5"
     tsafe "^1.6.5"
@@ -12327,10 +12345,10 @@ onetime@^5.1.0, onetime@^5.1.2:
   dependencies:
     mimic-fn "^2.1.0"
 
-onyxia-ui@^4.8.0:
-  version "4.8.0"
-  resolved "https://registry.yarnpkg.com/onyxia-ui/-/onyxia-ui-4.8.0.tgz#e901f98736a3a93b5cebde464c1dce735981bf58"
-  integrity sha512-VUEMkIdywXEJSY4jEv76vSK21Ob5TcdGyBAlKTo8IzeTv1rw9ZQSRlLqKh9CFgS5Jablx/Hn3qEzV3cDHPSGnA==
+onyxia-ui@^4.8.4:
+  version "4.8.4"
+  resolved "https://registry.yarnpkg.com/onyxia-ui/-/onyxia-ui-4.8.4.tgz#9cd338d1e0fd29f8d09148c5f0fafb44e9fc6220"
+  integrity sha512-IdP7Q/8JIysEyiCSPiEB6aB/L862z6oXGCVKwOjPI4q9a3A0jvLv7jG2XV6YoL9x1I/m48US4+Z9ZqDZh9fbnA==
   dependencies:
     "@mui/icons-material" "^5.14.18"
     color "3.1.3"
@@ -13502,6 +13520,15 @@ powerhooks@^1.0.5:
     memoizee "^0.4.15"
     tsafe "^1.6.5"
 
+powerhooks@^1.0.7:
+  version "1.0.7"
+  resolved "https://registry.yarnpkg.com/powerhooks/-/powerhooks-1.0.7.tgz#3b0b7045adb2f03160a91984d591d32832856318"
+  integrity sha512-FMd1G/5gf4NGPWwQcaYp0erG3+hrUY7gbxJn+GbRw1AjIzuO74+BDDDfyQiIKageuiufTQ9Ri5gwxkOLUrhK4g==
+  dependencies:
+    evt "^2.5.6"
+    memoizee "^0.4.15"
+    tsafe "^1.6.5"
+
 prelude-ls@^1.2.1:
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/prelude-ls/-/prelude-ls-1.2.1.tgz#debc6489d7a6e6b0e7611888cec880337d316396"
@@ -14184,10 +14211,10 @@ redent@^1.0.0:
     indent-string "^2.1.0"
     strip-indent "^1.0.1"
 
-redux-clean-architecture@^4.2.2:
-  version "4.2.2"
-  resolved "https://registry.yarnpkg.com/redux-clean-architecture/-/redux-clean-architecture-4.2.2.tgz#844051645d9bfae96282f4467cb2c7f022f40477"
-  integrity sha512-jb6LBh867OWlUJoh9oMcP2RDV1s/+OZvv86tpbC61qXTCZVbG3TSYhrK+1lBqjp1o6HPTwn0KB4c4oLpjfSfNg==
+redux-clean-architecture@^4.3.1:
+  version "4.3.1"
+  resolved "https://registry.yarnpkg.com/redux-clean-architecture/-/redux-clean-architecture-4.3.1.tgz#b3c0f661d3813a39f66bd0713d711974f83e1a33"
+  integrity sha512-WXbvO47tdoh4heJ26ZbfdLOKsXAz6SPCCig99ufTa5zEcm0R44+Xn/h7GYo3wBFTacHlcuv9KEbSap7TdDW1nA==
   dependencies:
     "@reduxjs/toolkit" "^1.9.6"
     minimal-polyfills "^2.2.3"
@@ -16133,6 +16160,11 @@ tsafe@^1.6.5:
   version "1.6.5"
   resolved "https://registry.yarnpkg.com/tsafe/-/tsafe-1.6.5.tgz#74943b69190069168a53d2accd6d07891cf1cce8"
   integrity sha512-895zss8xqqHKTc28sHGIfZKnt3C5jrstB1DyPr/h3/flK0zojsZUMQL1/W4ytdDW6KI4Oth62nb9rrxmA3s3Iw==
+
+tsafe@^1.6.6:
+  version "1.6.6"
+  resolved "https://registry.yarnpkg.com/tsafe/-/tsafe-1.6.6.tgz#fd93e64d6eb13ef83ed1650669cc24bad4f5df9f"
+  integrity sha512-gzkapsdbMNwBnTIjgO758GujLCj031IgHK/PKr2mrmkCSJMhSOR5FeOuSxKLMUoYc0vAA4RGEYYbjt/v6afD3g==
 
 tsconfig-paths@^3.14.1:
   version "3.14.2"
