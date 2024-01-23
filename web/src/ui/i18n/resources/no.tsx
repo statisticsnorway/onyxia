@@ -2,13 +2,17 @@ import MuiLink from "@mui/material/Link";
 import type { Translations } from "../types";
 import { Markdown } from "ui/shared/Markdown";
 import { elementsToSentence } from "ui/tools/elementsToSentence";
+import { Icon } from "onyxia-ui/Icon";
+import type { MuiIconComponentName } from "onyxia-ui/MuiIconComponentName";
+import { id } from "tsafe/id";
 
 export const translations: Translations<"no"> = {
+    /* spell-checker: disable */
     "Account": {
         "infos": "Kontoinformasjon",
         "third-party-integration": "Eksterne tjenester",
         "storage": "Koble til lagring",
-        "k8sCredentials": "Kubernetes",
+        "k8sCodeSnippets": "Kubernetes",
         "user-interface": "Grensesnittspreferanser",
         "text1": "Min konto",
         "text2": "Få tilgang til ulik kontoinformasjon.",
@@ -23,11 +27,7 @@ export const translations: Translations<"no"> = {
         "user id": "Bruker-ID (IDEP)",
         "full name": "Fullt navn",
         "email": "E-postadresse",
-        "change account info": "Endre kontoinformasjon (f.eks. passord).",
-        "auth information": "Onyxia-autentiseringsinformasjon",
-        "auth information helper": `Denne informasjonen gjør at du kan identifisere deg
-            innenfor plattformen og de ulike tjenestene.`,
-        "ip address": "IP-adresse"
+        "change account info": "Endre kontoinformasjon (f.eks. passord)."
     },
     "AccountIntegrationsTab": {
         "git section title": "Git-konfigurasjon",
@@ -102,6 +102,128 @@ export const translations: Translations<"no"> = {
         ),
         "expires in": ({ howMuchTime }) => `Token går ut om ${howMuchTime}`
     },
+    "ProjectSettings": {
+        "page header title": "Prosjektinnstillinger",
+        "page header help title": ({ groupProjectName }) =>
+            groupProjectName === undefined
+                ? "Innstillinger for ditt personlige prosjekt"
+                : `Innstillinger for "${groupProjectName}"`,
+        "page header help content": ({
+            groupProjectName,
+            doesUserBelongToSomeGroupProject
+        }) => (
+            <>
+                Denne siden lar deg konfigurere innstillingene som gjelder for
+                {groupProjectName === undefined
+                    ? " ditt personlige prosjekt"
+                    : ` ${groupProjectName}-prosjektet`}
+                .
+                <br />
+                {groupProjectName !== undefined && (
+                    <>
+                        Vær oppmerksom på at {groupProjectName} er et gruppeprosjekt delt
+                        med andre brukere; endringene du gjør her vil gjelde for alle
+                        medlemmer av prosjektet.
+                        <br />
+                    </>
+                )}
+                {doesUserBelongToSomeGroupProject && (
+                    <>
+                        Du kan bytte mellom dine prosjekter ved å bruke rullegardinmenyen
+                        i overskriften.
+                        <br />
+                    </>
+                )}
+                Merk at bare administratoren for din Onyxia-instans kan opprette nye
+                prosjekter.
+            </>
+        ),
+        "security-info": "Sikkerhetsinformasjon",
+        "s3-configs": "S3-konfigurasjoner"
+    },
+    "ProjectSettingsS3ConfigTab": {
+        "add custom config": "Legg til en tilpasset S3-konfigurasjon"
+    },
+    "S3ConfigCard": {
+        "data source": "Datakilde",
+        "credentials": "Legitimasjon",
+        "sts credentials":
+            "Token som dynamisk etterspørres på dine vegne av Onyxia (STS)",
+        "account": "Konto",
+        "use in services": "Bruk i tjenester",
+        "use in services helper": `Hvis aktivert, vil denne konfigurasjonen brukes som standard i dine tjenester som implementerer en S3-integrasjon.`,
+        "use for onyxia explorers": "Bruk for Onyxia utforskere",
+        "use for onyxia explorers helper": `Hvis aktivert, vil denne konfigurasjonen brukes
+            av filutforskeren og datautforskeren.`,
+        "edit": "Rediger",
+        "delete": "Slett"
+    },
+    "AddCustomS3ConfigDialog": {
+        "dialog title": "Ny tilpasset S3-konfigurasjon",
+        "dialog subtitle":
+            "Angi en tilpasset tjenestekonto eller koble til en annen S3-kompatibel tjeneste",
+        "cancel": "Avbryt",
+        "save config": "Lagre konfigurasjon",
+        "update config": "Oppdater konfigurasjon",
+        "is required": "Dette feltet er påkrevd",
+        "must be an url": "Ikke en gyldig URL",
+        "not a valid access key id": "Dette ser ikke ut som en gyldig tilgangsnøkkel-ID",
+        "url textField label": "URL",
+        "url textField helper text": "URL til S3-tjenesten",
+        "region textField label": "AWS S3-region",
+        "region textField helper text": "Eksempel: eu-west-1, hvis usikker, la være tom",
+        "workingDirectoryPath textField label": "Arbeidsmappesti",
+        "workingDirectoryPath textField helper text": (
+            <>
+                Dette lar deg spesifisere bøtten og S3-objektprefikset du eier på
+                S3-tjenesten. <br />
+                Eksempel: <code>min-bøtte/mitt-prefiks/</code> eller{" "}
+                <code>kun min-bøtte/</code> hvis du eier hele bøtten.
+            </>
+        ),
+        "account credentials": "Kontokredensialer",
+        "accountFriendlyName textField label": "Brukervennlig kontonavn",
+        "accountFriendlyName textField helper text":
+            "Dette er bare for å hjelpe deg med å identifisere denne kontoen. Eksempel: Min personlige konto",
+        "accessKeyId textField label": "Tilgangsnøkkel-ID",
+        "accessKeyId textField helper text": "Eksempel: 1A2B3C4D5E6F7G8H9I0J",
+        "secretAccessKey textField label": "Hemmelig tilgangsnøkkel",
+        "sessionToken textField label": "Sesjonstoken",
+        "sessionToken textField helper text": "Valgfritt, la være tom hvis usikker",
+        "url style": "URL-stil",
+        "url style helper text": `Spesifiser hvordan din S3-server formaterer URL-en for nedlasting av filer.`,
+        "path style label": ({ example }) => (
+            <>
+                Sti-stil
+                {example !== undefined && (
+                    <>
+                        :&nbsp;
+                        <code>{example}mitt-datasett.parquet</code>
+                    </>
+                )}
+            </>
+        ),
+        "virtual-hosted style label": ({ example }) => (
+            <>
+                Virtuelt-vertsbasert stil
+                {example !== undefined && (
+                    <>
+                        :&nbsp;
+                        <code>{example}mitt-datasett.parquet</code>
+                    </>
+                )}
+            </>
+        )
+    },
+    "TestS3ConnectionButton": {
+        "test connection": "Test forbindelse",
+        "test connection failed": ({ errorMessage }) => (
+            <>
+                Test av forbindelse feilet med feil: <br />
+                {errorMessage}
+            </>
+        )
+    },
     "AccountUserInterfaceTab": {
         "title": "Grensesnittspreferanser",
         "enable dark mode": "Skru på mørk modus",
@@ -121,12 +243,34 @@ export const translations: Translations<"no"> = {
             </>
         )
     },
-    "AccountField": {
+    "SettingField": {
         "copy tooltip": "Kopier til utklippstavlen",
         "language": "Bytt språk",
-        "service password": "Passord for tjenestene dine",
-        "service password helper text": `Dette passordet kreves for å logge på alle tjenestene dine.
-      Det genereres automatisk og fornyes jevnlig.`,
+        "service password": "Standard servicepassord",
+        "service password helper text": ({ groupProjectName }) => (
+            <>
+                Dette er standardpassordet som brukes for å beskytte dine kjørende
+                tjenester. <br />
+                Når du starter en tjeneste, blir passordfeltet i sikkerhetsfanen
+                forhåndsutfylt med dette passordet. <br />
+                Ved å klikke på{" "}
+                <Icon
+                    size="extra small"
+                    icon={id<MuiIconComponentName>("Refresh")}
+                />{" "}
+                ikonet vil generere et nytt tilfeldig passord. Vær imidlertid oppmerksom
+                på at det ikke vil oppdatere passordet for tjenester som allerede kjører.{" "}
+                <br />
+                Tjenestepassordet er det Onyxia får deg til å kopiere til utklippstavlen
+                din før du får tilgang til en kjørende tjeneste. <br />
+                {groupProjectName !== undefined && (
+                    <>
+                        Vær oppmerksom på at dette passordet deles blant alle medlemmer av
+                        prosjektet ({groupProjectName}).
+                    </>
+                )}
+            </>
+        ),
         "not yet defined": "Ikke definert ennå",
         "reset helper dialogs": "Tilbakestill instruksjonsvinduer",
         "reset": "Tilbakestill",
@@ -149,6 +293,13 @@ export const translations: Translations<"no"> = {
                 <MuiLink {...accountTabLink}>Konfigurer minio-klientene</MuiLink>.
             </>
         )
+    },
+    "MyFilesDisabledDialog": {
+        "dialog title": "Ingen S3-server konfigurert",
+        "dialog body":
+            "Det er ingen S3-server konfigurert for denne instansen. Men du kan legge til en manuelt for å aktivere S3-filutforskeren.",
+        "cancel": "Avbryt",
+        "go to settings": "Gå til innstillinger"
     },
     "MySecrets": {
         "page title - my files": "Mine filer",
@@ -304,6 +455,7 @@ export const translations: Translations<"no"> = {
         "reduce": "Reduser",
         "home": "Hjem",
         "account": "Min konto",
+        "projectSettings": "Prosjektinnstillinger",
         "catalog": "Tjenestekatalog",
         "myServices": "Mine tjenester",
         "mySecrets": "Mine hemmeligheter",
@@ -321,6 +473,15 @@ export const translations: Translations<"no"> = {
     "PortraitModeUnsupported": {
         "instructions":
             "For å bruke denne appen på telefonen din, må du aktivere rotasjonssensoren og snu telefonen."
+    },
+    "MaybeAcknowledgeConfigVolatilityDialog": {
+        "dialog title": "Vær oppmerksom, konfigurasjoner er flyktige",
+        "dialog body": `Denne Onyxia-instansen implementerer ikke noen persistensmekanisme for lagring av konfigurasjoner. 
+            Alle konfigurasjoner lagres i nettleserens lokale lagring. Dette betyr at hvis du tømmer nettleserens lokale 
+            lagring eller bytter nettleser, vil du miste alle dine konfigurasjoner.`,
+        "do not show next time": "Ikke vis denne meldingen igjen",
+        "cancel": "Avbryt",
+        "I understand": "Jeg forstår"
     },
     "Home": {
         "title authenticated": ({ userFirstname }) => `Velkommen ${userFirstname}!`,
@@ -353,12 +514,7 @@ export const translations: Translations<"no"> = {
                 </MuiLink>
             </>
         ),
-        "here": "her",
-        "show more": "Vis mer",
-        "no service found": "Ingen tjeneste funnet",
         "no result found": ({ forWhat }) => `Ingen resultater funnet for ${forWhat}`,
-        "check spelling": "Vennligst kontroller stavemåten eller prøv å utvide søket.",
-        "go back": "Tilbake til hovedtjenester",
         "search results": "Søkeresultat",
         "search": "Søk"
     },
@@ -587,9 +743,6 @@ Føl deg fri til å utforske og ta kontroll over dine Kubernetes-implementeringe
         "open": "åpne",
         "readme": "lesmeg",
         "shared by you": "Delt av deg",
-        "which token expire when": ({ which, howMuchTime }) =>
-            `${which}-tokenet utløper ${howMuchTime}.`,
-        "which token expired": ({ which }) => `${which}-tokenet er utløpt.`,
         "reminder to delete services": "Husk å slette tjenestene dine.",
         "this is a shared service": "Denne tjenesten deles blant prosjektets medlemmer"
     },
@@ -741,4 +894,5 @@ Føl deg fri til å utforske og ta kontroll over dine Kubernetes-implementeringe
         "copied to clipboard": "Kopiert!",
         "copy to clipboard": "Kopier til utklippstavlen"
     }
+    /* spell-checker: enable */
 };

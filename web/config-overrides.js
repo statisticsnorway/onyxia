@@ -11,6 +11,10 @@ const { assert } = require("tsafe/assert");
 
 module.exports = function override(config) {
 
+    if( config.resolve === undefined ){
+      config.resolve = {};
+    }
+
     Object.assign(config.resolve.fallback ??= {}, {
         "crypto": require.resolve("crypto-browserify"),
         "stream": require.resolve("stream-browserify"),
@@ -42,7 +46,8 @@ module.exports = function override(config) {
 
     {
 
-        const sourceMapLoaderRule = config.module.rules.find(({ loader }) => loader.includes("source-map-loader"));
+        const sourceMapLoaderRule = config.module.rules
+            .find(({ loader }) => typeof loader === "string" && loader.includes("source-map-loader"));
 
         assert(sourceMapLoaderRule !== undefined);
 
