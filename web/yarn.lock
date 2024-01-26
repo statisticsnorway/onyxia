@@ -11014,10 +11014,10 @@ jwt-decode@^3.1.2:
   resolved "https://registry.yarnpkg.com/jwt-decode/-/jwt-decode-3.1.2.tgz#3fb319f3675a2df0c2895c8f5e9fa4b67b04ed59"
   integrity sha512-UfpWE/VZn0iP50d8cz9NrZLM9lSWhcJ+0Gt/nm4by88UL+J1SiKN8/5dkjMmbEzwL2CAe+67GsegCbIKtbp75A==
 
-keycloakify@^8.4.1:
-  version "8.4.1"
-  resolved "https://registry.yarnpkg.com/keycloakify/-/keycloakify-8.4.1.tgz#2b716be894bf3bfe760d52014ffcdabde02bc2cf"
-  integrity sha512-Uv+HditKWNkAZ/QFERFymdjaPZ2qXkf8dJTRmg7Ej4NE6KbKmHzQpGGRrmEKRM1Y/ViQP90vmYDX6RdF/G5H8Q==
+keycloakify@^9.2.0:
+  version "9.2.0"
+  resolved "https://registry.yarnpkg.com/keycloakify/-/keycloakify-9.2.0.tgz#236edadcc35f4ab039529577b26fc28c117bd55b"
+  integrity sha512-VbQ5EL7hvsEuoEr9pXd+2KDhVcNd4YOJuKG6+/pH0RfNeO6sow63WD8C+XiGY6HoEIKb22S2NNKR3mjclRaCrA==
   dependencies:
     "@babel/generator" "^7.22.9"
     "@babel/parser" "^7.22.7"
@@ -12304,10 +12304,10 @@ oidc-client-ts@^2.3.0:
     crypto-js "^4.1.1"
     jwt-decode "^3.1.2"
 
-oidc-spa@^3.0.3:
-  version "3.0.3"
-  resolved "https://registry.yarnpkg.com/oidc-spa/-/oidc-spa-3.0.3.tgz#01e524064e91615e3f2c6d6c906234fc13351787"
-  integrity sha512-yoAQHaTPw0Eb3AYLQ1ODuCfO0iboUv3agnz45QSm0LWG9o6+9mtN6g71XljrSIPR/G5g4rLria4Ke+Rq/LoJZg==
+oidc-spa@^4.0.0:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/oidc-spa/-/oidc-spa-4.0.0.tgz#7cec1683686cd6f2b9c85547107b19b6b54ffd39"
+  integrity sha512-Zy386BfS/LbkUopNTA1xFCWYIMc7fFrQ1Iyc58vt+2dAezTAt15F6YTrYGXGCa4P0q8SpO6Avu8/OmHyO67d9w==
   dependencies:
     jwt-decode "^3.1.2"
     oidc-client-ts "^2.3.0"
@@ -12339,10 +12339,10 @@ onetime@^5.1.0, onetime@^5.1.2:
   dependencies:
     mimic-fn "^2.1.0"
 
-onyxia-ui@^5.1.0:
-  version "5.1.0"
-  resolved "https://registry.yarnpkg.com/onyxia-ui/-/onyxia-ui-5.1.0.tgz#d44d9a1d434a944e471c84b4b5d51e31da79e5e0"
-  integrity sha512-5fSNZXsdghGSNFd0Ut/NcJqfizhwD/gZC32x3dGk088Z6KFxX1MDhyM+AUSc/dX6dgK1G1dRjuat0cweN7B1xg==
+onyxia-ui@^5.1.1:
+  version "5.1.1"
+  resolved "https://registry.yarnpkg.com/onyxia-ui/-/onyxia-ui-5.1.1.tgz#67d952868c7bf052694ae73b4e8ae0a954a2a290"
+  integrity sha512-UjOnNiiM++mJ9kTPw+OV9MFITigtBy812PDC6h2ghY95RI2O7gubft6ynWWWWbdUSOMwWSwzIgK2YxvbFkyhEg==
   dependencies:
     "@mui/icons-material" "^5.14.18"
     color "3.1.3"
