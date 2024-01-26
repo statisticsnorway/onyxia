@@ -27,7 +27,8 @@ export const translations: Translations<"no"> = {
         "user id": "Bruker-ID (IDEP)",
         "full name": "Fullt navn",
         "email": "E-postadresse",
-        "change account info": "Endre kontoinformasjon (f.eks. passord)."
+        "instructions about how to change password":
+            'For å endre passordet ditt, bare logg ut og klikk på "glemt passord"-lenken.'
     },
     "AccountIntegrationsTab": {
         "git section title": "Git-konfigurasjon",
@@ -279,10 +280,7 @@ export const translations: Translations<"no"> = {
     },
     "MyFiles": {
         "page title - my files": "Mine filer",
-        "page title - my secrets": "Mine hemmeligheter",
         "what this page is used for - my files": "Her kan du bla gjennom S3-bøtter.",
-        "what this page is used for - my secrets":
-            "Her kan du definere variabler som vil være tilgjengelige i tjenestene dine som miljøvariabler.",
         "help content": ({ accountTabLink, docHref }) => (
             <>
                 Les{" "}
@@ -302,9 +300,7 @@ export const translations: Translations<"no"> = {
         "go to settings": "Gå til innstillinger"
     },
     "MySecrets": {
-        "page title - my files": "Mine filer",
         "page title - my secrets": "Mine hemmeligheter",
-        "what this page is used for - my files": "Her kan du bla gjennom S3-bøtter.",
         "what this page is used for - my secrets":
             "Her kan du definere variabler som vil være tilgjengelige i tjenestene dine som miljøvariabler.",
         "learn more - my files": "For å lære mer om filbehandling,",
@@ -329,12 +325,10 @@ export const translations: Translations<"no"> = {
         "description": "beskrivelse"
     },
     "SecretsExplorerButtonBar": {
-        "file": "fil",
         "secret": "hemmelighet",
         "rename": "gi nytt navn",
         "delete": "slett",
         "create secret": "Opprett hemmelighet",
-        "upload file": "Last opp fil",
         "copy path": "Bruk i en tjeneste",
         "create directory": "Opprett katalog",
         "refresh": "oppdater",
@@ -343,9 +337,7 @@ export const translations: Translations<"no"> = {
     },
     "ExplorerButtonBar": {
         "file": "fil",
-        "secret": "hemmelighet",
         "delete": "slett",
-        "create secret": "Opprett hemmelighet",
         "upload file": "Last opp fil",
         "copy path": "Kopier S3-objektnavnet",
         "create directory": "Opprett katalog",

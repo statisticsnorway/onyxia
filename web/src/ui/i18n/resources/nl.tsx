@@ -26,7 +26,8 @@ export const translations: Translations<"nl"> = {
         "user id": "Gebruikersnaam (IDEP)",
         "full name": "Volledige naam",
         "email": "E-mailadres",
-        "change account info": "Accountgegevens (zoals uw wachtwoord) wijzigen"
+        "instructions about how to change password":
+            'Om uw wachtwoord te wijzigen, logt u simpelweg uit en klikt u op de link "wachtwoord vergeten".'
     },
     "AccountIntegrationsTab": {
         "git section title": "Git-configuraties",
@@ -281,10 +282,7 @@ export const translations: Translations<"nl"> = {
     },
     "MyFiles": {
         "page title - my files": "Mijn bestanden",
-        "page title - my secrets": "My Secrets",
         "what this page is used for - my files": "Sla hier uw gegevensbestanden op.",
-        "what this page is used for - my secrets":
-            "Sla hier geheimen op die toegankelijk zullen zijn als omgevingsvariabelen in uw diensten.",
         "help content": ({ accountTabLink, docHref }) => (
             <>
                 Lezen{" "}
@@ -304,9 +302,7 @@ export const translations: Translations<"nl"> = {
         "go to settings": "Ga naar instellingen"
     },
     "MySecrets": {
-        "page title - my files": "Mijn bestanden",
         "page title - my secrets": "My Secrets",
-        "what this page is used for - my files": "Sla hier uw gegevensbestanden op.",
         "what this page is used for - my secrets":
             "Sla hier geheimen op die toegankelijk zullen zijn als omgevingsvariabelen in uw diensten.",
         "learn more - my files": "Voor meer informatie over het gebruik van opslag S3,",
@@ -329,9 +325,7 @@ export const translations: Translations<"nl"> = {
     },
     "ExplorerButtonBar": {
         "file": "bestand",
-        "secret": "geheim",
         "delete": "verwijderen",
-        "create secret": "Nieuw geheim",
         "upload file": "Een bestand uploaden",
         "copy path": "De naam van het S3-object kopiëren",
         "create directory": "Nieuwe map",
@@ -340,13 +334,10 @@ export const translations: Translations<"nl"> = {
         "new": "Nieuw"
     },
     "SecretsExplorerButtonBar": {
-        "file": "bestand",
         "secret": "geheim",
         "rename": "hernoemen",
         "delete": "verwijderen",
-
         "create secret": "Nieuw geheim",
-        "upload file": "Een bestand uploaden",
         "copy path": "Gebruiken binnen de dienst",
         "create directory": "Nieuwe map",
         "refresh": "vernieuwen",

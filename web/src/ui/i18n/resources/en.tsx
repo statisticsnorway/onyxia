@@ -26,7 +26,8 @@ export const translations: Translations<"en"> = {
         "user id": "User id (IDEP)",
         "full name": "Full name",
         "email": "Email address",
-        "change account info": "Change account information (e.g., password)."
+        "instructions about how to change password":
+            'To change your password, simply logout, and click on the "forgot password" link.'
     },
     "AccountIntegrationsTab": {
         "git section title": "Git configuration",
@@ -276,10 +277,7 @@ export const translations: Translations<"en"> = {
     },
     "MyFiles": {
         "page title - my files": "My Files",
-        "page title - my secrets": "My Secrets",
         "what this page is used for - my files": "Here you can browse your S3 Buckets.",
-        "what this page is used for - my secrets":
-            "Here can be defined variables that will be accessible in your services under the form of environnement variables.",
         "help content": ({ accountTabLink, docHref }) => (
             <>
                 Read{" "}
@@ -299,9 +297,7 @@ export const translations: Translations<"en"> = {
         "go to settings": "Go to settings"
     },
     "MySecrets": {
-        "page title - my files": "My Files",
         "page title - my secrets": "My Secrets",
-        "what this page is used for - my files": "Here you can browse your S3 Buckets.",
         "what this page is used for - my secrets":
             "Here can be defined variables that will be accessible in your services under the form of environnement variables.",
         "learn more - my files": "To learn more about file management,",
@@ -323,12 +319,10 @@ export const translations: Translations<"en"> = {
         "description": "description"
     },
     "SecretsExplorerButtonBar": {
-        "file": "file",
         "secret": "secret",
         "rename": "rename",
         "delete": "delete",
         "create secret": "Create secret",
-        "upload file": "Upload file",
         "copy path": "Use in a service",
         "create directory": "Create directory",
         "refresh": "refresh",
@@ -337,9 +331,7 @@ export const translations: Translations<"en"> = {
     },
     "ExplorerButtonBar": {
         "file": "file",
-        "secret": "secret",
         "delete": "delete",
-        "create secret": "Create secret",
         "upload file": "Upload file",
         "copy path": "Copy S3 object name",
         "create directory": "Create directory",

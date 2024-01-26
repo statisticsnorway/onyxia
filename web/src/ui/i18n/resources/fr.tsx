@@ -12,7 +12,7 @@ export const translations: Translations<"fr"> = {
         "infos": "Information du compte",
         "third-party-integration": "Services externes",
         "storage": "Connexion au stockage",
-        "k8sCodeSnippets": "Connexion a Kubernetes",
+        "k8sCodeSnippets": "Connexion à Kubernetes",
         "user-interface": "Modes d'interface",
         "text1": "Mon compte",
         "text2": "Accédez à vos différentes informations de compte.",
@@ -26,19 +26,19 @@ export const translations: Translations<"fr"> = {
         "user id": "Identifiant (IDEP)",
         "full name": "Nom complet",
         "email": "Adresse mail",
-        "change account info":
-            "Modifier les informations du compte (comme, par exemple, votre mot de passe)"
+        "instructions about how to change password":
+            'Pour changer votre mot de passe, déconnectez-vous simplement, puis cliquez sur le lien "mot de passe oublié".'
     },
     "AccountIntegrationsTab": {
         "git section title": "Configurations Git",
-        "git section helper": `Pour vous assurer que vous apparaissez depuis vos
-            services comme l'auteur des contributions Git`,
+        "git section helper":
+            "Pour vous assurer que vous apparaissez depuis vos services comme l'auteur des contributions Git",
         "gitName": "Nom d'utilisateur pour Git",
         "gitEmail": "Email pour Git",
         "third party tokens section title":
             "Connecter vos comptes Gitlab, Github et Kaggle",
-        "third party tokens section helper": `Connectez vos services à des comptes extérieurs à l'aide
-            de jetons d'accès personnel et de variables d'environnement.`,
+        "third party tokens section helper":
+            "Connectez vos services à des comptes extérieurs à l'aide de jetons d'accès personnel et de variables d'environnement.",
         "personal token": ({ serviceName }) => `Jeton d'accès personnel ${serviceName}`,
         "link for token creation": ({ serviceName }) =>
             `Créer votre jeton ${serviceName}.`,
@@ -53,7 +53,8 @@ export const translations: Translations<"fr"> = {
             "Accessible au sein de vos services en tant que la variable d'environnement",
         "init script section title":
             "Pour accéder au stockage en dehors des services du datalab",
-        "init script section helper": `Téléchargez ou copiez le script d'initialisation dans le langage de programmation de votre choix.`,
+        "init script section helper":
+            "Téléchargez ou copiez le script d'initialisation dans le langage de programmation de votre choix.",
         "expires in": ({ howMuchTime }) => `Expire dans ${howMuchTime}`
     },
     "AccountKubernetesTab": {
@@ -101,7 +102,7 @@ export const translations: Translations<"fr"> = {
                 local.
             </>
         ),
-        "expires in": ({ howMuchTime }) => `Le token expire in ${howMuchTime}`
+        "expires in": ({ howMuchTime }) => `Le token expire dans ${howMuchTime}`
     },
     "ProjectSettings": {
         "page header title": "Paramètres du projet",
@@ -114,10 +115,10 @@ export const translations: Translations<"fr"> = {
             doesUserBelongToSomeGroupProject
         }) => (
             <>
-                Cette page vous permet de configurer les paramètres qui s'appliquent à
+                Cette page vous permet de configurer les paramètres qui s'appliquent
                 {groupProjectName === undefined
-                    ? " votre projet personnel"
-                    : ` le ${groupProjectName}`}
+                    ? " à votre projet personnel"
+                    : ` au ${groupProjectName}`}
                 .
                 <br />
                 {groupProjectName !== undefined && (
@@ -286,10 +287,7 @@ export const translations: Translations<"fr"> = {
     },
     "MyFiles": {
         "page title - my files": "Mes fichiers",
-        "page title - my secrets": "My Secrets",
         "what this page is used for - my files": "Stocker ici vos fichiers de données.",
-        "what this page is used for - my secrets":
-            "Stockez ici des secrets qui seront accessibles sous forme de variables d'environnement dans vos services.",
         "help content": ({ accountTabLink, docHref }) => (
             <>
                 Lire{" "}
@@ -309,9 +307,7 @@ export const translations: Translations<"fr"> = {
         "go to settings": "Aller aux paramètres"
     },
     "MySecrets": {
-        "page title - my files": "Mes fichiers",
         "page title - my secrets": "My Secrets",
-        "what this page is used for - my files": "Stockez ici vos fichiers de données.",
         "what this page is used for - my secrets":
             "Stockez ici des secrets qui seront accessibles sous forme de variables d'environnement dans vos services.",
         "learn more - my files": "Pour en savoir plus sur l'utilisation du stockage S3,",
@@ -334,9 +330,7 @@ export const translations: Translations<"fr"> = {
     },
     "ExplorerButtonBar": {
         "file": "fichier",
-        "secret": "secret",
         "delete": "supprimer",
-        "create secret": "Nouveau secret",
         "upload file": "Téléverser un fichier",
         "copy path": "Copier le nom de l'objet S3",
         "create directory": "Nouveau dossier",
@@ -345,13 +339,10 @@ export const translations: Translations<"fr"> = {
         "new": "Nouveau"
     },
     "SecretsExplorerButtonBar": {
-        "file": "fichier",
         "secret": "secret",
         "rename": "renommer",
         "delete": "supprimer",
-
         "create secret": "Nouveau secret",
-        "upload file": "Téléverser un fichier",
         "copy path": "Utiliser dans le service",
         "create directory": "Nouveau dossier",
         "refresh": "rafraîchir",
