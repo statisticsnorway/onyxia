@@ -4,7 +4,7 @@ import type { ReturnType } from "tsafe";
 import { S3Client } from "core/ports/S3Client";
 import {
     getNewlyRequestedOrCachedTokenFactory,
-    type TokenPersistance
+    createSessionStorageTokenPersistance
 } from "core/tools/getNewlyRequestedOrCachedToken";
 import { assert } from "tsafe/assert";
 import { Deferred } from "evt/tools/Deferred";
@@ -14,6 +14,7 @@ import type { Oidc } from "core/ports/Oidc";
 import { addParamToUrl } from "powerhooks/tools/urlSearchParams";
 import { bucketNameAndObjectNameFromS3Path } from "./utils/bucketNameAndObjectNameFromS3Path";
 import { exclude } from "tsafe/exclude";
+import { fnv1aHashToHex } from "core/tools/fnv1aHashToHex";
 
 export type ParamsOfCreateS3Client =
     | ParamsOfCreateS3Client.NoSts
@@ -46,13 +47,6 @@ export namespace ParamsOfCreateS3Client {
               }
             | undefined;
         nameOfBucketToCreateIfNotExist: string | undefined;
-        persistance: TokenPersistance<{
-            accessKeyId: string;
-            expirationTime: number;
-            secretAccessKey: string;
-            sessionToken: string;
-            acquisitionTime: number;
-        }>;
     };
 }
 
@@ -78,10 +72,34 @@ export function createS3Client(params: ParamsOfCreateS3Client): S3Client {
                 };
             }
 
-            const { oidc, persistance } = params;
+            const { oidc } = params;
 
             const { getNewlyRequestedOrCachedToken, clearCachedToken } =
                 getNewlyRequestedOrCachedTokenFactory({
+                    "persistance": createSessionStorageTokenPersistance<{
+                        // NOTE: StsToken are like ReturnType<S3Client["getToken"]> but we know that
+                        // session token expiration time and acquisition time are defined.
+                        accessKeyId: string;
+                        secretAccessKey: string;
+                        sessionToken: string;
+                        expirationTime: number;
+                        acquisitionTime: number;
+                    }>({
+                        "sessionStorageKey":
+                            "s3ClientToken_" +
+                            fnv1aHashToHex(
+                                (() => {
+                                    const { durationSeconds, url, stsUrl, role } = params;
+
+                                    return JSON.stringify({
+                                        durationSeconds,
+                                        url,
+                                        stsUrl,
+                                        role
+                                    });
+                                })()
+                            )
+                    }),
                     "requestNewToken": async () => {
                         // NOTE: We renew the OIDC access token because it's expiration time
                         // cap the duration of the token we will request to minio so we want it
@@ -156,10 +174,9 @@ export function createS3Client(params: ParamsOfCreateS3Client): S3Client {
                             secretAccessKey,
                             sessionToken,
                             "acquisitionTime": now
-                        } satisfies ReturnType<S3Client["getToken"]>;
+                        };
                     },
-                    "returnCachedTokenIfStillValidForXPercentOfItsTTL": "90%",
-                    persistance
+                    "returnCachedTokenIfStillValidForXPercentOfItsTTL": "90%"
                 });
 
             return { getNewlyRequestedOrCachedToken, clearCachedToken };
@@ -281,9 +298,11 @@ export function createS3Client(params: ParamsOfCreateS3Client): S3Client {
     })();
 
     const s3Client: S3Client = {
+        "url": params.url,
+        "pathStyleAccess": params.pathStyleAccess,
         "getToken": async ({ doForceRenew }) => {
             if (doForceRenew) {
-                clearCachedToken();
+                await clearCachedToken();
             }
 
             return getNewlyRequestedOrCachedToken();

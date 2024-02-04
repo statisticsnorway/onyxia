@@ -7,6 +7,7 @@ import type { Secret } from "core/ports/SecretsManager";
 import { selectors, protectedSelectors } from "./selectors";
 import * as userConfigs from "core/usecases/userConfigs";
 import { same } from "evt/tools/inDepth";
+import { id } from "tsafe/id";
 
 export const thunks = {
     "changeProject":
@@ -34,9 +35,14 @@ export const thunks = {
                 projectVaultTopDirPath
             });
 
-            const { files } = await secretsManager.list({
-                "path": projectConfigVaultDirPath
-            });
+            const { files } = await secretsManager
+                .list({
+                    "path": projectConfigVaultDirPath
+                })
+                .catch(() => {
+                    console.log("The above 404 is fine");
+                    return { "files": id<string[]>([]) };
+                });
 
             const projectConfigs: ProjectConfigs = Object.fromEntries(
                 await Promise.all(
@@ -97,8 +103,7 @@ const keys = [
     "servicePassword",
     "onboardingTimestamp",
     "restorableConfigs",
-    "s3",
-    "s3StsToken"
+    "s3"
 ] as const;
 
 assert<Equals<(typeof keys)[number], keyof ProjectConfigs>>();
@@ -115,9 +120,18 @@ export const privateThunks = {
                 projectVaultTopDirPath
             });
 
-            const { files } = await secretsManager.list({
-                "path": projectConfigVaultDirPath
-            });
+            let files: string[];
+
+            try {
+                files = (
+                    await secretsManager.list({
+                        "path": projectConfigVaultDirPath
+                    })
+                ).files;
+            } catch {
+                console.log("The above 404 is fine");
+                return;
+            }
 
             restorableConfigsStr: {
                 if (!files.includes("restorableConfigsStr")) {
@@ -253,11 +267,6 @@ function getDefaultConfig<K extends keyof ProjectConfigs>(key_: K): ProjectConfi
                 "indexForExplorer": undefined,
                 "indexForXOnyxia": undefined
             };
-            // @ts-expect-error
-            return out;
-        }
-        case "s3StsToken": {
-            const out: ProjectConfigs[typeof key] = undefined;
             // @ts-expect-error
             return out;
         }
