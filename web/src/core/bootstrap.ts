@@ -131,7 +131,24 @@ export async function bootstrapCore(
         "secretsManager": createObjectThatThrowsIfAccessed<SecretsManager>(),
         "s3ClientSts": undefined,
         "s3ClientForExplorer": createObjectThatThrowsIfAccessed<S3Client>(),
-        "sqlOlap": createDuckDbSqlOlap()
+        "sqlOlap": createDuckDbSqlOlap({
+            "getS3Config": async () => {
+                const { s3ClientForExplorer } = context;
+
+                const { accessKeyId, secretAccessKey, sessionToken } =
+                    await s3ClientForExplorer.getToken({
+                        "doForceRenew": false
+                    });
+
+                return {
+                    "s3_endpoint": s3ClientForExplorer.url,
+                    "s3_access_key_id": accessKeyId,
+                    "s3_secret_access_key": secretAccessKey,
+                    "s3_session_token": sessionToken,
+                    "s3_url_style": s3ClientForExplorer.pathStyleAccess ? "path" : "vhost"
+                };
+            }
+        })
     };
 
     const { core, dispatch, getState, evtAction } = createCore({
@@ -269,24 +286,7 @@ export async function bootstrapCore(
                                 return project.group === undefined
                                     ? `${workingDirectory.bucketNamePrefix}${username}`
                                     : `${workingDirectory.bucketNamePrefixGroup}${project.group}`;
-                            })(),
-                            "persistance": {
-                                "get": () =>
-                                    Promise.resolve(
-                                        usecases.projectManagement.protectedSelectors.currentProjectConfigs(
-                                            getState()
-                                        ).s3StsToken
-                                    ),
-                                "set": ({ token, ttl }) =>
-                                    dispatch(
-                                        usecases.projectManagement.protectedThunks.updateConfigValue(
-                                            {
-                                                "key": "s3StsToken",
-                                                "value": { token, ttl }
-                                            }
-                                        )
-                                    )
-                            }
+                            })()
                         })
                     );
                 });
@@ -302,14 +302,14 @@ export async function bootstrapCore(
                             data.payload.key === "s3"))
             )
             .toStateful()
-            .pipe((): [ParamsOfCreateS3Client.NoSts | undefined] => {
+            .pipe((): [ParamsOfCreateS3Client.NoSts | number] => {
                 const { indexForExplorer, customConfigs } =
                     usecases.s3ConfigManagement.protectedSelectors.projectS3Config(
                         getState()
                     );
 
                 if (indexForExplorer === undefined) {
-                    return [undefined];
+                    return [Date.now() + Math.random()];
                 }
 
                 const customS3ConfigForExplorer = customConfigs[indexForExplorer];
@@ -327,14 +327,17 @@ export async function bootstrapCore(
                 ];
             })
             .pipe(onlyIfChanged())
-            .attach(
-                paramsOfCreateS3Client =>
-                    (context.s3ClientForExplorer =
-                        paramsOfCreateS3Client === undefined
-                            ? context.s3ClientSts ??
-                              createObjectThatThrowsIfAccessed<S3Client>()
-                            : createS3Client(paramsOfCreateS3Client))
-            );
+            .pipe(data => [typeof data === "number" ? undefined : data])
+            .attach(paramsOfCreateS3ClientNoSts => {
+                if (paramsOfCreateS3ClientNoSts === undefined) {
+                    context.s3ClientForExplorer =
+                        context.s3ClientSts ??
+                        createObjectThatThrowsIfAccessed<S3Client>();
+                    return;
+                }
+
+                context.s3ClientForExplorer = createS3Client(paramsOfCreateS3ClientNoSts);
+            });
     }
 
     if (oidc.isUserLoggedIn) {

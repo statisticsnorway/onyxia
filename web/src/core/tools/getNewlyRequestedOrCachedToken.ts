@@ -4,6 +4,7 @@ import memoize from "memoizee";
 export type TokenPersistance<T> = {
     get: () => Promise<{ token: T; ttl: number } | undefined>;
     set: (cache: { token: T; ttl: number }) => Promise<void>;
+    clear: () => Promise<void>;
 };
 
 function getNewlyRequestedOrCachedTokenWithoutParamsFactory<
@@ -94,9 +95,36 @@ export function getNewlyRequestedOrCachedTokenFactory<
         return getNewlyRequestedOrCachedTokenWithoutParams();
     }
 
-    function clearCachedToken() {
+    async function clearCachedToken() {
+        await persistance?.clear();
         getNewlyRequestedOrCachedTokenFactory_memo.clear();
     }
 
     return { getNewlyRequestedOrCachedToken, clearCachedToken };
+}
+
+export function createSessionStorageTokenPersistance<T>(params: {
+    sessionStorageKey: string;
+}): TokenPersistance<T> {
+    const { sessionStorageKey } = params;
+
+    return {
+        "set": async ({ token, ttl }) => {
+            sessionStorage.setItem(sessionStorageKey, JSON.stringify({ token, ttl }));
+        },
+        "get": async () => {
+            const item = sessionStorage.getItem(sessionStorageKey);
+
+            if (item === null) {
+                return undefined;
+            }
+
+            const { token, ttl } = JSON.parse(item);
+
+            return { token, ttl };
+        },
+        "clear": async () => {
+            sessionStorage.removeItem(sessionStorageKey);
+        }
+    };
 }
