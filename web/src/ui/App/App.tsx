@@ -42,7 +42,8 @@ const { CoreProvider } = createCoreProvider({
                     }).newUrl
             )[0],
     "disablePersonalInfosInjectionInGroup": env.DISABLE_PERSONAL_INFOS_INJECTION_IN_GROUP,
-    "isCommandBarEnabledByDefault": !env.DISABLE_COMMAND_BAR
+    "isCommandBarEnabledByDefault": !env.DISABLE_COMMAND_BAR,
+    "oidcExtraQueryParams": env.OIDC_EXTRA_QUERY_PARAMETERS
 });
 
 export default function App() {

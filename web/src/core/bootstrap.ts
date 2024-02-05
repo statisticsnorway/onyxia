@@ -26,6 +26,7 @@ type ParamsOfBootstrapCore = {
     getCurrentLang: () => Language;
     disablePersonalInfosInjectionInGroup: boolean;
     isCommandBarEnabledByDefault: boolean;
+    oidcExtraQueryParams: Record<string, string>;
 };
 
 export type Context = {
@@ -43,7 +44,7 @@ export type Core = GenericCore<typeof usecases, Context>;
 export async function bootstrapCore(
     params: ParamsOfBootstrapCore
 ): Promise<{ core: Core }> {
-    const { apiUrl, transformUrlBeforeRedirectToLogin } = params;
+    const { apiUrl, transformUrlBeforeRedirectToLogin, oidcExtraQueryParams } = params;
 
     const isSandboxEnvironment = apiUrl === "";
 
@@ -120,7 +121,8 @@ export async function bootstrapCore(
         return createOidc({
             "issuerUri": oidcParams.issuerUri,
             "clientId": oidcParams.clientId,
-            "transformUrlBeforeRedirect": transformUrlBeforeRedirectToLogin
+            "transformUrlBeforeRedirect": transformUrlBeforeRedirectToLogin,
+            "extraQueryParams": oidcExtraQueryParams
         });
     })();
 

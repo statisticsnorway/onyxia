@@ -5,18 +5,14 @@ export async function createOidc(params: {
     issuerUri: string;
     clientId: string;
     transformUrlBeforeRedirect: (url: string) => string;
+    extraQueryParams?: Record<string, string>;
 }): Promise<Oidc> {
-    const { issuerUri, clientId, transformUrlBeforeRedirect } = params;
+    const { issuerUri, clientId, transformUrlBeforeRedirect, extraQueryParams } = params;
 
     return createOidcSpa({
         issuerUri,
         clientId,
         transformUrlBeforeRedirect,
-        "extraQueryParams": () => ({
-            // A Google `refresh_token` is only provided during the initial user authorization process, unless prompt is set to consent.
-            // See: https://stackoverflow.com/questions/10827920/not-receiving-google-oauth-refresh-token/10857806#10857806
-            // Without a Google refresh token, Keycloak/oidc provider is unable to refresh the Google access token during token exchange.
-            "prompt": "consent"
-        })
+        extraQueryParams
     });
 }

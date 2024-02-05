@@ -1064,6 +1064,17 @@ export const { env, injectTransferableEnvsInQueryParams } = createParsedEnvs([
             assert(envValue !== "", "Should have default in .env");
             return envValue;
         }
+    },
+    {
+        "envName": "OIDC_EXTRA_QUERY_PARAMETERS",
+        "isUsedInKeycloakTheme": false,
+        "validateAndParseOrGetDefault": ({ envValue, envName }) => {
+            try {
+                return JSON5.parse(envValue);
+            } catch {
+                throw new Error(`${envName} is not a valid JSON`);
+            }
+        }
     }
 ]);
 
