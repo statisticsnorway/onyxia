@@ -80,7 +80,9 @@ export function createOnyxiaApi(params: {
                         ? undefined
                         : {
                               "issuerUri": data.oidcConfiguration.issuerURI,
-                              "clientId": data.oidcConfiguration.clientID
+                              "clientId": data.oidcConfiguration.clientID,
+                              "serializedExtraQueryParams":
+                                  data.oidcConfiguration.extraQueryParams
                           };
 
                 const regions = data.regions.map(
@@ -222,7 +224,9 @@ export function createOnyxiaApi(params: {
         "getCatalogsAndCharts": memoize(
             async () => {
                 const { data } = await axiosInstance.get<ApiTypes["/public/catalogs"]>(
-                    "/public/catalogs"
+                    getOidcAccessToken() === undefined
+                        ? "/public/catalogs"
+                        : "/my-lab/catalogs"
                 );
 
                 return {

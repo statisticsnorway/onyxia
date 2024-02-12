@@ -17,10 +17,7 @@ import {
     generateUniqDefaultName,
     buildNameFactory
 } from "ui/tools/generateUniqDefaultName";
-import { Tooltip } from "onyxia-ui/Tooltip";
-import { id } from "tsafe/id";
 import type { Id } from "tsafe/id";
-import { evaluateShellExpression } from "ui/tools/evaluateShellExpression";
 import TableRow from "@mui/material/TableRow";
 import TableCell from "@mui/material/TableCell";
 import Table from "@mui/material/Table";
@@ -166,49 +163,6 @@ export const MySecretsEditor = memo((props: Props) => {
         [secret, t]
     );
 
-    const getResolvedValueFactory = useMemo(() => {
-        const secretKeys = Object.keys(secret);
-
-        /** Can throw */
-        const getResolvedValue = memoize(
-            (key: string, strValue: string): undefined | string => {
-                const indexOfKey = secretKeys.indexOf(key);
-
-                return evaluateShellExpression({
-                    "expression": strValue,
-                    "getEnvValue": ({ envName: keyBis }) => {
-                        const indexOfKeyBis = secretKeys.indexOf(keyBis);
-
-                        if (indexOfKeyBis === -1 || !(indexOfKeyBis < indexOfKey)) {
-                            return undefined;
-                        }
-
-                        return getResolvedValue(keyBis, stringifyValue(secret[keyBis]));
-                    }
-                });
-            }
-        );
-
-        return memoize((key: string) =>
-            id<RowProps["getResolvedValue"]>(({ strValue }) => {
-                const resolvedValue = getResolvedValue(key, strValue);
-
-                return resolvedValue === undefined
-                    ? ({
-                          "isResolvedSuccessfully": false,
-                          "message": t("invalid value cannot eval")
-                      } as const)
-                    : ({
-                          "isResolvedSuccessfully": true,
-                          "resolvedValue":
-                              resolvedValue === strValue.replace(/ +$/, "")
-                                  ? ""
-                                  : resolvedValue
-                      } as const);
-            })
-        );
-    }, [secret, t]);
-
     const onClick = useConstCallback(() =>
         onEdit({
             "action": "addOrOverwriteKeyValue",
@@ -223,7 +177,7 @@ export const MySecretsEditor = memo((props: Props) => {
         })
     );
 
-    const { classes, css } = useStyles(props);
+    const { classes } = useStyles(props);
 
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -272,20 +226,6 @@ export const MySecretsEditor = memo((props: Props) => {
                             <TableCell>
                                 <Text typo="body 1">{t("value column name")}</Text>
                             </TableCell>
-
-                            <TableCell>
-                                <Tooltip title={t("what's a resolved value")}>
-                                    <Text
-                                        typo="body 1"
-                                        className={css({
-                                            //So that the tooltip is well positioned
-                                            "display": "inline-block"
-                                        })}
-                                    >
-                                        {t("resolved value column name")}
-                                    </Text>
-                                </Tooltip>
-                            </TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -297,7 +237,6 @@ export const MySecretsEditor = memo((props: Props) => {
                                 isLocked={isBeingUpdated}
                                 onEdit={onEditFactory(key)}
                                 onDelete={onDeleteFactory(key)}
-                                getResolvedValue={getResolvedValueFactory(key)}
                                 getIsValidAndAvailableKey={getIsValidAndAvailableKeyFactory(
                                     key
                                 )}
@@ -346,14 +285,11 @@ export const { i18n } = declareComponentKeys<
     | "table of secret"
     | "key column name"
     | "value column name"
-    | "resolved value column name"
-    | "what's a resolved value"
     | "unavailable key"
     | "invalid key empty string"
     | "invalid key _ not valid"
     | "invalid key start with digit"
     | "invalid key invalid character"
-    | "invalid value cannot eval"
     | "use this secret"
     | "use secret dialog title"
     | "use secret dialog subtitle"
@@ -384,10 +320,9 @@ const useStyles = tss
             }
         },
         "buttonWrapper": {
-            "& > *": {
-                "marginTop": theme.spacing(4),
-                "marginRight": theme.spacing(2)
-            }
+            "marginTop": theme.spacing(4),
+            "display": "inline-flex",
+            "gap": theme.spacing(2)
         },
         "tableContainerRoot": {
             "overflow": "visible"

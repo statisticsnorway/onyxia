@@ -15,6 +15,7 @@ export type OnyxiaApi = {
                 | {
                       issuerUri: string;
                       clientId: string;
+                      serializedExtraQueryParams: string | undefined;
                   }
                 | undefined;
         }>;
