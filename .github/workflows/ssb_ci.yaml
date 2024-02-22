@@ -16,7 +16,7 @@ env:
   TAG: ${{ github.ref_name }}-${{ github.sha }}
 
 jobs:
-  test:
+  test_web:
     runs-on: ubuntu-latest
     steps:
     - uses: InseeFrLab/onyxia@gh-actions
@@ -27,8 +27,6 @@ jobs:
     - uses: bahmutov/npm-install@v1.8.35
     - run: yarn build
     - run: npx keycloakify
-      env:
-        XDG_CACHE_HOME: "/home/runner/.cache/yarn"
 
   test_helm-chart:
     runs-on: ubuntu-latest
