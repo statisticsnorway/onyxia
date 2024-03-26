@@ -5,6 +5,7 @@ import { elementsToSentence } from "ui/tools/elementsToSentence";
 import { Icon } from "onyxia-ui/Icon";
 import type { MuiIconComponentName } from "onyxia-ui/MuiIconComponentName";
 import { id } from "tsafe/id";
+import { capitalize } from "tsafe/capitalize";
 
 export const translations: Translations<"zh-CN"> = {
     /* spell-checker: disable */
@@ -416,6 +417,10 @@ export const translations: Translations<"zh-CN"> = {
         "dataExplorer": "数据浏览器",
         "sqlOlapShell": "SQL OLAP 外壳"
     },
+    "AutoLogoutCountdown": {
+        "are you still there": "你还在吗？",
+        "you'll soon be automatically logged out": "你将很快被自动登出。"
+    },
     "Page404": {
         "not found": "网页未找到"
     },
@@ -685,10 +690,11 @@ ${
         "readme": "自述文件",
         "shared by you": "你分享的",
         "reminder to delete services": "请在使用后删除您的服务。",
-        "this is a shared service": "该服务在项目内共享"
-    },
-    "MyServicesRunningTime": {
-        "launching": "启动中"
+        "this is a shared service": "该服务在项目内共享",
+        "status": "状态",
+        "container starting": "容器启动中",
+        "pending": "待定",
+        "failed": "失败"
     },
     "MyServicesRestorableConfigOptions": {
         "edit": "编辑服务",
@@ -701,7 +707,7 @@ ${
     },
     "MyServicesRestorableConfigs": {
         "saved": "已经保存",
-        "show all": "显示所有"
+        "expand": "展开"
     },
     "ReadmeAndEnvDialog": {
         "ok": "是",
@@ -717,6 +723,35 @@ ${
     "NoRunningService": {
         "launch one": "点击来启动此服务",
         "no services running": "You don't have any service running"
+    },
+    "CircularUsage": {
+        "max": "最大",
+        "used": "已用",
+        "quota card title": ({ what, isLimit }) => {
+            const whatTranslated = (() => {
+                switch (what) {
+                    case "memory":
+                        return "RAM";
+                    case "cpu":
+                        return "CPU";
+                    case "storage":
+                        return "存储";
+                    case "count/pod":
+                        return "Kubernetes 容器";
+                    case "nvidia.com/gpu":
+                        return "Nvidia GPU";
+                    default:
+                        return capitalize(what);
+                }
+            })();
+
+            return `${whatTranslated} - ${isLimit ? "限额" : "请求"}`;
+        }
+    },
+    "Quotas": {
+        "show more": "显示更多",
+        "resource usage quotas": "资源使用配额",
+        "current resource usage is reasonable": "您当前的资源使用是合理的。"
     },
     "DataExplorer": {
         "page header title": "数据浏览器",

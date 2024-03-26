@@ -63,7 +63,11 @@ export function createOidc(params: { isUserInitiallyLoggedIn: boolean }): Oidc {
 
             return new Promise<never>(() => {});
         },
-        "renewTokens": () => Promise.reject("Not implemented")
+        "renewTokens": () => Promise.reject("Not implemented"),
+        "loginScenario": "backFromLoginPages",
+        "subscribeToAutoLogoutCountdown": () => ({
+            "unsubscribeFromAutoLogoutCountdown": () => {}
+        })
     });
 }
 

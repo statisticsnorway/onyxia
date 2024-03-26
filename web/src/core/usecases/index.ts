@@ -1,3 +1,4 @@
+import * as autoLogoutCountdown from "./autoLogoutCountdown";
 import * as catalog from "./catalog";
 import * as deploymentRegionManagement from "./deploymentRegionManagement";
 import * as fileExplorer from "./fileExplorer";
@@ -6,6 +7,7 @@ import * as launcher from "./launcher";
 import * as restorableConfigManagement from "./restorableConfigManagement";
 import * as s3ConfigCreation from "./s3ConfigCreation";
 import * as s3ConfigManagement from "./s3ConfigManagement";
+import * as serviceDetails from "./serviceDetails";
 import * as serviceManagement from "./serviceManagement";
 import * as userAuthentication from "./userAuthentication";
 import * as userConfigs from "./userConfigs";
@@ -16,8 +18,10 @@ import * as vaultCredentials from "./vaultCredentials";
 import * as sqlOlapShell from "./sqlOlapShell";
 import * as dataExplorer from "./dataExplorer";
 import * as projectManagement from "./projectManagement";
+import * as viewQuotas from "./viewQuotas";
 
 export const usecases = {
+    autoLogoutCountdown,
     catalog,
     deploymentRegionManagement,
     fileExplorer,
@@ -26,6 +30,7 @@ export const usecases = {
     restorableConfigManagement,
     s3ConfigCreation,
     s3ConfigManagement,
+    serviceDetails,
     serviceManagement,
     userAuthentication,
     userConfigs,
@@ -35,5 +40,6 @@ export const usecases = {
     vaultCredentials,
     sqlOlapShell,
     dataExplorer,
-    projectManagement
+    projectManagement,
+    viewQuotas
 };

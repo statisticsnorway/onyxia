@@ -18,6 +18,13 @@ export declare namespace Oidc {
         renewTokens(): Promise<void>;
         getTokens: () => Tokens;
         logout: (params: { redirectTo: "home" | "current page" }) => Promise<never>;
+        loginScenario:
+            | "backFromLoginPages"
+            | "sessionStorageRestoration"
+            | "silentSignin";
+        subscribeToAutoLogoutCountdown: (
+            tickCallback: (params: { secondsLeft: number | undefined }) => void
+        ) => { unsubscribeFromAutoLogoutCountdown: () => void };
     };
 
     export type Tokens = {

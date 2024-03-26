@@ -45,10 +45,11 @@ type ImportMetaEnv = {
   DISABLE_PERSONAL_INFOS_INJECTION_IN_GROUP: string
   DISABLE_AUTO_LAUNCH: string
   SAMPLE_DATASET_URL: string
+  QUOTA_WARNING_THRESHOLD: string
+  QUOTA_CRITICAL_THRESHOLD: string
   ONYXIA_VERSION: string
   ONYXIA_VERSION_URL: string
   ONYXIA_API_URL: string
-  CUSTOM_RESOURCES_URL: string
   ALLOW_THEME_TESTING_VIA_URL: string
   // @user-defined-start
     /*

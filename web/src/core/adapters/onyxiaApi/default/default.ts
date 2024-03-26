@@ -1,4 +1,5 @@
 /* eslint-disable no-template-curly-in-string */
+import "minimal-polyfills/Object.fromEntries";
 import {
     type OnyxiaApi,
     type DeploymentRegion,
@@ -15,6 +16,7 @@ import { assert } from "tsafe/assert";
 import { is } from "tsafe/is";
 import { compareVersions } from "compare-versions";
 import { injectXOnyxiaContextInValuesSchemaJson } from "./injectXOnyxiaContextInValuesSchemaJson";
+import { exclude } from "tsafe/exclude";
 import type { ApiTypes } from "./ApiTypes";
 
 export function createOnyxiaApi(params: {
@@ -453,70 +455,16 @@ export function createOnyxiaApi(params: {
                     })(),
                     "ownerUsername": apiApp.env["onyxia.owner"],
                     "isShared": apiApp.env["onyxia.share"] === "true",
-                    ...(() => {
-                        if (
-                            apiApp.tasks.length !== 0 &&
-                            apiApp.tasks[0].containers.length !== 0 &&
-                            apiApp.tasks[0].containers.every(({ ready }) => ready)
-                        ) {
-                            return {
-                                "isStarting": false
-                            } as const;
-                        }
-
-                        if (Date.now() - apiApp.startedAt > 10 * 60 * 1000) {
-                            return {
-                                "isStarting": true,
-                                // If the service is not yet started after 10 minutes, we consider
-                                // no need to periodically check if it's miraculously started.
-                                // At the moment Onyxia has no way of representing a failed start
-                                // so we just leave it in a state where it's starting forever.
-                                "prStarted": new Promise<never>(() => {})
-                            } as const;
-                        }
-
-                        const prStarted = (async function callee(): Promise<void> {
-                            await new Promise(resolve => setTimeout(resolve, 2000));
-
-                            const { data } =
-                                await axiosInstance.get<ApiTypes["/my-lab/services"]>(
-                                    "/my-lab/services"
-                                );
-
-                            const refreshedApiApp = data.apps.find(
-                                ({ id }) => id === apiApp.id
-                            );
-
-                            if (refreshedApiApp === undefined) {
-                                // Release uninstalled, we let it spin forever
-                                // See comment above
-                                return new Promise(() => {});
-                            }
-
-                            const [task] = refreshedApiApp.tasks;
-
-                            if (task === undefined) {
-                                console.warn(
-                                    `Couldn't get the service status from tasks for ${apiApp.id}`
-                                );
-                                return;
-                            }
-
-                            if (
-                                task.containers.length !== 0 &&
-                                task.containers.every(({ ready }) => ready)
-                            ) {
-                                return;
-                            }
-
-                            await callee();
-                        })();
-
-                        return {
-                            "isStarting": true,
-                            prStarted
-                        };
-                    })()
+                    "areAllTasksReady":
+                        apiApp.tasks.length !== 0 &&
+                        apiApp.tasks[0].containers.length !== 0 &&
+                        apiApp.tasks[0].containers.every(({ ready }) => ready),
+                    "status": apiApp.status,
+                    "taskIds": apiApp.tasks.map(({ id }) => id),
+                    "events": apiApp.events.map(({ timestamp, message }) => ({
+                        "time": timestamp,
+                        message
+                    }))
                 })
             );
         },
@@ -566,7 +514,51 @@ export function createOnyxiaApi(params: {
                 return { user, projects };
             },
             { "promise": true }
-        )
+        ),
+        "getQuotas": async () => {
+            let resp;
+
+            try {
+                resp =
+                    await axiosInstance.get<ApiTypes["/my-lab/quota"]>("/my-lab/quota");
+            } catch (error) {
+                assert(is<any>(error));
+
+                if (error.response?.status === 403) {
+                    return {};
+                }
+
+                throw error;
+            }
+
+            const { data } = resp;
+
+            if (data === undefined) {
+                return {};
+            }
+
+            const { spec, usage } = data;
+
+            return Object.fromEntries(
+                Object.entries(spec)
+                    .map(([key, value]) => {
+                        const usageValue = usage[key];
+
+                        return [key, { "spec": value, "usage": usageValue }];
+                    })
+                    .filter(exclude(undefined))
+            );
+        },
+        "getTaskLogs": async ({ helmReleaseName, taskId }) => {
+            const { data } = await axiosInstance.get<string>("/my-lab/app/logs", {
+                "params": {
+                    "serviceId": helmReleaseName,
+                    "taskId": taskId
+                }
+            });
+
+            return data;
+        }
     };
 
     let isFirstRequestMade = false;
@@ -594,7 +586,17 @@ export function createOnyxiaApi(params: {
                     );
 
                     const { response, config } = error;
-                    const message =
+
+                    const message = [
+                        isThisTheFirstRequest
+                            ? [
+                                  "The first request to the Onyxia API failed.",
+                                  "This usually means that the Onyxia API is not configured correctly.",
+                                  `Please make sure that onyxia-api is running at:`,
+                                  url,
+                                  ""
+                              ].join("\n")
+                            : undefined,
                         config === undefined
                             ? String(error)
                             : [
@@ -612,20 +614,14 @@ export function createOnyxiaApi(params: {
 
                                       return `Response: ${response.status} ${response.statusText}`;
                                   })()
-                              ].join("\n");
+                              ].join("\n")
+                    ]
+                        .filter(exclude(undefined))
+                        .join("\n");
 
-                    if (isThisTheFirstRequest) {
-                        alert(
-                            [
-                                "The first request to the Onyxia API failed.",
-                                "This usually means that the Onyxia API is not configured correctly.",
-                                `Please make sure that onyxia-api is running at:`,
-                                url
-                            ].join("\n")
-                        );
-                    }
-
-                    alert(message);
+                    (error as any).onUnhandledOnyxiaApiError = () => {
+                        alert(message);
+                    };
 
                     throw error;
                 }
@@ -635,5 +631,39 @@ export function createOnyxiaApi(params: {
         ])
     ) as OnyxiaApi;
 
+    const handleUnhandledError = (error: any) => {
+        if (error === undefined) {
+            return;
+        }
+
+        if (!(error instanceof Error)) {
+            return;
+        }
+
+        const { onUnhandledOnyxiaApiError } = error as any;
+
+        if (onUnhandledOnyxiaApiError === undefined) {
+            return;
+        }
+
+        onUnhandledOnyxiaApiError();
+    };
+
+    window.onunhandledrejection = event => {
+        handleUnhandledError(event.reason);
+        return originalOnunhandledrejection?.call(window, event);
+    };
+
+    window.onerror = function (...args) {
+        const [, , , , error] = args;
+
+        handleUnhandledError(error);
+
+        return originalOnerror?.call(window, ...args);
+    };
+
     return onyxiaApiWithErrorLogging;
 }
+
+const originalOnunhandledrejection = window.onunhandledrejection;
+const originalOnerror = window.onerror;

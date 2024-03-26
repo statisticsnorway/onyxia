@@ -8,8 +8,6 @@ import { CollapsibleSectionHeader } from "onyxia-ui/CollapsibleSectionHeader";
 import { declareComponentKeys } from "i18nifty";
 import { symToStr } from "tsafe/symToStr";
 
-const maxConfigCountInShortVariant = 5;
-
 export type Props = {
     className?: string;
     isShortVariant: boolean;
@@ -49,40 +47,34 @@ export const MyServicesRestorableConfigs = memo((props: Props) => {
                     className={classes.header}
                     isCollapsed={isShortVariant}
                     title={t("saved")}
-                    showAllStr={t("show all")}
+                    showAllStr={t("expand")}
                     total={entries.length}
                     onToggleIsCollapsed={onRequestToggleIsShortVariant}
                 />
             )}
             <div className={classes.wrapper}>
-                {entries
-                    .filter(
-                        isShortVariant
-                            ? (...[, i]) => i < maxConfigCountInShortVariant
-                            : () => true
+                {entries.map(
+                    ({
+                        restorableConfigIndex,
+                        chartIconUrl,
+                        friendlyName,
+                        launchLink,
+                        editLink
+                    }) => (
+                        <MyServicesRestorableConfig
+                            key={launchLink.href}
+                            className={classes.entry}
+                            isShortVariant={isShortVariant}
+                            chartIconUrl={chartIconUrl}
+                            friendlyName={friendlyName}
+                            launchLink={launchLink}
+                            editLink={editLink}
+                            onRequestDelete={onRequestDeleteFactory(
+                                restorableConfigIndex
+                            )}
+                        />
                     )
-                    .map(
-                        ({
-                            restorableConfigIndex,
-                            chartIconUrl,
-                            friendlyName,
-                            launchLink,
-                            editLink
-                        }) => (
-                            <MyServicesRestorableConfig
-                                key={launchLink.href}
-                                className={classes.entry}
-                                isShortVariant={isShortVariant}
-                                chartIconUrl={chartIconUrl}
-                                friendlyName={friendlyName}
-                                launchLink={launchLink}
-                                editLink={editLink}
-                                onRequestDelete={onRequestDeleteFactory(
-                                    restorableConfigIndex
-                                )}
-                            />
-                        )
-                    )}
+                )}
             </div>
         </div>
     );
@@ -90,7 +82,7 @@ export const MyServicesRestorableConfigs = memo((props: Props) => {
 
 MyServicesRestorableConfigs.displayName = symToStr({ MyServicesRestorableConfigs });
 
-export const { i18n } = declareComponentKeys<"saved" | "show all">()({
+export const { i18n } = declareComponentKeys<"saved" | "expand">()({
     MyServicesRestorableConfigs
 });
 

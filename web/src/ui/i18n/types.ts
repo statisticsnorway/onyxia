@@ -27,6 +27,7 @@ export type ComponentKey =
     | typeof import("ui/pages/myFiles/Explorer/ExplorerUploadModal/ExplorerUploadModal").i18n
     | typeof import("ui/App/Header/Header").i18n
     | typeof import("ui/App/LeftBar").i18n
+    | typeof import("ui/App/AutoLogoutCountdown").i18n
     | typeof import("ui/pages/page404/Page404").i18n
     | typeof import("ui/shared/PortraitModeUnsupported").i18n
     | typeof import("ui/shared/MaybeAcknowledgeConfigVolatilityDialog").i18n
@@ -59,7 +60,6 @@ export type ComponentKey =
     | typeof import("ui/pages/myServices/MyServicesConfirmDeleteDialog").i18n
     | typeof import("ui/pages/myServices/MyServicesButtonBar").i18n
     | typeof import("ui/pages/myServices/MyServicesCards/MyServicesCard/MyServicesCard").i18n
-    | typeof import("ui/pages/myServices/MyServicesCards/MyServicesCard/MyServicesRunningTime").i18n
     | typeof import("ui/pages/myServices/MyServicesCards/MyServicesCard/ReadmeAndEnvDialog/ReadmeAndEnvDialog").i18n
     | typeof import("ui/pages/myServices/MyServicesCards/MyServicesCard/ReadmeAndEnvDialog/CopyOpenButton").i18n
     | typeof import("ui/pages/myServices/MyServicesRestorableConfigs/MyServicesRestorableConfig/MyServicesRestorableConfigOptions").i18n
@@ -67,6 +67,8 @@ export type ComponentKey =
     | typeof import("ui/pages/myServices/MyServicesRestorableConfigs").i18n
     | typeof import("ui/pages/myServices/MyServicesCards").i18n
     | typeof import("ui/pages/myServices/MyServicesCards/NoRunningService").i18n
+    | typeof import("ui/pages/myServices/Quotas/CircularUsage").i18n
+    | typeof import("ui/pages/myServices/Quotas/Quotas").i18n
     | typeof import("ui/pages/dataExplorer/DataExplorer").i18n
     | typeof import("ui/pages/dataExplorer/UrlInput").i18n
     | typeof import("ui/shared/CommandBar").i18n

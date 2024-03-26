@@ -166,8 +166,8 @@ const useStyles = tss.withName({ S3ConfigCard }).create(({ theme }) => ({
     "root": {
         "padding": theme.spacing(3),
         "borderRadius": theme.spacing(2),
-        "backgroundColor": theme.colors.useCases.surfaces.surface2,
-        "boxShadow": theme.shadows[1],
+        "backgroundColor": theme.colors.useCases.surfaces.surface1,
+        "boxShadow": theme.shadows[3],
         "&:hover": {
             "boxShadow": theme.shadows[6]
         }

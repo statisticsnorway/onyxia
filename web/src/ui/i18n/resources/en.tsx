@@ -5,6 +5,7 @@ import { elementsToSentence } from "ui/tools/elementsToSentence";
 import { Icon } from "onyxia-ui/Icon";
 import type { MuiIconComponentName } from "onyxia-ui/MuiIconComponentName";
 import { id } from "tsafe/id";
+import { capitalize } from "tsafe/capitalize";
 
 export const translations: Translations<"en"> = {
     "Account": {
@@ -448,6 +449,11 @@ export const translations: Translations<"en"> = {
         "dataExplorer": "Data Explorer",
         "sqlOlapShell": "SQL Olap Shell"
     },
+    "AutoLogoutCountdown": {
+        "are you still there": "Are you still there?",
+        "you'll soon be automatically logged out":
+            "You'll soon be automatically logged out."
+    },
     "Page404": {
         "not found": "Page not found"
     },
@@ -729,10 +735,11 @@ Feel free to explore and take charge of your Kubernetes deployments!
         "readme": "readme",
         "shared by you": "Shared by you",
         "reminder to delete services": "Remember to delete your services.",
-        "this is a shared service": "This service is shared among project's member"
-    },
-    "MyServicesRunningTime": {
-        "launching": "Launching..."
+        "this is a shared service": "This service is shared among project's member",
+        "status": "Status",
+        "container starting": "Container starting",
+        "pending": "Pending",
+        "failed": "Failed"
     },
     "MyServicesRestorableConfigOptions": {
         "edit": "Edit",
@@ -745,7 +752,7 @@ Feel free to explore and take charge of your Kubernetes deployments!
     },
     "MyServicesRestorableConfigs": {
         "saved": "Saved",
-        "show all": "Show all"
+        "expand": "Expand"
     },
     "ReadmeAndEnvDialog": {
         "ok": "ok",
@@ -761,6 +768,36 @@ Feel free to explore and take charge of your Kubernetes deployments!
     "NoRunningService": {
         "launch one": "Click here to launch one",
         "no services running": "You don't have any service running"
+    },
+    "CircularUsage": {
+        "max": "Max",
+        "used": "Used",
+        "quota card title": ({ what, isLimit }) => {
+            const whatTranslated = (() => {
+                switch (what) {
+                    case "memory":
+                        return "RAM";
+                    case "cpu":
+                        return "CPU";
+                    case "storage":
+                        return "Storage";
+                    case "count/pod":
+                        return "Kubernetes pods";
+                    case "nvidia.com/gpu":
+                        return "Nvidia GPUs";
+                    default:
+                        return capitalize(what);
+                }
+            })();
+
+            return `${whatTranslated} - ${isLimit ? "Limit" : "Requested"}`;
+        }
+    },
+    "Quotas": {
+        "show more": "Show more",
+        "resource usage quotas": "Resource usage quotas",
+        "current resource usage is reasonable":
+            "Your current resource usage is reasonable."
     },
     "DataExplorer": {
         "page header title": "Data Explorer",

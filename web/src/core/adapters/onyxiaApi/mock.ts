@@ -64,9 +64,11 @@ export const onyxiaApi: OnyxiaApi = {
             }),
         { "promise": true }
     ),
+    ...createPropertyThatThrowIfAccessed("getQuotas", "Not mocked"),
     ...createPropertyThatThrowIfAccessed("getCatalogsAndCharts", "Not mocked"),
     ...createPropertyThatThrowIfAccessed("getHelmChartDetails", "Not mocked"),
     ...createPropertyThatThrowIfAccessed("helmInstall", "Not mocked"),
     ...createPropertyThatThrowIfAccessed("listHelmReleases", "Not mocked"),
-    ...createPropertyThatThrowIfAccessed("helmUninstall", "Not mocked")
+    ...createPropertyThatThrowIfAccessed("helmUninstall", "Not mocked"),
+    ...createPropertyThatThrowIfAccessed("getTaskLogs", "Not mocked")
 };

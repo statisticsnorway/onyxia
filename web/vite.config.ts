@@ -17,23 +17,33 @@ export default defineConfig({
         react(),
         tsconfigPaths(),
         commonjs(),
-        keycloakify(),
+        keycloakify({
+            "themeName": "onyxia",
+            "extraThemeProperties": [
+                "RESOURCES_ALLOWED_ORIGINS=${env.ONYXIA_RESOURCES_ALLOWED_ORIGINS:*}",
+                "HEADER_TEXT_BOLD=${env.ONYXIA_HEADER_TEXT_BOLD:}",
+                "HEADER_TEXT_FOCUS=${env.ONYXIA_HEADER_TEXT_FOCUS:}",
+                "PALETTE_OVERRIDE=${env.ONYXIA_PALETTE_OVERRIDE:}",
+                "TAB_TITLE=${env.ONYXIA_TAB_TITLE:}"
+            ]
+        }),
         viteEnvs({
-            computedEnv: ({ resolvedConfig }) => ({
+            "computedEnv": ({ resolvedConfig }) => ({
                 "WEB_VERSION": JSON.parse(
                     fs.readFileSync(pathJoin(__dirname, "package.json")).toString("utf8")
                 ).version,
-                //NOTE: Initially we where in CRA so we used PUBLIC_URL,
-                // in Vite BASE_URL is the equivalent but it's not exactly formatted the same way.
-                // CRA: "" <=> Vite: "/"
-                // CRA: "/foo" <=> Vite: "/foo/"
-                // So we convert the Vite format to the CRA format for retro compatibility.
+                // Only so that html substitution can work (after rendering of the EJS).
+                // Do not use in the TS code.
                 "PUBLIC_URL": (() => {
                     const { BASE_URL } = resolvedConfig.env;
 
                     return BASE_URL === "/" ? "" : BASE_URL.replace(/\/$/, "");
                 })()
-            })
+            }),
+            "indexAsEjs": true
         })
-    ]
+    ],
+    "build": {
+        "sourcemap": true
+    }
 });

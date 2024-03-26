@@ -20,6 +20,8 @@ import { addParamToUrl } from "powerhooks/tools/urlSearchParams";
 import { LeftBar } from "./LeftBar";
 import { GlobalAlert } from "./GlobalAlert";
 import { Main } from "./Main";
+import { AutoLogoutCountdown } from "./AutoLogoutCountdown";
+import { onyxiaInstancePublicUrlKey } from "keycloak-theme/login/onyxiaInstancePublicUrl";
 
 loadThemedFavicon();
 // NOTE: We do that only to showcase the app with an other font with the URL.
@@ -36,12 +38,22 @@ const { CoreProvider } = createCoreProvider({
                 url =>
                     addParamToUrl({
                         url,
+                        "name": onyxiaInstancePublicUrlKey,
+                        "value": `${window.location.origin}${env.PUBLIC_URL}`
+                    }).newUrl
+            )
+            .map(
+                url =>
+                    addParamToUrl({
+                        url,
                         "name": "ui_locales",
                         "value": evtLang.state
                     }).newUrl
             )[0],
     "disablePersonalInfosInjectionInGroup": env.DISABLE_PERSONAL_INFOS_INJECTION_IN_GROUP,
-    "isCommandBarEnabledByDefault": !env.DISABLE_COMMAND_BAR
+    "isCommandBarEnabledByDefault": !env.DISABLE_COMMAND_BAR,
+    "quotaWarningThresholdPercent": env.QUOTA_WARNING_THRESHOLD * 100,
+    "quotaCriticalThresholdPercent": env.QUOTA_CRITICAL_THRESHOLD * 100
 });
 
 export default function App() {
@@ -76,23 +88,27 @@ function ContextualizedApp() {
     useSyncDarkModeWithValueInProfile();
 
     const { classes } = useStyles();
+    const { isUserLoggedIn } = useCoreState("userAuthentication", "authenticationState");
 
     return (
-        <div className={classes.root}>
-            {env.GLOBAL_ALERT !== undefined && (
-                <GlobalAlert
-                    className={classes.globalAlert}
-                    severity={env.GLOBAL_ALERT.severity}
-                    message={env.GLOBAL_ALERT.message}
-                />
-            )}
-            <Header className={classes.header} />
-            <section className={classes.betweenHeaderAndFooter}>
-                <LeftBar className={classes.leftBar} />
-                <Main className={classes.main} />
-            </section>
-            <Footer className={classes.footer} />
-        </div>
+        <>
+            <div className={classes.root}>
+                {env.GLOBAL_ALERT !== undefined && (
+                    <GlobalAlert
+                        className={classes.globalAlert}
+                        severity={env.GLOBAL_ALERT.severity}
+                        message={env.GLOBAL_ALERT.message}
+                    />
+                )}
+                <Header className={classes.header} />
+                <section className={classes.betweenHeaderAndFooter}>
+                    <LeftBar className={classes.leftBar} />
+                    <Main className={classes.main} />
+                </section>
+                <Footer className={classes.footer} />
+            </div>
+            {isUserLoggedIn && <AutoLogoutCountdown />}
+        </>
     );
 }
 

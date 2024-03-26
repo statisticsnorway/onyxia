@@ -5,17 +5,19 @@ import type { Thunks } from "core/bootstrap";
 import { exclude } from "tsafe/exclude";
 import { createUsecaseContextApi } from "clean-architecture";
 import { assert } from "tsafe/assert";
-import { Evt } from "evt";
-import { name, actions } from "../state";
-import type { RunningService } from "../state";
+import { Evt, type Ctx } from "evt";
+import { name, actions } from "./state";
+import type { RunningService } from "./state";
 import type { OnyxiaApi } from "core/ports/OnyxiaApi";
-import { formatHelmLsResp } from "./formatHelmCommands";
+import { formatHelmLsResp } from "./utils/formatHelmCommands";
+import * as viewQuotas from "core/usecases/viewQuotas";
+import { protectedSelectors } from "./selectors";
 
 export const thunks = {
     "setActive":
         () =>
         (...args) => {
-            const [dispatch, , { evtAction }] = args;
+            const [dispatch, getState, { evtAction, onyxiaApi }] = args;
 
             const ctx = Evt.newCtx();
 
@@ -28,6 +30,124 @@ export const thunks = {
                 )
                 .toStateful()
                 .attach(() => dispatch(thunks.update()));
+
+            evtAction.attach(
+                action =>
+                    action.usecaseName === "viewQuotas" &&
+                    action.actionName === "isOnlyNonNegligibleQuotasToggled" &&
+                    viewQuotas.protectedSelectors.isOnlyNonNegligibleQuotas(
+                        getState()
+                    ) === false,
+                ctx,
+                () => {
+                    const commandLogsEntry =
+                        viewQuotas.protectedSelectors.commandLogsEntry(getState());
+
+                    assert(commandLogsEntry !== undefined);
+
+                    dispatch(actions.commandLogsEntryAdded({ commandLogsEntry }));
+                }
+            );
+
+            let ctxInner_prev: Ctx<void> | undefined = undefined;
+
+            evtAction
+                .pipe(
+                    ctx,
+                    action =>
+                        action.usecaseName === name &&
+                        action.actionName === "updateCompleted"
+                )
+                .toStateful()
+                .attach(async () => {
+                    if (ctxInner_prev !== undefined) {
+                        ctxInner_prev.done();
+                    }
+
+                    const ctxInner = Evt.newCtx();
+
+                    ctxInner_prev = ctxInner;
+
+                    ctx.evtDoneOrAborted.attachOnce(ctxInner, () => ctxInner.done());
+
+                    evtAction.attachOnce(
+                        action =>
+                            action.usecaseName === name &&
+                            action.actionName === "updateStarted",
+                        ctxInner,
+                        () => {
+                            ctxInner.done();
+                        }
+                    );
+
+                    await (async function monitorServicesStartupStatus() {
+                        const startingRunningServiceHelmReleaseNames =
+                            protectedSelectors.startingRunningServiceHelmReleaseNames(
+                                getState()
+                            );
+
+                        if (startingRunningServiceHelmReleaseNames === undefined) {
+                            return;
+                        }
+
+                        if (startingRunningServiceHelmReleaseNames.length === 0) {
+                            return;
+                        }
+
+                        await new Promise(resolve => setTimeout(resolve, 3_000));
+
+                        if (ctxInner.completionStatus) {
+                            return;
+                        }
+
+                        const helmReleases = await onyxiaApi.listHelmReleases();
+
+                        if (ctxInner.completionStatus) {
+                            return;
+                        }
+
+                        let hasNonStartedHelmRelease = false;
+
+                        startingRunningServiceHelmReleaseNames.forEach(
+                            helmReleaseName => {
+                                const helmRelease = helmReleases.find(
+                                    helmRelease =>
+                                        helmRelease.helmReleaseName === helmReleaseName
+                                );
+
+                                if (helmRelease === undefined) {
+                                    return;
+                                }
+
+                                if (
+                                    helmRelease.status === "deployed" &&
+                                    helmRelease.areAllTasksReady
+                                ) {
+                                    dispatch(
+                                        actions.statusUpdated({
+                                            helmReleaseName,
+                                            "status": helmRelease.status,
+                                            "areAllTasksReady":
+                                                helmRelease.areAllTasksReady
+                                        })
+                                    );
+
+                                    return;
+                                }
+
+                                hasNonStartedHelmRelease = true;
+                            }
+                        );
+
+                        if (!hasNonStartedHelmRelease) {
+                            return;
+                        }
+
+                        return monitorServicesStartupStatus();
+                    })();
+
+                    ctxInner.done();
+                });
 
             function setInactive() {
                 ctx.done();
@@ -106,6 +226,64 @@ export const thunks = {
                 user: { username }
             } = await onyxiaApi.getUserAndProjects();
 
+            const runningServices: RunningService[] = helmReleases
+                .map(
+                    ({
+                        helmReleaseName,
+                        friendlyName,
+                        urls,
+                        startedAt,
+                        isShared,
+                        ownerUsername,
+                        postInstallInstructions,
+                        chartName,
+                        chartVersion,
+                        areAllTasksReady,
+                        status
+                    }) => {
+                        const common: RunningService.Common = {
+                            helmReleaseName,
+                            chartName,
+                            "friendlyName": friendlyName ?? helmReleaseName,
+                            "chartIconUrl": getLogoUrl({
+                                chartName,
+                                chartVersion
+                            }),
+                            "monitoringUrl": getMonitoringUrl({
+                                helmReleaseName
+                            }),
+                            startedAt,
+                            "urls": urls.sort(),
+                            status,
+                            areAllTasksReady,
+                            "hasPostInstallInstructions":
+                                postInstallInstructions !== undefined
+                        };
+
+                        const isOwned = ownerUsername === username;
+
+                        if (!isOwned) {
+                            if (!isShared) {
+                                return undefined;
+                            }
+
+                            return id<RunningService.NotOwned>({
+                                ...common,
+                                isShared,
+                                isOwned,
+                                ownerUsername
+                            });
+                        }
+
+                        return id<RunningService.Owned>({
+                            ...common,
+                            isShared,
+                            isOwned
+                        });
+                    }
+                )
+                .filter(exclude(undefined));
+
             dispatch(
                 actions.updateCompleted({
                     kubernetesNamespace,
@@ -124,71 +302,7 @@ export const thunks = {
                             )
                             .filter(exclude(undefined))
                     ),
-                    "runningServices": helmReleases
-                        .map(
-                            ({
-                                helmReleaseName,
-                                friendlyName,
-                                urls,
-                                startedAt,
-                                isShared,
-                                ownerUsername,
-                                env,
-                                postInstallInstructions,
-                                chartName,
-                                chartVersion,
-                                ...rest
-                            }) => {
-                                const common: RunningService.Common = {
-                                    helmReleaseName,
-                                    chartName,
-                                    "friendlyName": friendlyName ?? helmReleaseName,
-                                    "chartIconUrl": getLogoUrl({
-                                        chartName,
-                                        chartVersion
-                                    }),
-                                    "monitoringUrl": getMonitoringUrl({
-                                        helmReleaseName
-                                    }),
-                                    startedAt,
-                                    "urls": urls.sort(),
-                                    "isStarting": !rest.isStarting
-                                        ? false
-                                        : (rest.prStarted.then(() =>
-                                              dispatch(
-                                                  actions.serviceStarted({
-                                                      helmReleaseName
-                                                  })
-                                              )
-                                          ),
-                                          true),
-                                    "hasPostInstallInstructions":
-                                        postInstallInstructions !== undefined
-                                };
-
-                                const isOwned = ownerUsername === username;
-
-                                if (!isOwned) {
-                                    if (!isShared) {
-                                        return undefined;
-                                    }
-
-                                    return id<RunningService.NotOwned>({
-                                        ...common,
-                                        isShared,
-                                        isOwned,
-                                        ownerUsername
-                                    });
-                                }
-
-                                return id<RunningService.Owned>({
-                                    ...common,
-                                    isShared,
-                                    isOwned
-                                });
-                            }
-                        )
-                        .filter(exclude(undefined))
+                    runningServices
                 })
             );
         },
@@ -290,13 +404,14 @@ const privateThunks = {
                                         revision,
                                         chartName,
                                         chartVersion,
-                                        appVersion
+                                        appVersion,
+                                        status
                                     }) => ({
                                         "name": helmReleaseName,
                                         namespace,
                                         revision,
                                         "updatedTime": startedAt,
-                                        "status": "deployed",
+                                        "status": status,
                                         "chart": `${chartName}-${chartVersion}`,
                                         appVersion
                                     })

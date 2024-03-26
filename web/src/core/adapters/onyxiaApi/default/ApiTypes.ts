@@ -182,6 +182,7 @@ export type ApiTypes = {
     "/my-lab/services": {
         apps: {
             id: string;
+            status: "deployed" | "pending-install" | "failed";
             urls: string[];
             env: {
                 [onyxiaIsSharedFormFieldPath]: "true" | "false";
@@ -191,12 +192,17 @@ export type ApiTypes = {
             };
             startedAt: number;
             tasks: {
+                id: string;
                 containers: { ready: boolean }[];
             }[];
             postInstallInstructions?: string;
             chart: string;
             appVersion: string;
             revision: string;
+            events: {
+                message: string;
+                timestamp: number;
+            }[];
         }[];
     };
     "/user/info": {
@@ -211,5 +217,9 @@ export type ApiTypes = {
             namespace: string;
             vaultTopDir: string;
         }[];
+    };
+    "/my-lab/quota": {
+        spec: Record<string, number | string>;
+        usage: Record<string, number | string>;
     };
 };

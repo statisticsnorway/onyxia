@@ -5,6 +5,7 @@ import { elementsToSentence } from "ui/tools/elementsToSentence";
 import { Icon } from "onyxia-ui/Icon";
 import type { MuiIconComponentName } from "onyxia-ui/MuiIconComponentName";
 import { id } from "tsafe/id";
+import { capitalize } from "tsafe/capitalize";
 
 export const translations: Translations<"nl"> = {
     /* spell-checker: disable */
@@ -451,6 +452,11 @@ export const translations: Translations<"nl"> = {
         "dataExplorer": "Data Verkenner",
         "sqlOlapShell": "SQL OLAP Shell"
     },
+    "AutoLogoutCountdown": {
+        "are you still there": "Ben je er nog?",
+        "you'll soon be automatically logged out":
+            "Je wordt binnenkort automatisch uitgelogd."
+    },
     "Page404": {
         "not found": "Pagina niet gevonden"
     },
@@ -743,10 +749,11 @@ Voel je vrij om te verkennen en de controle over je Kubernetes-implementaties te
         "shared by you": "gedeeld door u",
         "reminder to delete services":
             "Vergeet niet uw diensten te verwijderen na gebruik.",
-        "this is a shared service": "Deze dienst wordt gedeeld binnen het project"
-    },
-    "MyServicesRunningTime": {
-        "launching": "In uitvoering..."
+        "this is a shared service": "Deze dienst wordt gedeeld binnen het project",
+        "status": "Status",
+        "container starting": "Container start",
+        "pending": "In afwachting",
+        "failed": "Mislukt"
     },
     "MyServicesRestorableConfigOptions": {
         "edit": "Wijzigen",
@@ -759,7 +766,7 @@ Voel je vrij om te verkennen en de controle over je Kubernetes-implementaties te
     },
     "MyServicesRestorableConfigs": {
         "saved": "Opgeslagen",
-        "show all": "Alles weergeven"
+        "expand": "Uitbreiden"
     },
     "ReadmeAndEnvDialog": {
         "ok": "ok",
@@ -775,6 +782,36 @@ Voel je vrij om te verkennen en de controle over je Kubernetes-implementaties te
     "NoRunningService": {
         "launch one": "Klik hier om er een te starten",
         "no services running": "You don't have any service running"
+    },
+    "CircularUsage": {
+        "max": "Max",
+        "used": "Gebruikt",
+        "quota card title": ({ what, isLimit }) => {
+            const whatTranslated = (() => {
+                switch (what) {
+                    case "memory":
+                        return "RAM";
+                    case "cpu":
+                        return "CPU";
+                    case "storage":
+                        return "Opslag";
+                    case "count/pod":
+                        return "Kubernetes pods";
+                    case "nvidia.com/gpu":
+                        return "Nvidia GPU's";
+                    default:
+                        return capitalize(what);
+                }
+            })();
+
+            return `${whatTranslated} - ${isLimit ? "Limiet" : "Aangevraagd"}`;
+        }
+    },
+    "Quotas": {
+        "show more": "Meer tonen",
+        "resource usage quotas": "Quota's voor het gebruik van middelen",
+        "current resource usage is reasonable":
+            "Uw huidig gebruik van middelen is redelijk."
     },
     "DataExplorer": {
         "page header title": "Data Verkenner",

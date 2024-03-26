@@ -5,6 +5,7 @@ import { elementsToSentence } from "ui/tools/elementsToSentence";
 import { Icon } from "onyxia-ui/Icon";
 import type { MuiIconComponentName } from "onyxia-ui/MuiIconComponentName";
 import { id } from "tsafe/id";
+import { capitalize } from "tsafe/capitalize";
 
 export const translations: Translations<"fi"> = {
     /* spell-checker: disable */
@@ -446,6 +447,11 @@ export const translations: Translations<"fi"> = {
         "dataExplorer": "Data Explorer",
         "sqlOlapShell": "SQL OLAP-kuori"
     },
+    "AutoLogoutCountdown": {
+        "are you still there": "Oletko vielä siellä?",
+        "you'll soon be automatically logged out":
+            "Sinut kirjataan pian automaattisesti ulos."
+    },
     "Page404": {
         "not found": "Sivua ei löydy"
     },
@@ -730,10 +736,11 @@ Tutustu vapaasti ja ota hallintaan Kubernetes-julkaisusi!
         "readme": "lueminut",
         "shared by you": "Jaettu sinun kanssasi",
         "reminder to delete services": "Muista poistaa palvelusi.",
-        "this is a shared service": "Tämä palvelu on jaettu projektin jäsenten kesken"
-    },
-    "MyServicesRunningTime": {
-        "launching": "Käynnistetään..."
+        "this is a shared service": "Tämä palvelu on jaettu projektin jäsenten kesken",
+        "status": "Tila",
+        "container starting": "Säiliö käynnistyy",
+        "pending": "Odottaa",
+        "failed": "Epäonnistui"
     },
     "MyServicesRestorableConfigOptions": {
         "edit": "Muokkaa",
@@ -746,7 +753,7 @@ Tutustu vapaasti ja ota hallintaan Kubernetes-julkaisusi!
     },
     "MyServicesRestorableConfigs": {
         "saved": "Tallennettu",
-        "show all": "Näytä kaikki"
+        "expand": "Laajenna"
     },
     "ReadmeAndEnvDialog": {
         "ok": "ok",
@@ -762,6 +769,36 @@ Tutustu vapaasti ja ota hallintaan Kubernetes-julkaisusi!
     "NoRunningService": {
         "launch one": "Käynnistä palvelu",
         "no services running": "Sinulla ei ole käynnissä olevia palveluita"
+    },
+    "CircularUsage": {
+        "max": "Maksimi",
+        "used": "Käytetty",
+        "quota card title": ({ what, isLimit }) => {
+            const whatTranslated = (() => {
+                switch (what) {
+                    case "memory":
+                        return "RAM";
+                    case "cpu":
+                        return "CPU";
+                    case "storage":
+                        return "Tallennustila";
+                    case "count/pod":
+                        return "Kubernetes-podit";
+                    case "nvidia.com/gpu":
+                        return "Nvidia-GPU:t";
+                    default:
+                        return capitalize(what);
+                }
+            })();
+
+            return `${whatTranslated} - ${isLimit ? "Raja" : "Pyydetty"}`;
+        }
+    },
+    "Quotas": {
+        "show more": "Näytä lisää",
+        "resource usage quotas": "Resurssien käyttökiintiöt",
+        "current resource usage is reasonable":
+            "Nykyinen resurssien käyttösi on kohtuullista."
     },
     "DataExplorer": {
         "page header title": "Data Explorer",

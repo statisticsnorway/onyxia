@@ -5,6 +5,7 @@ import { elementsToSentence } from "ui/tools/elementsToSentence";
 import { Icon } from "onyxia-ui/Icon";
 import type { MuiIconComponentName } from "onyxia-ui/MuiIconComponentName";
 import { id } from "tsafe/id";
+import { capitalize } from "tsafe/capitalize";
 
 export const translations: Translations<"fr"> = {
     /* spell-checker: disable */
@@ -456,6 +457,11 @@ export const translations: Translations<"fr"> = {
         "dataExplorer": "Explorateur de Données",
         "sqlOlapShell": "Coquille SQL OLAP"
     },
+    "AutoLogoutCountdown": {
+        "are you still there": "Êtes-vous toujours là ?",
+        "you'll soon be automatically logged out":
+            "Vous serez bientôt déconnecté automatiquement."
+    },
     "Page404": {
         "not found": "Page non trouvée"
     },
@@ -748,10 +754,11 @@ N'hésitez pas à explorer et à prendre en main vos déploiements Kubernetes !
         "shared by you": "partagé par vous",
         "reminder to delete services":
             "Rappelez-vous de supprimer vos services après utilisation.",
-        "this is a shared service": "Ce service est partagé au sein du projet"
-    },
-    "MyServicesRunningTime": {
-        "launching": "En cours..."
+        "this is a shared service": "Ce service est partagé au sein du projet",
+        "status": "Statut",
+        "container starting": "Démarrage du conteneur",
+        "pending": "En attente",
+        "failed": "Échoué"
     },
     "MyServicesRestorableConfigOptions": {
         "edit": "Modifier",
@@ -764,7 +771,7 @@ N'hésitez pas à explorer et à prendre en main vos déploiements Kubernetes !
     },
     "MyServicesRestorableConfigs": {
         "saved": "Enregistrés",
-        "show all": "Afficher tous"
+        "expand": "Développer"
     },
     "ReadmeAndEnvDialog": {
         "ok": "ok",
@@ -781,6 +788,36 @@ N'hésitez pas à explorer et à prendre en main vos déploiements Kubernetes !
         "launch one": "Clickez ici pour en lancer un",
         "no services running":
             "Vous n'avez actuellement aucun service en cours d'exécution"
+    },
+    "CircularUsage": {
+        "max": "Max",
+        "used": "Utilisé",
+        "quota card title": ({ what, isLimit }) => {
+            const whatTranslated = (() => {
+                switch (what) {
+                    case "memory":
+                        return "RAM";
+                    case "cpu":
+                        return "CPU";
+                    case "storage":
+                        return "Stockage";
+                    case "count/pod":
+                        return "Pods Kubernetes";
+                    case "nvidia.com/gpu":
+                        return "GPUs Nvidia";
+                    default:
+                        return capitalize(what);
+                }
+            })();
+
+            return `${whatTranslated} - ${isLimit ? "Limite" : "Demandé"}`;
+        }
+    },
+    "Quotas": {
+        "show more": "Afficher plus",
+        "resource usage quotas": "Quotas d'utilisation des ressources",
+        "current resource usage is reasonable":
+            "Votre utilisation actuelle des ressources est raisonnable."
     },
     "DataExplorer": {
         "page header title": "Explorateur de Données",

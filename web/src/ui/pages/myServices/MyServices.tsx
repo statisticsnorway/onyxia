@@ -26,6 +26,7 @@ import {
 } from "./MyServicesConfirmDeleteDialog";
 import { Deferred } from "evt/tools/Deferred";
 import { customIcons } from "ui/theme";
+import { Quotas } from "./Quotas";
 
 export type Props = {
     route: PageRoute;
@@ -42,24 +43,22 @@ export default function MyServices(props: Props) {
     const { serviceManagement, restorableConfigManagement, k8sCodeSnippets } = useCore().functions;
     /* prettier-ignore */
     const { restorableConfigs, chartIconAndFriendlyNameByRestorableConfigIndex } = useCoreState("restorableConfigManagement", "main");
-    const isUpdating = useCoreState("serviceManagement", "isUpdating");
-    const runningServices = useCoreState("serviceManagement", "runningServices");
-    const deletableRunningServiceHelmReleaseNames = useCoreState(
-        "serviceManagement",
-        "deletableRunningServiceHelmReleaseNames"
-    );
-    const isThereOwnedSharedServices = useCoreState(
-        "serviceManagement",
-        "isThereOwnedSharedServices"
-    );
-    const isThereNonOwnedServices = useCoreState(
-        "serviceManagement",
-        "isThereNonOwnedServices"
-    );
-    const commandLogsEntries = useCoreState("serviceManagement", "commandLogsEntries");
+    const {
+        isUpdating,
+        runningServices,
+        deletableRunningServiceHelmReleaseNames,
+        isThereNonOwnedServices,
+        isThereOwnedSharedServices,
+        commandLogsEntries
+    } = useCoreState("serviceManagement", "main");
 
-    const { isCommandBarEnabled } = useCoreState("userConfigs", "userConfigs");
+    const { isCommandBarEnabled, isDevModeEnabled } = useCoreState(
+        "userConfigs",
+        "userConfigs"
+    );
     const servicePassword = useCoreState("projectManagement", "servicePassword");
+
+    const evtQuotasActionUpdate = useConst(() => Evt.create());
 
     const onButtonBarClick = useConstCallback(async (buttonId: ButtonId) => {
         switch (buttonId) {
@@ -68,6 +67,7 @@ export default function MyServices(props: Props) {
                 return;
             case "refresh":
                 serviceManagement.update();
+                evtQuotasActionUpdate.post();
                 return;
             case "trash":
                 const dDoProceed = new Deferred<boolean>();
@@ -170,7 +170,8 @@ export default function MyServices(props: Props) {
                     urls,
                     startedAt,
                     monitoringUrl,
-                    isStarting,
+                    status,
+                    areAllTasksReady,
                     hasPostInstallInstructions,
                     ...rest
                 }) => ({
@@ -180,10 +181,15 @@ export default function MyServices(props: Props) {
                     chartName,
                     "openUrl": urls[0],
                     monitoringUrl,
-                    "startTime": isStarting ? undefined : startedAt,
+                    "startTime": startedAt,
+                    status,
+                    areAllTasksReady,
                     hasPostInstallInstructions,
                     "isShared": rest.isShared,
                     "isOwned": rest.isOwned,
+                    "myServiceLink": !isDevModeEnabled
+                        ? undefined
+                        : routes.myService({ helmReleaseName }).link,
                     "ownerUsername": rest.isOwned ? undefined : rest.ownerUsername
                 })
             ),
@@ -307,13 +313,19 @@ export default function MyServices(props: Props) {
                                 }
                             />
                         )}
-                        <MyServicesRestorableConfigs
-                            isShortVariant={!isSavedConfigsExtended}
-                            entries={restorableConfigEntires}
-                            className={classes.savedConfigs}
-                            onRequestDelete={onRequestDeleteRestorableConfig}
-                            onRequestToggleIsShortVariant={onRequestToggleIsShortVariant}
-                        />
+                        <div className={classes.rightPanel}>
+                            {!isSavedConfigsExtended && (
+                                <Quotas evtActionUpdate={evtQuotasActionUpdate} />
+                            )}
+                            <MyServicesRestorableConfigs
+                                isShortVariant={!isSavedConfigsExtended}
+                                entries={restorableConfigEntires}
+                                onRequestDelete={onRequestDeleteRestorableConfig}
+                                onRequestToggleIsShortVariant={
+                                    onRequestToggleIsShortVariant
+                                }
+                            />
+                        </div>
                     </>
                 </div>
                 <MyServicesConfirmDeleteDialog evtOpen={evtConfirmDeleteDialogOpen} />
@@ -379,10 +391,7 @@ const useStyles = tss
         "cardsAndSavedConfigs": {
             "overflow": "hidden",
             "flex": 1,
-            "display": "flex",
-            "& > *": {
-                "height": "100%"
-            }
+            "display": "flex"
         },
         ...(() => {
             const ratio = 0.65;
@@ -392,11 +401,13 @@ const useStyles = tss
                     "flex": ratio,
                     "marginRight": theme.spacing(5)
                 },
-                "savedConfigs": {
+                "rightPanel": {
                     "flex": isSavedConfigsExtended ? 1 : 1 - ratio,
                     "paddingRight": "2%",
                     //NOTE: It's not great to have a fixed width here but measuring would needlessly complexity the code too much.
-                    "marginTop": isCommandBarEnabled ? 40 : undefined
+                    "marginTop": isCommandBarEnabled ? 40 : undefined,
+                    "height": `calc(100% - ${commandBarTop}px)`,
+                    "overflow": "auto"
                 }
             };
         })(),
