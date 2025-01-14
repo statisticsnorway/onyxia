@@ -1,6 +1,6 @@
 /* Hide "how to change password" message on Account Info page */
 [class$="AccountInfoTab-howToChangePasswordInfo"] {
-    display: none;
+    display: none !important;
 }
 
 [class$="-BrandHeaderSection-logoContainer"] {
