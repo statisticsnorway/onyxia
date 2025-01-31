@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { useMemo, memo } from "react";
 import { MyServicesCard } from "./MyServicesCard";
 import { tss } from "tss";
 import { Text } from "onyxia-ui/Text";
@@ -8,93 +8,102 @@ import { NonPostableEvt } from "evt";
 import { useEvt } from "evt/hooks";
 import { CircularProgress } from "onyxia-ui/CircularProgress";
 import { declareComponentKeys } from "i18nifty";
-import { useConst } from "powerhooks/useConst";
 import memoize from "memoizee";
 import { Evt } from "evt";
 import { NoRunningService } from "./NoRunningService";
+import type { Service } from "core/usecases/serviceManagement";
 
 export type Props = {
     className?: string;
     isUpdating: boolean;
-    cards:
-        | {
-              helmReleaseName: string;
-              chartIconUrl: string | undefined;
-              chartName: string;
-              friendlyName: string;
-              openUrl: string | undefined;
-              monitoringUrl: string | undefined;
-              startTime: number;
-              status: "deployed" | "pending" | "failed";
-              areAllTasksReady: boolean;
-              isShared: boolean;
-              isOwned: boolean;
-              /** undefined when isOwned === true*/
-              ownerUsername: string | undefined;
-              hasPostInstallInstructions: boolean;
-              myServiceLink: Link | undefined;
-          }[]
-        | undefined;
+    services: Service[] | undefined;
+    getMyServiceLink: (params: { helmReleaseName: string }) => Link;
     catalogExplorerLink: Link;
     onRequestDelete(params: { helmReleaseName: string }): void;
-    getEnv: (params: { helmReleaseName: string }) => Record<string, string>;
-    getPostInstallInstructions: (params: { helmReleaseName: string }) => string;
+    onRequestPauseOrResume: (params: { helmReleaseName: string }) => void;
+    onRequestLogHelmGetNotes: (params: { helmReleaseName: string }) => void;
+    onRequestChangeFriendlyName: (params: {
+        helmReleaseName: string;
+        friendlyName: string;
+    }) => void;
+    onRequestChangeSharedStatus: (params: {
+        helmReleaseName: string;
+        isShared: boolean;
+    }) => void;
     evtAction: NonPostableEvt<{
-        action: "TRIGGER SHOW POST INSTALL INSTRUCTIONS";
+        action: "open readme dialog";
         helmReleaseName: string;
     }>;
-    projectServicePassword: string;
+    lastClusterEvent:
+        | { message: string; severity: "error" | "info" | "warning" }
+        | undefined;
+    onOpenClusterEventsDialog: () => void;
+    groupProjectName: string | undefined;
 };
 
 export const MyServicesCards = memo((props: Props) => {
     const {
         className,
-        cards,
+        services,
+        getMyServiceLink,
         catalogExplorerLink,
         isUpdating,
         onRequestDelete,
-        getEnv,
-        getPostInstallInstructions,
+        onRequestPauseOrResume,
+        onRequestLogHelmGetNotes,
+        onRequestChangeFriendlyName,
         evtAction,
-        projectServicePassword
+        lastClusterEvent,
+        onOpenClusterEventsDialog,
+        onRequestChangeSharedStatus,
+        groupProjectName
     } = props;
 
     const { classes, cx } = useStyles({
-        "isThereServicesRunning": (cards ?? []).length !== 0
+        isThereServices: services !== undefined && services.length !== 0
     });
 
     const { t } = useTranslation({ MyServicesCards });
 
-    const getEvtMyServicesCardAction = useConst(() =>
-        memoize((_helmReleaseName: string) =>
-            Evt.create<"SHOW POST INSTALL INSTRUCTIONS">()
-        )
+    const getMyServicesFunctionProps = useMemo(
+        () =>
+            memoize((helmReleaseName: string) => ({
+                onRequestLogHelmGetNotes: () =>
+                    onRequestLogHelmGetNotes({ helmReleaseName }),
+                onRequestDelete: () => onRequestDelete({ helmReleaseName }),
+                onRequestPauseOrResume: () => onRequestPauseOrResume({ helmReleaseName }),
+                onRequestChangeFriendlyName: (friendlyName: string) =>
+                    onRequestChangeFriendlyName({ helmReleaseName, friendlyName }),
+                myServiceLink: getMyServiceLink({ helmReleaseName }),
+                onRequestChangeSharedStatus: (isShared: boolean) =>
+                    onRequestChangeSharedStatus({ helmReleaseName, isShared }),
+                evtAction: Evt.create<"open readme dialog">()
+            })),
+        [
+            onRequestLogHelmGetNotes,
+            onRequestChangeFriendlyName,
+            onRequestDelete,
+            onRequestPauseOrResume,
+            onRequestChangeSharedStatus,
+            getMyServiceLink
+        ]
     );
 
     useEvt(
         ctx => {
             evtAction.$attach(
                 action =>
-                    action.action !== "TRIGGER SHOW POST INSTALL INSTRUCTIONS"
+                    action.action !== "open readme dialog"
                         ? null
                         : [action.helmReleaseName],
                 ctx,
                 helmReleaseName =>
-                    getEvtMyServicesCardAction(helmReleaseName).post(
-                        "SHOW POST INSTALL INSTRUCTIONS"
+                    getMyServicesFunctionProps(helmReleaseName).evtAction.post(
+                        "open readme dialog"
                     )
             );
         },
-        [evtAction]
-    );
-
-    const getMyServicesFunctionProps = useConst(() =>
-        memoize((helmReleaseName: string) => ({
-            "getPoseInstallInstructions": () =>
-                getPostInstallInstructions({ helmReleaseName }),
-            "onRequestDelete": () => onRequestDelete({ helmReleaseName }),
-            "getEnv": () => getEnv({ helmReleaseName })
-        }))
+        [evtAction, getMyServicesFunctionProps]
     );
 
     return (
@@ -106,11 +115,11 @@ export const MyServicesCards = memo((props: Props) => {
             </Text>
             <div className={classes.wrapper}>
                 {(() => {
-                    if (cards === undefined) {
+                    if (services === undefined) {
                         return null;
                     }
 
-                    if (cards.length === 0) {
+                    if (services.length === 0) {
                         return (
                             <NoRunningService
                                 className={classes.noRunningServices}
@@ -119,25 +128,31 @@ export const MyServicesCards = memo((props: Props) => {
                         );
                     }
 
-                    return cards.map(card => {
-                        const { getEnv, getPoseInstallInstructions, onRequestDelete } =
-                            getMyServicesFunctionProps(card.helmReleaseName);
+                    return services.map(service => {
+                        const {
+                            onRequestLogHelmGetNotes,
+                            onRequestChangeFriendlyName,
+                            onRequestDelete,
+                            onRequestPauseOrResume,
+                            onRequestChangeSharedStatus,
+                            myServiceLink,
+                            evtAction
+                        } = getMyServicesFunctionProps(service.helmReleaseName);
 
                         return (
                             <MyServicesCard
-                                key={card.helmReleaseName}
-                                evtAction={getEvtMyServicesCardAction(
-                                    card.helmReleaseName
-                                )}
-                                getPoseInstallInstructions={
-                                    !card.hasPostInstallInstructions
-                                        ? undefined
-                                        : getPoseInstallInstructions
-                                }
-                                projectServicePassword={projectServicePassword}
+                                key={service.helmReleaseName}
+                                evtAction={evtAction}
                                 onRequestDelete={onRequestDelete}
-                                getEnv={getEnv}
-                                {...card}
+                                onRequestPauseOrResume={onRequestPauseOrResume}
+                                onRequestLogHelmGetNotes={onRequestLogHelmGetNotes}
+                                onRequestChangeFriendlyName={onRequestChangeFriendlyName}
+                                myServiceLink={myServiceLink}
+                                lastClusterEvent={lastClusterEvent}
+                                onOpenClusterEventsDialog={onOpenClusterEventsDialog}
+                                service={service}
+                                groupProjectName={groupProjectName}
+                                onRequestChangeSharedStatus={onRequestChangeSharedStatus}
                             />
                         );
                     });
@@ -147,35 +162,36 @@ export const MyServicesCards = memo((props: Props) => {
     );
 });
 
-export const { i18n } = declareComponentKeys<"running services">()({ MyServicesCards });
+const { i18n } = declareComponentKeys<"running services">()({ MyServicesCards });
+export type I18n = typeof i18n;
 
 const useStyles = tss
-    .withParams<{ isThereServicesRunning: boolean }>()
+    .withParams<{ isThereServices: boolean }>()
     .withName({ MyServicesCards })
-    .create(({ theme, isThereServicesRunning }) => ({
-        "root": {
-            "overflow": "hidden",
-            "display": "flex",
-            "flexDirection": "column"
+    .create(({ theme, isThereServices }) => ({
+        root: {
+            overflow: "hidden",
+            display: "flex",
+            flexDirection: "column"
         },
-        "header": {
+        header: {
             ...theme.spacing.topBottom("margin", 3)
         },
-        "wrapper": {
-            "overflow": "auto",
-            ...(!isThereServicesRunning
+        wrapper: {
+            overflow: "auto",
+            ...(!isThereServices
                 ? {
-                      "flex": 1
+                      flex: 1
                   }
                 : {
-                      "paddingRight": theme.spacing(3),
-                      "display": "grid",
-                      "gridTemplateColumns": "repeat(2,1fr)",
-                      "gap": theme.spacing(4)
+                      paddingRight: theme.spacing(3),
+                      display: "grid",
+                      gridTemplateColumns: "repeat(2,1fr)",
+                      gap: theme.spacing(4)
                   }),
-            "paddingBottom": theme.spacing(4)
+            paddingBottom: theme.spacing(4)
         },
-        "noRunningServices": {
-            "height": "100%"
+        noRunningServices: {
+            height: "100%"
         }
     }));

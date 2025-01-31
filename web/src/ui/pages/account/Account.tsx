@@ -1,7 +1,7 @@
 import { Tabs } from "onyxia-ui/Tabs";
 import { type AccountTabId, accountTabIds } from "./accountTabIds";
 import { AccountInfoTab } from "./AccountInfoTab";
-import { AccountIntegrationsTab } from "./AccountIntegrationsTab";
+import { AccountGitTab } from "./AccountGitTab";
 import { AccountKubernetesTab } from "./AccountKubernetesTab";
 import { AccountVaultTab } from "./AccountVaultTab";
 import { AccountStorageTab } from "./AccountStorageTab";
@@ -16,7 +16,7 @@ import { declareComponentKeys } from "i18nifty";
 import { useCore } from "core";
 import { assert, type Equals } from "tsafe/assert";
 import type { PageRoute } from "./route";
-import { customIcons } from "ui/theme";
+import { getIconUrlByName, customIcons } from "lazy-icons";
 
 export type Props = {
     route: PageRoute;
@@ -44,7 +44,7 @@ export default function Account(props: Props) {
                 .filter(accountTabId =>
                     accountTabId !== "vault" ? true : vaultCredentials.isAvailable()
                 )
-                .map(id => ({ id, "title": t(id) })),
+                .map(id => ({ id, title: t(id) })),
         [t]
     );
 
@@ -61,7 +61,7 @@ export default function Account(props: Props) {
                 title={t("text1")}
                 helpTitle={t("text2")}
                 helpContent={t("text3")}
-                helpIcon="sentimentSatisfied"
+                helpIcon={getIconUrlByName("SentimentSatisfied")}
             />
             <Tabs
                 className={classes.tabs}
@@ -75,8 +75,8 @@ export default function Account(props: Props) {
                     switch (route.params.tabId) {
                         case "infos":
                             return <AccountInfoTab />;
-                        case "third-party-integration":
-                            return <AccountIntegrationsTab />;
+                        case "git":
+                            return <AccountGitTab />;
                         case "storage":
                             return <AccountStorageTab />;
                         case "user-interface":
@@ -93,20 +93,21 @@ export default function Account(props: Props) {
     );
 }
 
-export const { i18n } = declareComponentKeys<
+const { i18n } = declareComponentKeys<
     AccountTabId | "text1" | "text2" | "text3" | "personal tokens tooltip"
 >()({
     Account
 });
+export type I18n = typeof i18n;
 
 const useStyles = tss.withName({ Account }).create(({ theme }) => ({
-    "root": {
-        "height": "100%",
-        "overflow": "auto"
+    root: {
+        height: "100%",
+        overflow: "auto"
     },
-    "tabs": {
-        "borderRadius": 8,
-        "overflow": "hidden",
-        "boxShadow": theme.shadows[1]
+    tabs: {
+        borderRadius: 8,
+        overflow: "hidden",
+        boxShadow: theme.shadows[1]
     }
 }));

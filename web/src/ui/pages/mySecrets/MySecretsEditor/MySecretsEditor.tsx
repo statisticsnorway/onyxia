@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { tss } from "tss";
 import { useMemo, useState, memo } from "react";
 import { useCallbackFactory } from "powerhooks/useCallbackFactory";
@@ -26,6 +27,7 @@ import TableHead from "@mui/material/TableHead";
 import TableBody from "@mui/material/TableBody";
 import { Dialog } from "onyxia-ui/Dialog";
 import { declareComponentKeys } from "i18nifty";
+import { getIconUrlByName } from "lazy-icons";
 
 export type Props = {
     isBeingUpdated: boolean;
@@ -57,9 +59,9 @@ export const MySecretsEditor = memo((props: Props) => {
 
     // When an row is created automatically enter editing mode.
     useArrayDiff({
-        "watchFor": "addition or deletion",
-        "array": Object.keys(secret),
-        "callback": ({ added, removed }) => {
+        watchFor: "addition or deletion",
+        array: Object.keys(secret),
+        callback: ({ added, removed }) => {
             if (
                 !(added.length === 1 && removed.length === 0 && secret[added[0]] === "")
             ) {
@@ -84,26 +86,26 @@ export const MySecretsEditor = memo((props: Props) => {
                                     editedStrValue !== undefined
                                 ) {
                                     return {
-                                        "action": "renameKeyAndUpdateValue" as const,
+                                        action: "renameKeyAndUpdateValue" as const,
                                         key,
-                                        "newKey": editedKey,
-                                        "newValue": editedStrValue
+                                        newKey: editedKey,
+                                        newValue: editedStrValue
                                     };
                                 }
 
                                 if (editedStrValue !== undefined) {
                                     return {
-                                        "action": "addOrOverwriteKeyValue" as const,
+                                        action: "addOrOverwriteKeyValue" as const,
                                         key,
-                                        "value": editedStrValue
+                                        value: editedStrValue
                                     };
                                 }
 
                                 if (editedKey !== undefined) {
                                     return {
-                                        "action": "renameKey" as const,
+                                        action: "renameKey" as const,
                                         key,
-                                        "newKey": editedKey
+                                        newKey: editedKey
                                     };
                                 }
 
@@ -119,7 +121,7 @@ export const MySecretsEditor = memo((props: Props) => {
             memoize(
                 (key: string) => () =>
                     onEdit({
-                        "action": "removeKeyValue",
+                        action: "removeKeyValue",
                         key
                     })
             ),
@@ -135,13 +137,13 @@ export const MySecretsEditor = memo((props: Props) => {
                     }: Parameters<RowProps["getIsValidAndAvailableKey"]>[0]) => {
                         {
                             const getIsValidKeyResult = getIsValidKey({
-                                "key": candidateKey
+                                key: candidateKey
                             });
 
                             if (!getIsValidKeyResult.isValidKey) {
                                 return {
-                                    "isValidAndAvailableKey": false,
-                                    "message": t(getIsValidKeyResult.message)
+                                    isValidAndAvailableKey: false,
+                                    message: t(getIsValidKeyResult.message)
                                 } as const;
                             }
                         }
@@ -152,12 +154,12 @@ export const MySecretsEditor = memo((props: Props) => {
                                 .includes(candidateKey)
                         ) {
                             return {
-                                "isValidAndAvailableKey": false,
-                                "message": t("unavailable key")
+                                isValidAndAvailableKey: false,
+                                message: t("unavailable key")
                             } as const;
                         }
 
-                        return { "isValidAndAvailableKey": true } as const;
+                        return { isValidAndAvailableKey: true } as const;
                     }
             ),
         [secret, t]
@@ -165,15 +167,15 @@ export const MySecretsEditor = memo((props: Props) => {
 
     const onClick = useConstCallback(() =>
         onEdit({
-            "action": "addOrOverwriteKeyValue",
-            "key": generateUniqDefaultName({
-                "names": Object.keys(secret),
-                "buildName": buildNameFactory({
-                    "defaultName": t("environnement variable default name"),
-                    "separator": "_"
+            action: "addOrOverwriteKeyValue",
+            key: generateUniqDefaultName({
+                names: Object.keys(secret),
+                buildName: buildNameFactory({
+                    defaultName: t("environnement variable default name"),
+                    separator: "_"
                 })
             }),
-            "value": ""
+            value: ""
         })
     );
 
@@ -250,13 +252,13 @@ export const MySecretsEditor = memo((props: Props) => {
             </TableContainer>
 
             <div className={classes.buttonWrapper}>
-                <Button startIcon="add" onClick={onClick}>
+                <Button startIcon={getIconUrlByName("Add")} onClick={onClick}>
                     {t("add an entry")}
                 </Button>
                 <Button
                     onClick={dialogCallbackFactory("open")}
                     variant="secondary"
-                    startIcon="filterNone"
+                    startIcon={getIconUrlByName("FilterNone")}
                 >
                     {t("use this secret")}
                 </Button>
@@ -279,7 +281,7 @@ export const MySecretsEditor = memo((props: Props) => {
     );
 });
 
-export const { i18n } = declareComponentKeys<
+const { i18n } = declareComponentKeys<
     | "add an entry"
     | "environnement variable default name"
     | "table of secret"
@@ -297,35 +299,36 @@ export const { i18n } = declareComponentKeys<
     | "use secret dialog ok"
     | "do not display again"
 >()({ MySecretsEditor });
+export type I18n = typeof i18n;
 
 const useStyles = tss
     .withParams<Props>()
     .withName({ MySecretsEditor })
     .create(({ theme }) => ({
-        "root": {
-            "padding": theme.spacing(3),
+        root: {
+            padding: theme.spacing(3),
             "& .MuiTableCell-root": {
-                "padding": 0,
-                "border": "unset"
+                padding: 0,
+                border: "unset"
             },
             "& .MuiTableHead-root": {
-                "borderBottom": `1px solid ${theme.colors.useCases.typography.textTertiary}`
+                borderBottom: `1px solid ${theme.colors.useCases.typography.textTertiary}`
             },
             //So the error on the input of the last row is not cropped.
-            "overflow": "visible"
+            overflow: "visible"
         },
-        "tableHead": {
+        tableHead: {
             "& .MuiTypography-root": {
-                "padding": theme.spacing({ "topBottom": 3, "rightLeft": 2 })
+                padding: theme.spacing({ topBottom: 3, rightLeft: 2 })
             }
         },
-        "buttonWrapper": {
-            "marginTop": theme.spacing(4),
-            "display": "inline-flex",
-            "gap": theme.spacing(2)
+        buttonWrapper: {
+            marginTop: theme.spacing(4),
+            display: "inline-flex",
+            gap: theme.spacing(2)
         },
-        "tableContainerRoot": {
-            "overflow": "visible"
+        tableContainerRoot: {
+            overflow: "visible"
         }
     }));
 
@@ -354,31 +357,31 @@ export function getIsValidKey(params: { key: string }):
 
     if (key === "") {
         return {
-            "isValidKey": false,
-            "message": "invalid key empty string"
+            isValidKey: false,
+            message: "invalid key empty string"
         };
     }
 
     if (key === "_") {
         return {
-            "isValidKey": false,
-            "message": "invalid key _ not valid"
+            isValidKey: false,
+            message: "invalid key _ not valid"
         };
     }
 
     if (/^[0-9]/.test(key)) {
         return {
-            "isValidKey": false,
-            "message": "invalid key start with digit"
+            isValidKey: false,
+            message: "invalid key start with digit"
         };
     }
 
     if (!/^[a-zA-Z0-9_]+$/.test(key)) {
         return {
-            "isValidKey": false,
-            "message": "invalid key invalid character"
+            isValidKey: false,
+            message: "invalid key invalid character"
         };
     }
 
-    return { "isValidKey": true };
+    return { isValidKey: true };
 }

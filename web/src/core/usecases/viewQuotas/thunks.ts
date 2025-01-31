@@ -5,7 +5,7 @@ import { privateSelectors } from "./selectors";
 import * as projectManagement from "core/usecases/projectManagement";
 
 export const thunks = {
-    "setActive":
+    setActive:
         () =>
         (...args) => {
             const [dispatch, getState, { evtAction }] = args;
@@ -28,10 +28,13 @@ export const thunks = {
                     }
                 });
 
+            // TODO: Update, it isn't smart.
             evtAction.attach(
                 action =>
                     action.usecaseName === "serviceManagement" &&
-                    action.actionName === "serviceStopped",
+                    action.actionName === "helmReleaseLocked" &&
+                    (action.payload.reason === "delete" ||
+                        action.payload.reason === "suspend"),
                 ctx,
                 () => {
                     dispatch(actions.podDeletionStarted());
@@ -44,12 +47,19 @@ export const thunks = {
                         privateSelectors.isOngoingPodDeletion(getState());
 
                     await new Promise<void>(resolve => {
+                        const ctxInner = Evt.newCtx();
+
                         const timer = setTimeout(
-                            resolve,
+                            () => {
+                                ctxInner.done();
+                                resolve();
+                            },
                             isOngoingPodDeletion === true ? 4_000 : 30_000
                         );
 
-                        ctx.evtDoneOrAborted.attachOnce(() => clearTimeout(timer));
+                        ctx.evtDoneOrAborted.attachOnce(ctxInner, () =>
+                            clearTimeout(timer)
+                        );
                     });
 
                     try {
@@ -66,7 +76,7 @@ export const thunks = {
 
             return { setInactive };
         },
-    "update":
+    update:
         () =>
         async (...args) => {
             const [dispatch, getState, { onyxiaApi, paramsOfBootstrapCore }] = args;
@@ -86,16 +96,17 @@ export const thunks = {
             dispatch(
                 actions.updateCompleted({
                     quotas,
-                    "projectId":
-                        projectManagement.selectors.currentProject(getState()).id,
-                    "quotaWarningThresholdPercent":
+                    projectId:
+                        projectManagement.protectedSelectors.currentProject(getState())
+                            .id,
+                    quotaWarningThresholdPercent:
                         paramsOfBootstrapCore.quotaWarningThresholdPercent,
-                    "quotaCriticalThresholdPercent":
+                    quotaCriticalThresholdPercent:
                         paramsOfBootstrapCore.quotaCriticalThresholdPercent
                 })
             );
         },
-    "toggleIsOnlyNonNegligibleQuotas":
+    toggleIsOnlyNonNegligibleQuotas:
         () =>
         (...args) => {
             const [dispatch] = args;

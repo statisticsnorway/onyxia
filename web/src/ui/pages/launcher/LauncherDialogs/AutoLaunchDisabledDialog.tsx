@@ -33,7 +33,7 @@ export const AutoLaunchDisabledDialog = memo((props: Props) => {
                     typo="body 2"
                     htmlComponent="div"
                     className={css({
-                        "marginTop": theme.spacing(3)
+                        marginTop: theme.spacing(3)
                     })}
                 >
                     {t("auto launch disabled dialog body")}
@@ -53,7 +53,7 @@ export const AutoLaunchDisabledDialog = memo((props: Props) => {
 
 AutoLaunchDisabledDialog.displayName = symToStr({ AutoLaunchDisabledDialog });
 
-export const { i18n } = declareComponentKeys<
+const { i18n } = declareComponentKeys<
     | "auto launch disabled dialog title"
     | {
           K: "auto launch disabled dialog body";
@@ -61,3 +61,4 @@ export const { i18n } = declareComponentKeys<
       }
     | "ok"
 >()({ AutoLaunchDisabledDialog });
+export type I18n = typeof i18n;

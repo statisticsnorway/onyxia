@@ -22,7 +22,6 @@ import * as deploymentRegionManagement from "core/usecases/deploymentRegionManag
 export type UserConfigs = Id<
     Record<string, string | boolean | number | null>,
     {
-        kaggleApiToken: string | null;
         gitName: string;
         gitEmail: string;
         gitCredentialCacheDuration: number;
@@ -48,12 +47,12 @@ export const name = "userConfigs";
 
 export const { reducer, actions } = createUsecaseActions({
     name,
-    "initialState": createObjectThatThrowsIfAccessed<State>({
-        "debugMessage":
+    initialState: createObjectThatThrowsIfAccessed<State>({
+        debugMessage:
             "The userConfigState should have been initialized during the store initialization"
     }),
-    "reducers": {
-        "initializationCompleted": (
+    reducers: {
+        initializationCompleted: (
             ...[, { payload }]: [any, { payload: { userConfigs: UserConfigs } }]
         ) => {
             const { userConfigs } = payload;
@@ -61,17 +60,17 @@ export const { reducer, actions } = createUsecaseActions({
             return Object.fromEntries(
                 Object.entries(userConfigs).map(([key, value]) => [
                     key,
-                    { value, "isBeingChanged": false }
+                    { value, isBeingChanged: false }
                 ])
             ) as any;
         },
-        "changeStarted": (state, { payload }: { payload: ChangeValueParams }) => {
+        changeStarted: (state, { payload }: { payload: ChangeValueParams }) => {
             const wrap = state[payload.key];
 
             wrap.value = payload.value;
             wrap.isBeingChanged = true;
         },
-        "changeCompleted": (
+        changeCompleted: (
             state,
             { payload }: { payload: { key: keyof UserConfigs } }
         ) => {
@@ -86,7 +85,7 @@ export type ChangeValueParams<K extends keyof UserConfigs = keyof UserConfigs> =
 };
 
 export const thunks = {
-    "changeValue":
+    changeValue:
         <K extends keyof UserConfigs>(params: ChangeValueParams<K>) =>
         async (...args) => {
             const [dispatch, getState, { secretsManager, oidc }] = args;
@@ -102,35 +101,35 @@ export const thunks = {
             const dirPath = await dispatch(privateThunks.getDirPath());
 
             await secretsManager.put({
-                "path": pathJoin(dirPath, params.key),
-                "secret": { "value": params.value }
+                path: pathJoin(dirPath, params.key),
+                secret: { value: params.value }
             });
 
             dispatch(actions.changeCompleted(params));
         },
-    "resetHelperDialogs":
+    resetHelperDialogs:
         () =>
         (...args) => {
             const [dispatch] = args;
 
             dispatch(
                 thunks.changeValue({
-                    "key": "doDisplayMySecretsUseInServiceDialog",
-                    "value": true
+                    key: "doDisplayMySecretsUseInServiceDialog",
+                    value: true
                 })
             );
 
             dispatch(
                 thunks.changeValue({
-                    "key": "doDisplayAcknowledgeConfigVolatilityDialogIfNoVault",
-                    "value": true
+                    key: "doDisplayAcknowledgeConfigVolatilityDialogIfNoVault",
+                    value: true
                 })
             );
         }
 } satisfies Thunks;
 
 export const protectedThunks = {
-    "initialize":
+    initialize:
         () =>
         async (...args) => {
             /* prettier-ignore */
@@ -142,18 +141,17 @@ export const protectedThunks = {
 
             // NOTE: Default values
             const userConfigs: UserConfigs = {
-                "kaggleApiToken": null,
-                "gitName": username,
-                "gitEmail": email,
-                "gitCredentialCacheDuration": 0,
-                "isBetaModeEnabled": false,
-                "isDevModeEnabled": false,
-                "isDarkModeEnabled": getIsDarkModeEnabledOsDefault(),
-                "githubPersonalAccessToken": null,
-                "doDisplayMySecretsUseInServiceDialog": true,
-                "doDisplayAcknowledgeConfigVolatilityDialogIfNoVault": true,
-                "selectedProjectId": null,
-                "isCommandBarEnabled": paramsOfBootstrapCore.isCommandBarEnabledByDefault
+                gitName: username,
+                gitEmail: email,
+                gitCredentialCacheDuration: 0,
+                isBetaModeEnabled: false,
+                isDevModeEnabled: false,
+                isDarkModeEnabled: getIsDarkModeEnabledOsDefault(),
+                githubPersonalAccessToken: null,
+                doDisplayMySecretsUseInServiceDialog: true,
+                doDisplayAcknowledgeConfigVolatilityDialogIfNoVault: true,
+                selectedProjectId: null,
+                isCommandBarEnabled: paramsOfBootstrapCore.isCommandBarEnabledByDefault
             };
 
             const dirPath = await dispatch(privateThunks.getDirPath());
@@ -171,7 +169,7 @@ export const protectedThunks = {
                         //Store default value.
                         await secretsManager.put({
                             path,
-                            "secret": { "value": userConfigs[key] }
+                            secret: { value: userConfigs[key] }
                         });
 
                         return;
@@ -186,7 +184,7 @@ export const protectedThunks = {
 } satisfies Thunks;
 
 const privateThunks = {
-    "getDirPath":
+    getDirPath:
         () =>
         async (...args): Promise<string> => {
             const [, , { onyxiaApi }] = args;
@@ -231,7 +229,7 @@ export const selectors = (() => {
 
     return {
         userConfigs,
-        "userConfigsWithUpdateProgress": state,
+        userConfigsWithUpdateProgress: state,
         isDarkModeEnabled,
         isVaultEnabled
     };

@@ -6,6 +6,7 @@ import { useDarkMode } from "onyxia-ui";
 import { useConstCallback } from "powerhooks/useConstCallback";
 import { useCore, useCoreState } from "core";
 import { declareComponentKeys } from "i18nifty";
+import { env } from "env";
 
 export type Props = {
     className?: string;
@@ -33,43 +34,45 @@ export const AccountUserInterfaceTab = memo((props: Props) => {
         const isBetaModeEnabledNew = !isBetaModeEnabled;
 
         userConfigs.changeValue({
-            "key": "isBetaModeEnabled",
-            "value": isBetaModeEnabledNew
+            key: "isBetaModeEnabled",
+            value: isBetaModeEnabledNew
         });
 
         if (!isBetaModeEnabledNew) {
             userConfigs.changeValue({
-                "key": "isDevModeEnabled",
-                "value": false
+                key: "isDevModeEnabled",
+                value: false
             });
         }
     });
 
     const onRequestToggleIsDevModeEnabled = useConstCallback(() =>
         userConfigs.changeValue({
-            "key": "isDevModeEnabled",
-            "value": !isDevModeEnabled
+            key: "isDevModeEnabled",
+            value: !isDevModeEnabled
         })
     );
 
     const onRequestToggleIsCommandBarEnabled = useConstCallback(() =>
         userConfigs.changeValue({
-            "key": "isCommandBarEnabled",
-            "value": !isCommandBarEnabled
+            key: "isCommandBarEnabled",
+            value: !isCommandBarEnabled
         })
     );
 
     return (
         <div className={className}>
             <SettingSectionHeader title={t("title")} />
-            <SettingField
-                type="toggle"
-                title={t("enable dark mode")}
-                helperText={t("dark mode helper")}
-                isLocked={false}
-                isOn={isDarkModeEnabled}
-                onRequestToggle={onRequestToggleIsDarkModeEnabled}
-            />
+            {env.DARK_MODE === undefined && (
+                <SettingField
+                    type="toggle"
+                    title={t("enable dark mode")}
+                    helperText={t("dark mode helper")}
+                    isLocked={false}
+                    isOn={isDarkModeEnabled}
+                    onRequestToggle={onRequestToggleIsDarkModeEnabled}
+                />
+            )}
             <SettingField
                 type="toggle"
                 title={t("enable beta")}
@@ -92,8 +95,7 @@ export const AccountUserInterfaceTab = memo((props: Props) => {
                 type="toggle"
                 title={t("Enable command bar")}
                 helperText={t("Enable command bar helper", {
-                    "imgUrl":
-                        "https://github.com/InseeFrLab/onyxia/assets/6702424/474da82c-a0e1-4107-acf7-84870aab9f78"
+                    imgUrl: "https://github.com/InseeFrLab/onyxia/assets/6702424/474da82c-a0e1-4107-acf7-84870aab9f78"
                 })}
                 isLocked={false}
                 isOn={isCommandBarEnabled}
@@ -108,7 +110,7 @@ export const AccountUserInterfaceTab = memo((props: Props) => {
     );
 });
 
-export const { i18n } = declareComponentKeys<
+const { i18n } = declareComponentKeys<
     | "title"
     | "enable dark mode"
     | "enable beta"
@@ -125,3 +127,4 @@ export const { i18n } = declareComponentKeys<
           R: JSX.Element;
       }
 >()({ AccountUserInterfaceTab });
+export type I18n = typeof i18n;

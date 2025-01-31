@@ -37,7 +37,7 @@ export const AcknowledgeSharingOfConfigConfirmDialog = memo((props: Props) => {
         <Dialog
             title={t("acknowledge sharing of config confirm dialog title")}
             subtitle={t("acknowledge sharing of config confirm dialog subtitle", {
-                "groupProjectName": state?.groupProjectName ?? ""
+                groupProjectName: state?.groupProjectName ?? ""
             })}
             body={t("acknowledge sharing of config confirm dialog body")}
             buttons={
@@ -60,7 +60,7 @@ AcknowledgeSharingOfConfigConfirmDialog.displayName = symToStr({
     AcknowledgeSharingOfConfigConfirmDialog
 });
 
-export const { i18n } = declareComponentKeys<
+const { i18n } = declareComponentKeys<
     | "acknowledge sharing of config confirm dialog title"
     | {
           K: "acknowledge sharing of config confirm dialog subtitle";
@@ -70,3 +70,4 @@ export const { i18n } = declareComponentKeys<
     | "cancel"
     | "i understand, proceed"
 >()({ AcknowledgeSharingOfConfigConfirmDialog });
+export type I18n = typeof i18n;

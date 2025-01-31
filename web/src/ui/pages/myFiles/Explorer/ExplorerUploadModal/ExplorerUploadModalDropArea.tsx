@@ -2,7 +2,7 @@ import { useState, memo } from "react";
 import type { DragEvent } from "react";
 import { tss } from "tss";
 import { Text } from "onyxia-ui/Text";
-import { ExplorerIcon } from "../ExplorerIcon";
+import { ExplorerIcon } from "../ExplorerIcon/ExplorerIcon";
 import { useTranslation } from "ui/i18n";
 import Link from "@mui/material/Link";
 import { InputFile } from "ui/tools/InputFile";
@@ -64,7 +64,7 @@ export const ExplorerUploadModalDropArea = memo((props: Props) => {
 
             assert(event.type === "drop");
 
-            onFileSelected({ "files": Object.values(event.dataTransfer.files) });
+            onFileSelected({ files: Object.values(event.dataTransfer.files) });
         }
     );
 
@@ -99,37 +99,38 @@ export const ExplorerUploadModalDropArea = memo((props: Props) => {
     );
 });
 
-export const { i18n } = declareComponentKeys<"drag and drop or" | "browse files">()({
+const { i18n } = declareComponentKeys<"drag and drop or" | "browse files">()({
     ExplorerUploadModalDropArea
 });
+export type I18n = typeof i18n;
 
 const useStyles = tss
     .withName({ ExplorerUploadModalDropArea })
     .withParams<{ isDragHover: boolean }>()
     .create(({ theme, isDragHover }) => ({
-        "root": {
-            "outline": `${isDragHover ? 3 : 1}px ${
+        root: {
+            outline: `${isDragHover ? 3 : 1}px ${
                 theme.colors.useCases.buttons[
                     isDragHover ? "actionActive" : "actionDisabled"
                 ]
             } dashed`,
-            "borderRadius": theme.spacing(3),
-            "display": "flex",
-            "justifyContent": "center",
-            "alignItems": "center",
-            "boxSizing": "border-box",
+            borderRadius: theme.spacing(3),
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            boxSizing: "border-box",
             ...theme.spacing.topBottom("padding", 7)
         },
-        "innerDiv": {
-            "display": "flex",
-            "flexDirection": "column",
-            "justifyContent": "center"
+        innerDiv: {
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center"
         },
-        "explorerIcon": {
-            "height": 60,
-            "marginBottom": theme.spacing(5)
+        explorerIcon: {
+            height: 60,
+            marginBottom: theme.spacing(5)
         },
-        "link": {
-            "cursor": "pointer"
+        link: {
+            cursor: "pointer"
         }
     }));

@@ -6,10 +6,10 @@ export function getRefFromDepsFactory(params: { max: number }) {
 
     const memoizedByNumberOfArgument = new Map<
         number,
-        (...deps: DependencyList) => Object
+        (...deps: DependencyList) => object
     >();
 
-    function getRefFromDeps(deps: DependencyList): Object {
+    function getRefFromDeps(deps: DependencyList): object {
         let memoized = memoizedByNumberOfArgument.get(deps.length);
 
         if (memoized !== undefined) {
@@ -19,7 +19,7 @@ export function getRefFromDepsFactory(params: { max: number }) {
         memoizedByNumberOfArgument.set(
             deps.length,
             memoize((..._deps: DependencyList) => ({}), {
-                "length": deps.length,
+                length: deps.length,
                 max
             })
         );

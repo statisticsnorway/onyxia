@@ -29,7 +29,7 @@ export const Footer = memo((props: Props) => {
 
     return (
         <footer className={cx(classes.root, className)}>
-            <Text typo="body 2">2017 - 2024 Onyxia</Text>
+            <Text typo="body 2">2017 - 2025 Onyxia</Text>
             {spacing}
             <a
                 href="https://github.com/InseeFrLab/onyxia"
@@ -51,11 +51,15 @@ export const Footer = memo((props: Props) => {
                     changeLanguageText={t("change language")}
                 />
             )}
-            {spacing}
-            <a {...routes.terms().link}>
-                {" "}
-                <Text typo="body 2">{t("terms of service")}</Text>{" "}
-            </a>
+            {env.TERMS_OF_SERVICES !== undefined && (
+                <>
+                    {spacing}
+                    <a {...routes.terms().link}>
+                        {" "}
+                        <Text typo="body 2">{t("terms of service")}</Text>{" "}
+                    </a>
+                </>
+            )}
             {spacing}
             {env.ONYXIA_VERSION !== undefined && (
                 <a href={env.ONYXIA_VERSION_URL} target="_blank" rel="noreferrer">
@@ -63,49 +67,52 @@ export const Footer = memo((props: Props) => {
                 </a>
             )}
             {spacing}
-            <DarkModeSwitch
-                size="extra small"
-                className={classes.darkModeSwitch}
-                ariaLabel={t("dark mode switch")}
-            />
+            {env.DARK_MODE === undefined && (
+                <DarkModeSwitch
+                    size="extra small"
+                    className={classes.darkModeSwitch}
+                    ariaLabel={t("dark mode switch")}
+                />
+            )}
         </footer>
     );
 });
 
-export const { i18n } = declareComponentKeys<
+const { i18n } = declareComponentKeys<
     "contribute" | "terms of service" | "change language" | "dark mode switch"
 >()({ Footer });
+export type I18n = typeof i18n;
 
 const useStyles = tss
     .withParams<Props>()
     .withName({ Footer })
     .create(({ theme }) => ({
-        "root": {
-            "backgroundColor": theme.colors.useCases.surfaces.background,
-            "display": "flex",
-            "alignItems": "center",
+        root: {
+            backgroundColor: theme.colors.useCases.surfaces.background,
+            display: "flex",
+            alignItems: "center",
             "& a": {
-                "textDecoration": "none",
+                textDecoration: "none",
                 "&:hover": {
-                    "textDecoration": "underline",
-                    "textDecorationColor": theme.colors.useCases.typography.textPrimary
+                    textDecoration: "underline",
+                    textDecorationColor: theme.colors.useCases.typography.textPrimary
                 }
             }
         },
-        "icon": {
-            "fill": theme.colors.useCases.typography.textPrimary
+        icon: {
+            fill: theme.colors.useCases.typography.textPrimary
         },
-        "contribute": {
-            "display": "flex",
-            "alignItems": "center"
+        contribute: {
+            display: "flex",
+            alignItems: "center"
         },
-        "sep": {
-            "flex": 1
+        sep: {
+            flex: 1
         },
-        "spacing": {
-            "width": theme.spacing(4)
+        spacing: {
+            width: theme.spacing(4)
         },
-        "darkModeSwitch": {
-            "padding": 0
+        darkModeSwitch: {
+            padding: 0
         }
     }));

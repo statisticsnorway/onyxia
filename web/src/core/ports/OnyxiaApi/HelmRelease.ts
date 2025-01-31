@@ -4,18 +4,17 @@ export type HelmRelease = {
     urls: string[];
     startedAt: number;
     postInstallInstructions: string | undefined;
-    isShared: boolean;
-    env: Record<string, string>;
+    isShared: boolean | undefined;
+    values: Record<string, string>;
     ownerUsername: string;
     appVersion: string;
     revision: string;
+    catalogId: string;
     chartName: string;
     chartVersion: string;
     areAllTasksReady: boolean;
     status: "deployed" | "pending-install" | "failed";
-    taskIds: string[];
-    events: {
-        message: string;
-        time: number;
-    }[];
+    podNames: string[];
+    doesSupportSuspend: boolean;
+    isSuspended: boolean;
 };

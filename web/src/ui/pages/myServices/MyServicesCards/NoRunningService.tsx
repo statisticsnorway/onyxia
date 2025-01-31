@@ -39,29 +39,30 @@ export const NoRunningService = memo((props: Props) => {
     );
 });
 
-export const { i18n } = declareComponentKeys<"no services running" | "launch one">()({
+const { i18n } = declareComponentKeys<"no services running" | "launch one">()({
     NoRunningService
 });
+export type I18n = typeof i18n;
 
 const useStyles = tss.withName({ NoRunningService }).create(({ theme }) => ({
-    "root": {
-        "display": "flex",
-        "alignItems": "center",
-        "justifyContent": "center"
+    root: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center"
     },
-    "innerDiv": {
-        "textAlign": "center",
-        "maxWidth": 500
+    innerDiv: {
+        textAlign: "center",
+        maxWidth: 500
     },
-    "svg": {
-        "fill": theme.colors.palette.dark.greyVariant2,
-        "width": 100,
-        "margin": 0
+    svg: {
+        fill: theme.colors.palette.dark.greyVariant2,
+        width: 100,
+        margin: 0
     },
-    "h2": {
+    h2: {
         ...theme.spacing.topBottom("margin", 5)
     },
-    "link": {
-        "cursor": "pointer"
+    link: {
+        cursor: "pointer"
     }
 }));

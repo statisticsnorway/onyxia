@@ -82,24 +82,25 @@ export const MyServicesRestorableConfigs = memo((props: Props) => {
 
 MyServicesRestorableConfigs.displayName = symToStr({ MyServicesRestorableConfigs });
 
-export const { i18n } = declareComponentKeys<"saved" | "expand">()({
+const { i18n } = declareComponentKeys<"saved" | "expand">()({
     MyServicesRestorableConfigs
 });
+export type I18n = typeof i18n;
 
 const useStyles = tss.withName({ MyServicesRestorableConfigs }).create(({ theme }) => ({
-    "root": {
-        "overflow": "hidden",
-        "display": "flex",
-        "flexDirection": "column"
+    root: {
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column"
     },
-    "header": {
+    header: {
         ...theme.spacing.topBottom("margin", 2)
     },
-    "entry": {
-        "marginBottom": theme.spacing(2)
+    entry: {
+        marginBottom: theme.spacing(2)
     },
-    "wrapper": {
-        "flex": 1,
-        "overflow": "auto"
+    wrapper: {
+        flex: 1,
+        overflow: "auto"
     }
 }));

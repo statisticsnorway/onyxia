@@ -8,8 +8,8 @@ import { CircularUsage } from "./CircularUsage";
 import { CollapsibleSectionHeader } from "onyxia-ui/CollapsibleSectionHeader";
 import { Icon } from "onyxia-ui/Icon";
 import { Text } from "onyxia-ui/Text";
-import type { MuiIconComponentName } from "onyxia-ui/MuiIconComponentName";
 import { declareComponentKeys, useTranslation } from "ui/i18n";
+import { getIconUrlByName } from "lazy-icons";
 
 type Props = {
     className?: string;
@@ -57,8 +57,8 @@ export function Quotas(props: Props) {
             {(() => {
                 if (!isReady) {
                     return (
-                        <div className={classes.loading}>
-                            <CircularProgress />
+                        <div className={classes.loadingWrapper}>
+                            <CircularProgress className={classes.loading} />
                         </div>
                     );
                 }
@@ -101,9 +101,7 @@ export function Quotas(props: Props) {
                                     <Text typo="body 1">
                                         <Icon
                                             className={classes.checkIcon}
-                                            icon={
-                                                "CheckCircle" satisfies MuiIconComponentName
-                                            }
+                                            icon={getIconUrlByName("CheckCircle")}
                                         />
                                         &nbsp;{t("current resource usage is reasonable")}
                                     </Text>
@@ -145,35 +143,39 @@ export function Quotas(props: Props) {
 }
 
 const useStyles = tss.withName({ Quotas }).create(({ theme }) => ({
-    "root": {},
-    "header": {
+    root: {},
+    header: {
         ...theme.spacing.topBottom("margin", 2)
     },
-    "checkIcon": {
-        "color": theme.colors.useCases.alertSeverity.success.main
+    checkIcon: {
+        color: theme.colors.useCases.alertSeverity.success.main
     },
-    "loading": {
-        "display": "flex",
-        "justifyContent": "center",
-        "alignItems": "center",
-        "height": theme.typography.rootFontSizePx * 10
+    loadingWrapper: {
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: theme.typography.rootFontSizePx * 10
     },
-    "podDeletingCircularProgress": {
-        "position": "relative",
-        "top": 5,
-        "color": theme.colors.useCases.typography.textPrimary
+    loading: {
+        color: theme.colors.useCases.typography.textPrimary
     },
-    "circularUsagesWrapper": {
-        "display": "flex",
-        "flexWrap": "wrap",
-        "justifyContent": "space-between",
-        "gap": theme.spacing(3)
+    podDeletingCircularProgress: {
+        position: "relative",
+        top: 5,
+        color: theme.colors.useCases.typography.textPrimary
     },
-    "circularUsage": {
-        "flexBasis": `calc(50% - ${theme.spacing(3) / 2}px)`
+    circularUsagesWrapper: {
+        display: "flex",
+        flexWrap: "wrap",
+        justifyContent: "space-between",
+        gap: theme.spacing(3)
+    },
+    circularUsage: {
+        flexBasis: `calc(50% - ${theme.spacing(3) / 2}px)`
     }
 }));
 
-export const { i18n } = declareComponentKeys<
+const { i18n } = declareComponentKeys<
     "show more" | "resource usage quotas" | "current resource usage is reasonable"
 >()({ Quotas });
+export type I18n = typeof i18n;

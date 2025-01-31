@@ -82,7 +82,7 @@ export const SecretsExplorerItems = memo((props: SecretsExplorerItemsProps) => {
     } = props;
 
     const { classes, cx } = useStyles({
-        "isEmpty": files.length === 0 && directories.length === 0
+        isEmpty: files.length === 0 && directories.length === 0
     });
 
     const { getKeyProp, transfersKeyProp, getValuesCurrentlyMappedToKeyProp } = useConst(
@@ -133,7 +133,7 @@ export const SecretsExplorerItems = memo((props: SecretsExplorerItemsProps) => {
                     case "COPY SELECTED ITEM PATH":
                         assert(selectedItemKeyProp !== undefined);
                         onCopyPath({
-                            "basename":
+                            basename:
                                 getValuesCurrentlyMappedToKeyProp(selectedItemKeyProp)
                                     .basename
                         });
@@ -179,15 +179,15 @@ export const SecretsExplorerItems = memo((props: SecretsExplorerItemsProps) => {
         );
 
         useArrayDiff({
-            "watchFor": "deletion",
-            "array": files,
-            "callback": callbackFactory("file")
+            watchFor: "deletion",
+            array: files,
+            callback: callbackFactory("file")
         });
 
         useArrayDiff({
-            "watchFor": "deletion",
-            "array": directories,
-            "callback": callbackFactory("directory")
+            watchFor: "deletion",
+            array: directories,
+            callback: callbackFactory("directory")
         });
     }
 
@@ -223,15 +223,15 @@ export const SecretsExplorerItems = memo((props: SecretsExplorerItemsProps) => {
         );
 
         useArrayDiff({
-            "watchFor": "addition",
-            "array": files,
-            "callback": callbackFactory("file")
+            watchFor: "addition",
+            array: files,
+            callback: callbackFactory("file")
         });
 
         useArrayDiff({
-            "watchFor": "addition",
-            "array": directories,
-            "callback": callbackFactory("directory")
+            watchFor: "addition",
+            array: directories,
+            callback: callbackFactory("directory")
         });
     }
 
@@ -245,7 +245,7 @@ export const SecretsExplorerItems = memo((props: SecretsExplorerItemsProps) => {
             }
 
             switch (type) {
-                case "down":
+                case "down": {
                     const keyProp = getKeyProp({ kind, basename });
 
                     if (target === "text" && selectedItemKeyProp === keyProp) {
@@ -259,6 +259,7 @@ export const SecretsExplorerItems = memo((props: SecretsExplorerItemsProps) => {
                     setSelectedItemKeyProp(keyProp);
 
                     break;
+                }
 
                 case "double":
                     switch (kind) {
@@ -293,11 +294,11 @@ export const SecretsExplorerItems = memo((props: SecretsExplorerItemsProps) => {
             ]
         ) => {
             transfersKeyProp({
-                "toValues": { kind, "basename": editedBasename },
-                "fromValues": { kind, basename }
+                toValues: { kind, basename: editedBasename },
+                fromValues: { kind, basename }
             });
 
-            onEditBasename({ kind, basename, "newBasename": editedBasename });
+            onEditBasename({ kind, basename, newBasename: editedBasename });
         }
     );
 
@@ -418,24 +419,25 @@ export const SecretsExplorerItems = memo((props: SecretsExplorerItemsProps) => {
     );
 });
 
-export const { i18n } = declareComponentKeys<"empty directory">()({
+const { i18n } = declareComponentKeys<"empty directory">()({
     SecretsExplorerItems
 });
+export type I18n = typeof i18n;
 
 const useStyles = tss
     .withParams<{ isEmpty: boolean }>()
     .withName({ SecretsExplorerItems })
     .create(({ theme, isEmpty }) => ({
-        "root": {
+        root: {
             ...(isEmpty
                 ? {}
                 : {
-                      "display": "flex",
-                      "flexWrap": "wrap",
-                      "justifyContent": "flex-start"
+                      display: "flex",
+                      flexWrap: "wrap",
+                      justifyContent: "flex-start"
                   })
         },
-        "item": {
-            "margin": theme.spacing(2)
+        item: {
+            margin: theme.spacing(2)
         }
     }));

@@ -3,8 +3,8 @@ node_modules/
 /.yarn_home/
 /build/
 /public/
-/src/env.ts
 /build_keycloak/
 /helm-chart/
 /src/vite-env.d.ts
+*.gen.ts
 

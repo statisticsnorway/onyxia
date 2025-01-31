@@ -43,6 +43,7 @@ By separating these components into distinct repositories, Onyxia ensures a clea
 | Joseph Garrone | Insee     |  [@garonnej](https://github.com/garronej) |
 | Olivier Levitt | Insee     |  [@olevitt](https://github.com/olevitt) |
 | Romain Lesur | Insee     |  [@rlesur](https://github.com/rlesur) |
+| Trygve Falch | Statistics Norway     |  [@trygu](https://github.com/trygu) |
 
 ## Repository Maintainers
 
@@ -54,6 +55,7 @@ By separating these components into distinct repositories, Onyxia ensures a clea
 
 ### List of maintainers
 
+As described in the Onyxia's Repository Structure section, there are many repositories.
 For each repository, a file named Maintainers.md must be created with the following format:
 
 

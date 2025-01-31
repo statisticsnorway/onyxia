@@ -18,9 +18,8 @@ import { CatalogNoSearchMatches } from "./CatalogNoSearchMatches";
 import { assert } from "tsafe/assert";
 import { useCallbackFactory } from "powerhooks/useCallbackFactory";
 import { CatalogChartCard } from "./CatalogChartCard";
-import { customIcons } from "ui/theme";
-import type { MuiIconComponentName } from "onyxia-ui/MuiIconComponentName";
-import { id } from "tsafe/id";
+import { LocalizedMarkdown } from "ui/shared/Markdown";
+import { customIcons, getIconUrlByName } from "lazy-icons";
 
 export type Props = {
     route: PageRoute;
@@ -55,11 +54,11 @@ export default function Catalog(props: Props) {
     const { catalog } = useCore().functions;
 
     useEffect(() => {
-        catalog.changeSelectedCatalogId({ "catalogId": route.params.catalogId });
+        catalog.changeSelectedCatalogId({ catalogId: route.params.catalogId });
     }, [route.params.catalogId]);
 
     useEffect(() => {
-        catalog.setSearch({ "search": route.params.search });
+        catalog.setSearch({ search: route.params.search });
     }, [route.params.search]);
 
     const onRequestLaunchFactory = useCallbackFactory(
@@ -74,7 +73,7 @@ export default function Catalog(props: Props) {
     );
 
     const { classes, cx, css } = useStyles({
-        "filteredCardCount": filteredCharts?.length ?? 0
+        filteredCardCount: filteredCharts?.length ?? 0
     });
 
     const [searchBarElement, setSearchBarElement] = useState<HTMLElement | null>(null);
@@ -92,7 +91,7 @@ export default function Catalog(props: Props) {
     );
 
     const { resolveLocalizedString } = useResolveLocalizedString({
-        "labelWhenMismatchingLanguage": true
+        labelWhenMismatchingLanguage: true
     });
 
     if (!isReady) {
@@ -103,29 +102,44 @@ export default function Catalog(props: Props) {
         <div className={cx(classes.root, className)}>
             <PageHeader
                 classes={{
-                    "title": css({ "paddingBottom": 3 })
+                    title: css({ paddingBottom: 3 }),
+                    helpTitle: css({ display: "none" }),
+                    helpIcon: css({ display: "none" })
                 }}
                 mainIcon={customIcons.catalogSvgUrl}
-                title={t("header text1")}
-                helpTitle={t("header text2")}
-                helpContent={t("header help", {
-                    "catalogDescription": resolveLocalizedString(
-                        selectedCatalog.description
-                    ),
-                    "catalogName": resolveLocalizedString(selectedCatalog.name),
-                    "repositoryUrl": selectedCatalog.repositoryUrl
-                })}
-                helpIcon={id<MuiIconComponentName>("SentimentSatisfied")}
+                title={t("header")}
+                helpTitle={""}
+                helpContent={
+                    selectedCatalog.description === undefined ? (
+                        ""
+                    ) : (
+                        <LocalizedMarkdown
+                            className={css({
+                                "&>p": { margin: 0 }
+                            })}
+                        >
+                            {selectedCatalog.description}
+                        </LocalizedMarkdown>
+                    )
+                }
+                helpIcon={getIconUrlByName("SentimentSatisfied")}
                 titleCollapseParams={{
-                    "behavior": "collapses on scroll",
-                    "scrollTopThreshold": 650,
-                    "scrollableElementRef": scrollableDivRef
+                    behavior: "collapses on scroll",
+                    scrollTopThreshold: 650,
+                    scrollableElementRef: scrollableDivRef
                 }}
-                helpCollapseParams={{
-                    "behavior": "collapses on scroll",
-                    "scrollTopThreshold": 300,
-                    "scrollableElementRef": scrollableDivRef
-                }}
+                helpCollapseParams={
+                    selectedCatalog.description === undefined
+                        ? {
+                              behavior: "controlled",
+                              isCollapsed: true
+                          }
+                        : {
+                              behavior: "collapses on scroll",
+                              scrollTopThreshold: 300,
+                              scrollableElementRef: scrollableDivRef
+                          }
+                }
             />
             <div className={classes.bodyWrapper}>
                 <div className={classes.body}>
@@ -140,7 +154,7 @@ export default function Catalog(props: Props) {
                             assert(catalogId !== undefined);
 
                             routes
-                                .catalog({ catalogId, "search": search || undefined })
+                                .catalog({ catalogId, search: search || undefined })
                                 .replace();
                         }}
                         placeholder={t("search")}
@@ -213,61 +227,52 @@ export default function Catalog(props: Props) {
     );
 }
 
-export const { i18n } = declareComponentKeys<
-    | "header text1"
-    | "header text2"
-    | {
-          K: "header help";
-          P: {
-              catalogName: JSX.Element;
-              catalogDescription: JSX.Element;
-              repositoryUrl: string;
-          };
-          R: JSX.Element;
-      }
+const { i18n } = declareComponentKeys<
+    | "header"
     | "search results"
     | { K: "no result found"; P: { forWhat: string } }
     | "search"
 >()({ Catalog });
+export type I18n = typeof i18n;
 
 const useStyles = tss
     .withName({ Catalog })
     .withParams<{ filteredCardCount: number }>()
     .create(({ theme, filteredCardCount }) => ({
-        "root": {
-            "height": "100%",
-            "display": "flex",
-            "flexDirection": "column"
+        root: {
+            height: "100%",
+            display: "flex",
+            flexDirection: "column"
         },
-        "bodyWrapper": {
-            "flex": 1,
-            "overflow": "hidden"
+        bodyWrapper: {
+            flex: 1,
+            overflow: "hidden"
         },
-        "body": {
-            "height": "100%",
-            "display": "flex",
-            "flexDirection": "column"
+        body: {
+            height: "100%",
+            display: "flex",
+            flexDirection: "column"
         },
-        "catalogSwitcher": {
-            "display": "flex",
-            "marginBottom": theme.spacing(3)
+        catalogSwitcher: {
+            display: "flex",
+            marginBottom: theme.spacing(3)
         },
-        "searchBar": {
-            "marginBottom": theme.spacing(3)
+        searchBar: {
+            marginBottom: theme.spacing(3)
         },
-        "searchResults": {
-            "marginBottom": theme.spacing(3)
+        searchResults: {
+            marginBottom: theme.spacing(3)
         },
-        "cardsWrapper": {
-            "flex": 1,
-            "overflow": "auto"
+        cardsWrapper: {
+            flex: 1,
+            overflow: "auto"
         },
-        "cards": {
+        cards: {
             ...(filteredCardCount === 0
                 ? {}
                 : {
-                      "display": "grid",
-                      "gridTemplateColumns": `repeat(${(() => {
+                      display: "grid",
+                      gridTemplateColumns: `repeat(${(() => {
                           if (theme.windowInnerWidth >= breakpointsValues.xl) {
                               return 4;
                           }
@@ -277,10 +282,10 @@ const useStyles = tss
 
                           return 2;
                       })()},1fr)`,
-                      "gap": theme.spacing(4)
+                      gap: theme.spacing(4)
                   })
         },
-        "bottomScrollSpace": {
-            "height": theme.spacing(3)
+        bottomScrollSpace: {
+            height: theme.spacing(3)
         }
     }));

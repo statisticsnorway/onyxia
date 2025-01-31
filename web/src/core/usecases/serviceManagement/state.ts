@@ -1,8 +1,7 @@
 import { assert } from "tsafe/assert";
 import { createUsecaseActions } from "clean-architecture";
 import { id } from "tsafe/id";
-import { nestObject } from "core/tools/nestObject";
-import * as yaml from "yaml";
+import type { HelmRelease } from "core/ports/OnyxiaApi/HelmRelease";
 
 export type State = State.NotInitialized | State.Ready;
 
@@ -22,38 +21,11 @@ export namespace State {
 
     export type Ready = Common & {
         stateDescription: "ready";
-        runningServices: RunningService[];
-        envByHelmReleaseName: Record<string, Record<string, string>>;
-        postInstallInstructionsByHelmReleaseName: Record<string, string>;
+        username: string;
         kubernetesNamespace: string;
-    };
-}
-
-export type RunningService = RunningService.Owned | RunningService.NotOwned;
-
-export declare namespace RunningService {
-    export type Common = {
-        helmReleaseName: string;
-        chartName: string;
-        friendlyName: string;
-        chartIconUrl: string | undefined;
-        monitoringUrl: string | undefined;
-        startedAt: number;
-        urls: string[];
-        hasPostInstallInstructions: boolean;
-        status: "deployed" | "pending-install" | "failed";
-        areAllTasksReady: boolean;
-    };
-
-    export type Owned = Common & {
-        isShared: boolean;
-        isOwned: true;
-    };
-
-    export type NotOwned = Common & {
-        isShared: true;
-        isOwned: false;
-        ownerUsername: string;
+        helmReleases: HelmRelease[];
+        lockedHelmReleaseNames: string[];
+        logoUrlByReleaseName: Record<string, string | undefined>;
     };
 }
 
@@ -61,176 +33,180 @@ export const name = "serviceManagement";
 
 export const { reducer, actions } = createUsecaseActions({
     name,
-    "initialState": id<State>(
+    initialState: id<State>(
         id<State.NotInitialized>({
-            "stateDescription": "not initialized",
-            "isUpdating": false,
-            "commandLogsEntries": []
+            stateDescription: "not initialized",
+            isUpdating: false,
+            commandLogsEntries: []
         })
     ),
-    "reducers": {
-        "updateStarted": state => {
-            state.isUpdating = true;
-        },
-        "updateCompleted": (
-            state,
-            {
-                payload
-            }: {
-                payload: {
-                    runningServices: RunningService[];
-                    envByHelmReleaseName: Record<string, Record<string, string>>;
-                    postInstallInstructionsByHelmReleaseName: Record<string, string>;
-                    kubernetesNamespace: string;
-                };
-            }
-        ) => {
-            const {
-                runningServices,
-                envByHelmReleaseName,
-                postInstallInstructionsByHelmReleaseName,
-                kubernetesNamespace
-            } = payload;
-
-            return id<State.Ready>({
-                "stateDescription": "ready",
-                "isUpdating": false,
-                runningServices,
-                envByHelmReleaseName,
-                postInstallInstructionsByHelmReleaseName,
-                kubernetesNamespace,
-                "commandLogsEntries": state.commandLogsEntries
-            });
-        },
-        "statusUpdated": (
-            state,
-            {
-                payload
-            }: {
-                payload: {
-                    helmReleaseName: string;
-                    status: "deployed" | "pending-install" | "failed";
-                    areAllTasksReady: boolean;
-                };
-            }
-        ) => {
-            const { helmReleaseName, status, areAllTasksReady } = payload;
-
-            assert(state.stateDescription === "ready");
-
-            const { runningServices } = state;
-
-            assert(runningServices !== undefined);
-
-            const runningService = runningServices.find(
-                runningService => runningService.helmReleaseName === helmReleaseName
-            );
-
-            if (runningService === undefined) {
-                return;
-            }
-
-            runningService.status = status;
-            runningService.areAllTasksReady = areAllTasksReady;
-
-            //NOTE: Harmless hack to improve UI readability.
-            if (status === "deployed" && areAllTasksReady) {
-                runningService.startedAt = Date.now();
-            }
-        },
-        "serviceStopped": (
-            state,
-            { payload }: { payload: { helmReleaseName: string } }
-        ) => {
-            const { helmReleaseName } = payload;
-
-            assert(state.stateDescription === "ready");
-
-            const { runningServices } = state;
-            assert(runningServices !== undefined);
-
-            runningServices.splice(
-                runningServices.findIndex(
-                    runningServices => runningServices.helmReleaseName === helmReleaseName
-                ),
-                1
-            );
-        },
-        "postInstallInstructionsRequested": (
-            state,
-            { payload }: { payload: { helmReleaseName: string } }
-        ) => {
-            const { helmReleaseName } = payload;
-
-            assert(state.stateDescription === "ready");
-
-            const postInstallInstructions =
-                state.postInstallInstructionsByHelmReleaseName[helmReleaseName];
-
-            assert(postInstallInstructions !== undefined);
-
-            state.commandLogsEntries.push({
-                "cmdId": Date.now(),
-                "cmd": `helm get notes ${helmReleaseName} --namespace ${state.kubernetesNamespace}`,
-                "resp": postInstallInstructions
-            });
-        },
-        "envRequested": (
-            state,
-            { payload }: { payload: { helmReleaseName: string } }
-        ) => {
-            const { helmReleaseName } = payload;
-
-            assert(state.stateDescription === "ready");
-
-            const env = state.envByHelmReleaseName[helmReleaseName];
-
-            state.commandLogsEntries.push({
-                "cmdId": Date.now(),
-                "cmd": `helm get values ${helmReleaseName} --namespace ${state.kubernetesNamespace}`,
-                "resp": ["USER-SUPPLIED VALUES:", yaml.stringify(nestObject(env))].join(
-                    "\n"
-                )
-            });
-        },
-        "commandLogsEntryAdded": (
-            state,
-            {
-                payload
-            }: {
-                payload: {
-                    commandLogsEntry: {
-                        cmdId: number;
-                        cmd: string;
-                        resp: string | undefined;
+    reducers: (() => {
+        const reducers = {
+            updateStarted: state => {
+                state.isUpdating = true;
+            },
+            updateCompleted: (
+                state,
+                {
+                    payload
+                }: {
+                    payload: {
+                        helmReleases: HelmRelease[];
+                        kubernetesNamespace: string;
+                        logoUrlByReleaseName: Record<string, string | undefined>;
+                        username: string;
                     };
-                };
+                }
+            ) => {
+                const {
+                    helmReleases,
+                    kubernetesNamespace,
+                    logoUrlByReleaseName,
+                    username
+                } = payload;
+
+                return id<State.Ready>({
+                    stateDescription: "ready",
+                    isUpdating: false,
+                    helmReleases,
+                    kubernetesNamespace,
+                    commandLogsEntries: state.commandLogsEntries,
+                    lockedHelmReleaseNames:
+                        state.stateDescription === "ready"
+                            ? state.lockedHelmReleaseNames
+                            : [],
+                    logoUrlByReleaseName,
+                    username
+                });
+            },
+            helmReleaseLocked: (
+                state,
+                {
+                    payload
+                }: {
+                    payload: {
+                        helmReleaseName: string;
+                        reason: "delete" | "suspend" | "other";
+                    };
+                }
+            ) => {
+                const { helmReleaseName } = payload;
+
+                assert(state.stateDescription === "ready");
+
+                state.lockedHelmReleaseNames.push(helmReleaseName);
+            },
+            helmReleaseUnlocked: (
+                state,
+                { payload }: { payload: { helmReleaseName: string } }
+            ) => {
+                const { helmReleaseName } = payload;
+
+                assert(state.stateDescription === "ready");
+
+                state.lockedHelmReleaseNames = state.lockedHelmReleaseNames.filter(
+                    lockedHelmReleaseName => lockedHelmReleaseName !== helmReleaseName
+                );
+            },
+            changeServiceFriendlyNameStarted: (
+                state,
+                {
+                    payload
+                }: { payload: { helmReleaseName: string; friendlyName: string } }
+            ) => {
+                const { helmReleaseName, friendlyName } = payload;
+
+                assert(state.stateDescription === "ready");
+
+                reducers.helmReleaseLocked(state, {
+                    payload: { helmReleaseName, reason: "other" }
+                });
+
+                const helmRelease = state.helmReleases.find(
+                    helmRelease => helmRelease.helmReleaseName === helmReleaseName
+                );
+
+                assert(helmRelease !== undefined);
+
+                helmRelease.friendlyName = friendlyName;
+            },
+            changeServiceFriendlyNameCompleted: (
+                state,
+                { payload }: { payload: { helmReleaseName: string } }
+            ) => {
+                const { helmReleaseName } = payload;
+
+                reducers.helmReleaseUnlocked(state, { payload: { helmReleaseName } });
+            },
+            changeServiceSharedStatusStarted: (
+                state,
+                { payload }: { payload: { helmReleaseName: string; isShared: boolean } }
+            ) => {
+                const { helmReleaseName, isShared } = payload;
+
+                assert(state.stateDescription === "ready");
+
+                reducers.helmReleaseLocked(state, {
+                    payload: { helmReleaseName, reason: "other" }
+                });
+
+                const helmRelease = state.helmReleases.find(
+                    helmRelease => helmRelease.helmReleaseName === helmReleaseName
+                );
+
+                assert(helmRelease !== undefined);
+
+                helmRelease.isShared = isShared;
+            },
+            changeServiceSharedStatusCompleted: (
+                state,
+                { payload }: { payload: { helmReleaseName: string } }
+            ) => {
+                const { helmReleaseName } = payload;
+
+                reducers.helmReleaseUnlocked(state, { payload: { helmReleaseName } });
+            },
+            commandLogsEntryAdded: (
+                state,
+                {
+                    payload
+                }: {
+                    payload: {
+                        commandLogsEntry: {
+                            cmdId: number;
+                            cmd: string;
+                            resp: string | undefined;
+                        };
+                    };
+                }
+            ) => {
+                const { commandLogsEntry } = payload;
+
+                state.commandLogsEntries.push(commandLogsEntry);
+            },
+            commandLogsRespUpdated: (
+                state,
+                {
+                    payload
+                }: {
+                    payload: {
+                        cmdId: number;
+                        resp: string;
+                    };
+                }
+            ) => {
+                const { cmdId, resp } = payload;
+
+                const commandLogsEntry = state.commandLogsEntries.find(
+                    commandLogsEntry => commandLogsEntry.cmdId === cmdId
+                );
+
+                assert(commandLogsEntry !== undefined);
+
+                commandLogsEntry.resp = resp;
             }
-        ) => {
-            const { commandLogsEntry } = payload;
+        } satisfies Record<string, (state: State, ...rest: any[]) => State | void>;
 
-            state.commandLogsEntries.push(commandLogsEntry);
-        },
-        "commandLogsRespUpdated": (
-            state,
-            {
-                payload
-            }: {
-                payload: {
-                    cmdId: number;
-                    resp: string;
-                };
-            }
-        ) => {
-            const { cmdId, resp } = payload;
-
-            const commandLogsEntry = state.commandLogsEntries.find(
-                commandLogsEntry => commandLogsEntry.cmdId === cmdId
-            );
-
-            assert(commandLogsEntry !== undefined);
-
-            commandLogsEntry.resp = resp;
-        }
-    }
+        return reducers;
+    })()
 });

@@ -1,8 +1,12 @@
 import type { Thunks } from "core/bootstrap";
 import { name, actions } from "./state";
+import * as deploymentRegionManagement from "core/usecases/deploymentRegionManagement";
+import * as projectManagement from "core/usecases/projectManagement";
+import { protectedSelectors } from "./selectors";
+import { assert } from "tsafe/assert";
 
 export const thunks = {
-    "setActive":
+    setActive:
         (params: { helmReleaseName: string }) =>
         (...args) => {
             const { helmReleaseName } = params;
@@ -18,11 +22,11 @@ export const thunks = {
 
                 try {
                     await dispatch(privateThunks.update({ helmReleaseName }));
-                } catch {
+                } catch (e) {
                     console.log("Pulling events and logs failed");
                 }
 
-                setTimeout(periodicalRefresh, 5_000);
+                setTimeout(periodicalRefresh, 10_000);
             })();
 
             function setInactive() {
@@ -30,11 +34,55 @@ export const thunks = {
             }
 
             return { setInactive };
+        },
+    changeSelectedPod:
+        (params: { podName: string }) =>
+        (...args) => {
+            const { podName } = params;
+
+            const [dispatch] = args;
+
+            dispatch(actions.selectedPodChanged({ podName }));
+        },
+    toggleHelmValues:
+        () =>
+        (...args) => {
+            const [dispatch, getState] = args;
+
+            {
+                const isCommandBarExpanded =
+                    protectedSelectors.isCommandBarExpanded(getState());
+
+                assert(isCommandBarExpanded !== undefined);
+
+                if (isCommandBarExpanded) {
+                    dispatch(thunks.collapseCommandBar());
+                    return;
+                }
+            }
+
+            const formattedHelmValues =
+                protectedSelectors.formattedHelmValues(getState());
+
+            assert(formattedHelmValues !== undefined);
+
+            dispatch(
+                actions.helmGetValueShown({
+                    cmdResp: formattedHelmValues
+                })
+            );
+        },
+    collapseCommandBar:
+        () =>
+        (...args) => {
+            const [dispatch] = args;
+
+            dispatch(actions.commandBarCollapsed());
         }
 } satisfies Thunks;
 
 const privateThunks = {
-    "update":
+    update:
         (params: { helmReleaseName: string }) =>
         async (...args) => {
             const { helmReleaseName } = params;
@@ -62,23 +110,27 @@ const privateThunks = {
                 return;
             }
 
-            const tasks = await Promise.all(
-                helmRelease.taskIds.map(async taskId => ({
-                    taskId,
-                    "logs": await onyxiaApi.getTaskLogs({
-                        helmReleaseName,
-                        taskId
-                    })
-                }))
-            );
+            const { namespace: kubernetesNamespace } =
+                projectManagement.protectedSelectors.currentProject(getState());
 
             dispatch(
                 actions.updateCompleted({
-                    "helmReleaseFriendlyName":
+                    helmReleaseFriendlyName:
                         helmRelease.friendlyName ?? helmRelease.helmReleaseName,
-                    tasks,
-                    "events": helmRelease.events,
-                    "env": helmRelease.env
+                    podNames: helmRelease.podNames,
+                    helmValues: helmRelease.values,
+                    monitoringUrl: (() => {
+                        const { helmReleaseName } = params;
+
+                        const region =
+                            deploymentRegionManagement.selectors.currentDeploymentRegion(
+                                getState()
+                            );
+
+                        return region.servicesMonitoringUrlPattern
+                            ?.replace("$NAMESPACE", kubernetesNamespace)
+                            .replace("$INSTANCE", helmReleaseName.replace(/^\//, ""));
+                    })()
                 })
             );
         }

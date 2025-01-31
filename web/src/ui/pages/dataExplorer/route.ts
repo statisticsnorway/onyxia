@@ -3,28 +3,18 @@ import { id } from "tsafe/id";
 import type { ValueSerializer } from "type-route";
 
 export const routeDefs = {
-    "dataExplorer": defineRoute(
+    dataExplorer: defineRoute(
         {
-            "source": param.query.optional.string,
-            "rowsPerPage": param.query.optional.number.default(25),
-            "page": param.query.optional.number.default(1),
-            "selectedRow": param.query.optional.number,
-            "columnWidths": param.query.optional
-                .ofType(
-                    id<ValueSerializer<Record<string, number>>>({
-                        "parse": raw => JSON.parse(raw),
-                        "stringify": value => JSON.stringify(value)
-                    })
-                )
-                .default({}),
-            "columnVisibility": param.query.optional
-                .ofType(
-                    id<ValueSerializer<Record<string, boolean>>>({
-                        "parse": raw => JSON.parse(raw),
-                        "stringify": value => JSON.stringify(value)
-                    })
-                )
-                .default({})
+            source: param.query.optional.string,
+            rowsPerPage: param.query.optional.number,
+            page: param.query.optional.number,
+            selectedRow: param.query.optional.number,
+            columnVisibility: param.query.optional.ofType(
+                id<ValueSerializer<Record<string, boolean>>>({
+                    parse: raw => JSON.parse(raw),
+                    stringify: value => JSON.stringify(value)
+                })
+            )
         },
         () => `/data-explorer`
     )

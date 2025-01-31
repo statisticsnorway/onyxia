@@ -1,31 +1,38 @@
-import { useEffect } from "react";
-import { useTranslation } from "ui/i18n";
+import { useEffect, useState } from "react";
+import { useTranslation, useResolveLocalizedString, declareComponentKeys } from "ui/i18n";
 import { tss } from "tss";
-import { PageHeader } from "onyxia-ui/PageHeader";
 import { useCoreState, useCore } from "core";
-import { useStateRef } from "powerhooks/useStateRef";
 import { useConstCallback } from "powerhooks/useConstCallback";
 import { useDomRect } from "powerhooks/useDomRect";
 import { useConst } from "powerhooks/useConst";
-import { declareComponentKeys } from "i18nifty";
 import type { PageRoute } from "./route";
 import { useSplashScreen } from "onyxia-ui";
 import { useEvt } from "evt/hooks";
 import { routes, getPreviousRouteName } from "ui/routes";
 import { env } from "env";
-import { assert } from "tsafe/assert";
+import { assert, type Equals } from "tsafe/assert";
 import { Deferred } from "evt/tools/Deferred";
 import { Evt, type UnpackEvt } from "evt";
 import { LauncherDialogs, type Props as LauncherDialogsProps } from "./LauncherDialogs";
 import { CommandBar } from "ui/shared/CommandBar";
 import { saveAs } from "file-saver";
 import { LauncherMainCard } from "./LauncherMainCard";
-import { LauncherConfigurationCard } from "./LauncherConfigurationCard";
-import { customIcons } from "ui/theme";
 import {
     MaybeAcknowledgeConfigVolatilityDialog,
     type MaybeAcknowledgeConfigVolatilityDialogProps
 } from "ui/shared/MaybeAcknowledgeConfigVolatilityDialog";
+import type { LabeledHelmChartSourceUrls } from "core/usecases/launcher/selectors";
+import { RootFormComponent } from "./RootFormComponent/RootFormComponent";
+import type { Param0 } from "tsafe";
+import type { FormCallbacks } from "./RootFormComponent/FormCallbacks";
+import { arrRemoveDuplicates } from "evt/tools/reducers/removeDuplicates";
+import { same } from "evt/tools/inDepth/same";
+import { DataTextEditor } from "ui/shared/textEditor/DataTextEditor";
+import { useSessionState } from "ui/tools/useSessionState";
+import { z } from "zod";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Radio from "@mui/material/Radio";
+import RadioGroup from "@mui/material/RadioGroup";
 
 export type Props = {
     route: PageRoute;
@@ -40,189 +47,151 @@ export default function Launcher(props: Props) {
     const {
         evtAcknowledgeSharingOfConfigConfirmDialogOpen,
         evtAutoLaunchDisabledDialogOpen,
-        evtSensitiveConfigurationDialogOpen,
         evtNoLongerBookmarkedDialogOpen,
         evtMaybeAcknowledgeConfigVolatilityDialogOpen
     } = useConst(() => ({
-        "evtAcknowledgeSharingOfConfigConfirmDialogOpen":
+        evtAcknowledgeSharingOfConfigConfirmDialogOpen:
             Evt.create<
                 UnpackEvt<
                     LauncherDialogsProps["evtAcknowledgeSharingOfConfigConfirmDialogOpen"]
                 >
             >(),
-        "evtAutoLaunchDisabledDialogOpen":
+        evtAutoLaunchDisabledDialogOpen:
             Evt.create<
                 UnpackEvt<LauncherDialogsProps["evtAutoLaunchDisabledDialogOpen"]>
             >(),
-        "evtSensitiveConfigurationDialogOpen":
-            Evt.create<
-                UnpackEvt<LauncherDialogsProps["evtSensitiveConfigurationDialogOpen"]>
-            >(),
-        "evtNoLongerBookmarkedDialogOpen":
+        evtNoLongerBookmarkedDialogOpen:
             Evt.create<
                 UnpackEvt<LauncherDialogsProps["evtNoLongerBookmarkedDialogOpen"]>
             >(),
-        "evtMaybeAcknowledgeConfigVolatilityDialogOpen":
+        evtMaybeAcknowledgeConfigVolatilityDialogOpen:
             Evt.create<MaybeAcknowledgeConfigVolatilityDialogProps["evtOpen"]>()
     }));
 
     const {
         isReady,
         friendlyName,
-        isThereASavedConfigWithThisFriendlyName,
         isShared,
-        indexedFormFields,
-        isLaunchable,
-        formFieldsIsWellFormed,
-        restorableConfig,
-        isRestorableConfigSaved,
-        areAllFieldsDefault,
         chartName,
         chartVersion,
         availableChartVersions,
+        restorableConfig,
+        rootForm,
+        willOverwriteExistingConfigOnSave,
+        isRestorableConfigSaved,
+        isDefaultConfiguration,
         catalogName,
-        catalogRepositoryUrl,
         chartIconUrl,
         launchScript,
         commandLogsEntries,
-        chartSourceUrls,
         groupProjectName,
-        s3ConfigSelect
+        s3ConfigSelect,
+        labeledHelmChartSourceUrls,
+        helmValues,
+        helmValuesSchema_forDataTextEditor
     } = useCoreState("launcher", "main");
-
-    const scrollableDivRef = useStateRef<HTMLDivElement>(null);
 
     const { launcher, restorableConfigManagement, k8sCodeSnippets } = useCore().functions;
 
     const { showSplashScreen, hideSplashScreen } = useSplashScreen();
 
     useEffect(() => {
-        const {
-            catalogId,
-            chartName,
-            version: chartVersion,
-            formFieldsValueDifferentFromDefault
-        } = route.params;
+        showSplashScreen({ enableTransparency: true });
 
-        showSplashScreen({ "enableTransparency": true });
+        let autoLaunch = route.params.autoLaunch ?? false;
+
+        disable_auto_launch: {
+            if (!autoLaunch) {
+                break disable_auto_launch;
+            }
+
+            if (!env.DISABLE_AUTO_LAUNCH) {
+                break disable_auto_launch;
+            }
+
+            if (getPreviousRouteName() === "myServices") {
+                break disable_auto_launch;
+            }
+
+            evtAutoLaunchDisabledDialogOpen.postAsyncOnceHandled();
+
+            autoLaunch = false;
+        }
 
         const { cleanup } = launcher.initialize({
-            catalogId,
-            chartName,
-            chartVersion,
-            formFieldsValueDifferentFromDefault
+            restorableConfig: {
+                catalogId: route.params.catalogId,
+                chartName: route.params.chartName,
+                chartVersion: route.params.version,
+                friendlyName: route.params.name,
+                isShared: route.params.shared,
+                s3ConfigId: route.params.s3,
+                helmValuesPatch: route.params.helmValuesPatch
+            },
+            autoLaunch
         });
 
         return cleanup;
     }, []);
 
     useEffect(() => {
-        const { version: chartVersion } = route.params;
-
-        if (chartVersion === undefined) {
+        if (!isReady) {
             return;
         }
 
-        launcher.changeChartVersion({ chartVersion });
-    }, [route.params.version]);
+        const {
+            catalogId,
+            chartName,
+            chartVersion,
+            friendlyName,
+            isShared,
+            s3ConfigId,
+            helmValuesPatch,
+            ...rest
+        } = restorableConfig;
+
+        // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+        assert<Equals<typeof rest, {}>>();
+
+        routes[route.name]({
+            catalogId,
+            chartName,
+            version: chartVersion,
+            name: friendlyName,
+            shared: isShared,
+            s3: s3ConfigId,
+            helmValuesPatch
+        }).replace();
+    }, [restorableConfig]);
 
     const { evtLauncher } = useCore().evts;
 
     useEvt(
-        ctx => {
-            evtLauncher.$attach(
-                action =>
-                    action.actionName === "chartVersionInternallySet" ? [action] : null,
-                ctx,
-                ({ chartVersion }) =>
-                    routes[route.name]({
-                        ...route.params,
-                        "version": chartVersion
-                    }).replace()
-            );
-
-            evtLauncher.$attach(
-                action => (action.actionName === "initialized" ? [action] : null),
-                ctx,
-                async ({ sensitiveConfigurations }) => {
-                    hideSplashScreen();
-
-                    auto_launch: {
-                        if (!route.params.autoLaunch) {
-                            break auto_launch;
-                        }
-
-                        routes[route.name]({
-                            ...route.params,
-                            "autoLaunch": undefined
-                        }).replace();
-
-                        if (
-                            env.DISABLE_AUTO_LAUNCH &&
-                            //If auto launch from myServices the user is launching one of his service, it's safe
-                            getPreviousRouteName() !== "myServices"
-                        ) {
-                            evtAutoLaunchDisabledDialogOpen.post();
-                            break auto_launch;
-                        }
-
-                        if (sensitiveConfigurations.length !== 0) {
-                            const dDoProceedToLaunch = new Deferred<boolean>();
-
-                            evtSensitiveConfigurationDialogOpen.post({
-                                sensitiveConfigurations,
-                                "resolveDoProceedToLaunch": dDoProceedToLaunch.resolve
-                            });
-
-                            if (!(await dDoProceedToLaunch.pr)) {
-                                break auto_launch;
-                            }
-                        }
-
-                        launcher.launch();
-                        return;
+        ctx =>
+            evtLauncher
+                .pipe(ctx)
+                .attach(
+                    event => event.eventName === "initialized",
+                    () => hideSplashScreen()
+                )
+                .attach(
+                    event => event.eventName === "launchStarted",
+                    () => showSplashScreen({ enableTransparency: true })
+                )
+                .$attach(
+                    event => (event.eventName === "launchCompleted" ? [event] : null),
+                    ({ helmReleaseName }) => {
+                        hideSplashScreen();
+                        routes
+                            .myServices({ autoOpenHelmReleaseName: helmReleaseName })
+                            .push();
                     }
-                }
-            );
-
-            evtLauncher.attach(
-                action => action.actionName === "launchStarted",
-                ctx,
-                () => showSplashScreen({ "enableTransparency": true })
-            );
-
-            evtLauncher.$attach(
-                action => (action.actionName === "launchCompleted" ? [action] : null),
-                ctx,
-                ({ helmReleaseName }) => {
-                    hideSplashScreen();
-                    routes
-                        .myServices({ "autoOpenHelmReleaseName": helmReleaseName })
-                        .push();
-                }
-            );
-        },
-        [evtLauncher, route.params]
+                ),
+        [evtLauncher]
     );
 
-    useEffect(() => {
-        if (restorableConfig === undefined) {
-            return;
-        }
-
-        const { catalogId, chartName, formFieldsValueDifferentFromDefault } =
-            restorableConfig;
-
-        routes[route.name]({
-            ...route.params,
-            catalogId,
-            chartName,
-            formFieldsValueDifferentFromDefault
-        }).replace();
-    }, [restorableConfig]);
-
     const onRequestCancel = useConstCallback(() =>
-        routes.catalog({ "catalogId": route.params.catalogId }).push()
+        routes.catalog({ catalogId: route.params.catalogId }).push()
     );
 
     const onRequestCopyLaunchUrl = useConstCallback(() =>
@@ -230,7 +199,7 @@ export default function Launcher(props: Props) {
             window.location.origin +
                 routes.launcher({
                     ...route.params,
-                    "autoLaunch": true
+                    autoLaunch: true
                 }).link.href
         )
     );
@@ -245,7 +214,7 @@ export default function Launcher(props: Props) {
                 const dDoProceed = new Deferred<boolean>();
 
                 evtMaybeAcknowledgeConfigVolatilityDialogOpen.post({
-                    "resolve": ({ doProceed }) => dDoProceed.resolve(doProceed)
+                    resolve: ({ doProceed }) => dDoProceed.resolve(doProceed)
                 });
 
                 if (!(await dDoProceed.pr)) {
@@ -258,7 +227,7 @@ export default function Launcher(props: Props) {
 
                 evtAcknowledgeSharingOfConfigConfirmDialogOpen.post({
                     groupProjectName,
-                    "resolveDoProceed": doProceed.resolve
+                    resolveDoProceed: doProceed.resolve
                 });
 
                 if (!(await doProceed.pr)) {
@@ -271,31 +240,119 @@ export default function Launcher(props: Props) {
     });
 
     const onChartVersionChange = useConstCallback((chartVersion: string) =>
-        routes[route.name]({
-            ...route.params,
-            "version": chartVersion
-        }).replace()
+        launcher.changeChartVersion({ chartVersion })
     );
 
     const {
+        ref: ref_root,
         domRect: { height: rootHeight }
-    } = useDomRect({
-        "ref": scrollableDivRef
-    });
+    } = useDomRect();
 
-    const { classes, cx, css } = useStyles({
-        "isCommandBarEnabled": commandLogsEntries !== undefined
-    });
+    const {
+        ref: ref_dataTextEditorWrapper,
+        domRect: { height: height_dataTextEditorWrapper }
+    } = useDomRect();
 
     const { myServicesSavedConfigsExtendedLink, projectS3ConfigLink } = useConst(() => ({
-        "myServicesSavedConfigsExtendedLink": routes.myServices({
-            "isSavedConfigsExtended": true
+        myServicesSavedConfigsExtendedLink: routes.myServices({
+            isSavedConfigsExtended: true
         }).link,
 
-        "projectS3ConfigLink": routes.projectSettings({
-            "tabId": "s3-configs"
+        projectS3ConfigLink: routes.projectSettings({
+            tabId: "s3-configs"
         }).link
     }));
+
+    const { resolveLocalizedString } = useResolveLocalizedString({
+        labelWhenMismatchingLanguage: true
+    });
+
+    const { erroredFormFields, onFieldErrorChange, removeAllErroredFormFields } =
+        (function useClosure() {
+            const [erroredFormFields, setErroredFormFields] = useState<
+                (string | number)[][]
+            >([]);
+
+            const onFieldErrorChange = useConstCallback(
+                ({
+                    helmValuesPath,
+                    hasError
+                }: Param0<FormCallbacks["onFieldErrorChange"]>) => {
+                    const erroredFormFields_new = [...erroredFormFields];
+
+                    if (hasError) {
+                        erroredFormFields_new.push(helmValuesPath);
+                        arrRemoveDuplicates(erroredFormFields_new, (a, b) => same(a, b));
+                    } else {
+                        const index = erroredFormFields_new.findIndex(erroredFormField =>
+                            same(erroredFormField, helmValuesPath)
+                        );
+
+                        if (index === -1) {
+                            return;
+                        }
+
+                        erroredFormFields_new.splice(index, 1);
+                    }
+
+                    setErroredFormFields(erroredFormFields_new);
+                }
+            );
+
+            const removeAllErroredFormFields = useConstCallback(
+                (params: { startingWithHelmValuesPath: (string | number)[] }) => {
+                    const { startingWithHelmValuesPath } = params;
+
+                    const erroredFormFields_new = erroredFormFields.filter(
+                        erroredFormField => {
+                            if (
+                                erroredFormField.length <
+                                startingWithHelmValuesPath.length
+                            ) {
+                                return true;
+                            }
+
+                            for (let i = 0; i < startingWithHelmValuesPath.length; i++) {
+                                if (
+                                    erroredFormField[i] !== startingWithHelmValuesPath[i]
+                                ) {
+                                    return true;
+                                }
+                            }
+
+                            return false;
+                        }
+                    );
+
+                    setErroredFormFields(erroredFormFields_new);
+                }
+            );
+
+            return { erroredFormFields, onFieldErrorChange, removeAllErroredFormFields };
+        })();
+
+    const onRemove = useConstCallback<FormCallbacks["onRemove"]>(
+        ({ helmValuesPath, index }) => {
+            removeAllErroredFormFields({ startingWithHelmValuesPath: helmValuesPath });
+
+            launcher.removeArrayItem({ helmValuesPath, index });
+        }
+    );
+
+    const [isDataEditorModeEnabled, setIsDataEditorModeEnabled] = useSessionState({
+        initialValue: false,
+        stateUniqueId: "isDataEditorModeEnabled",
+        zState: z.boolean()
+    });
+
+    const { classes, cx } = useStyles({
+        isCommandBarEnabled: commandLogsEntries !== undefined,
+        isDataEditorModeEnabled
+    });
+
+    const [dataTextEditorErrorMsg, setDataTextEditorErrorMsg] = useState<
+        string | undefined
+    >(undefined);
 
     if (!isReady) {
         return null;
@@ -303,137 +360,145 @@ export default function Launcher(props: Props) {
 
     return (
         <>
-            <div className={cx(classes.root, className)}>
-                <PageHeader
-                    classes={{
-                        "title": css({ "paddingBottom": 3 })
-                    }}
-                    mainIcon={customIcons.catalogSvgUrl}
-                    title={t("header text1")}
-                    helpTitle={t("header text2")}
-                    helpContent={t("chart sources", {
-                        chartName,
-                        "urls": chartSourceUrls
-                    })}
-                    helpIcon="sentimentSatisfied"
-                    titleCollapseParams={{
-                        "behavior": "collapses on scroll",
-                        "scrollTopThreshold": 100,
-                        "scrollableElementRef": scrollableDivRef
-                    }}
-                    helpCollapseParams={{
-                        "behavior": "collapses on scroll",
-                        "scrollTopThreshold": 50,
-                        "scrollableElementRef": scrollableDivRef
-                    }}
-                />
-                <div className={classes.bodyWrapper}>
-                    <div className={classes.body} ref={scrollableDivRef}>
-                        {commandLogsEntries !== undefined && (
-                            <CommandBar
-                                classes={{
-                                    "root": classes.commandBar,
-                                    "rootWhenExpended": classes.commandBarWhenExpended
-                                }}
-                                maxHeight={rootHeight - 30}
-                                entries={commandLogsEntries}
-                                downloadButton={{
-                                    "tooltipTitle": t("download as script"),
-                                    "onClick": () =>
-                                        saveAs(
-                                            new Blob([launchScript.content], {
-                                                "type": "text/plain;charset=utf-8"
-                                            }),
-                                            launchScript.fileBasename
-                                        )
-                                }}
-                                helpDialog={{
-                                    "body": t("api logs help body", {
-                                        "k8CredentialsHref":
-                                            !k8sCodeSnippets.getIsAvailable()
-                                                ? undefined
-                                                : routes.account({
-                                                      "tabId": "k8sCodeSnippets"
-                                                  }).href,
-                                        "myServicesHref": routes.myServices().href,
-                                        "interfacePreferenceHref": routes.account({
-                                            "tabId": "user-interface"
-                                        }).href
-                                    })
-                                }}
-                            />
-                        )}
-                        <div className={classes.wrapperForMawWidth}>
-                            <LauncherMainCard
-                                chartName={chartName}
-                                chartIconUrl={chartIconUrl}
-                                isThereASavedConfigWithThisFriendlyName={
-                                    isThereASavedConfigWithThisFriendlyName
-                                }
-                                isBookmarked={isRestorableConfigSaved}
-                                chartVersion={chartVersion}
-                                availableChartVersions={availableChartVersions}
-                                onChartVersionChange={onChartVersionChange}
-                                catalogName={catalogName}
-                                catalogRepositoryUrl={catalogRepositoryUrl}
-                                myServicesSavedConfigsExtendedLink={
-                                    myServicesSavedConfigsExtendedLink
-                                }
-                                onRequestToggleBookmark={onRequestToggleBookmark}
-                                friendlyName={friendlyName}
-                                onFriendlyNameChange={launcher.changeFriendlyName}
-                                isSharedWrap={
-                                    isShared === undefined
-                                        ? undefined
-                                        : {
-                                              isShared,
-                                              "onIsSharedValueChange":
-                                                  launcher.changeIsShared
-                                          }
-                                }
-                                onRequestLaunch={launcher.launch}
-                                onRequestCancel={onRequestCancel}
-                                onRequestRestoreAllDefault={
-                                    areAllFieldsDefault
-                                        ? undefined
-                                        : launcher.restoreAllDefault
-                                }
-                                onRequestCopyLaunchUrl={
-                                    areAllFieldsDefault || env.DISABLE_AUTO_LAUNCH
-                                        ? undefined
-                                        : onRequestCopyLaunchUrl
-                                }
-                                isLaunchable={isLaunchable}
-                                s3ConfigsSelect={
-                                    s3ConfigSelect === undefined
-                                        ? undefined
-                                        : {
-                                              projectS3ConfigLink,
-                                              "selectedOption":
-                                                  s3ConfigSelect.selectedOption,
-                                              "options": s3ConfigSelect.options,
-                                              "onSelectedS3ConfigChange":
-                                                  launcher.useSpecificS3Config
-                                          }
-                                }
-                            />
-                            {Object.keys(indexedFormFields).map(
-                                dependencyNamePackageNameOrGlobal => (
-                                    <LauncherConfigurationCard
-                                        key={dependencyNamePackageNameOrGlobal}
-                                        dependencyNamePackageNameOrGlobal={
-                                            dependencyNamePackageNameOrGlobal
-                                        }
-                                        {...indexedFormFields[
-                                            dependencyNamePackageNameOrGlobal
-                                        ]}
-                                        onFormValueChange={launcher.changeFormFieldValue}
-                                        formFieldsIsWellFormed={formFieldsIsWellFormed}
-                                    />
+            <div ref={ref_root} className={cx(classes.root, className)}>
+                {commandLogsEntries !== undefined && (
+                    <CommandBar
+                        classes={{
+                            root: classes.commandBar,
+                            rootWhenExpended: classes.commandBarWhenExpended
+                        }}
+                        maxHeight={rootHeight - 30}
+                        entries={commandLogsEntries}
+                        downloadButton={{
+                            tooltipTitle: t("download as script"),
+                            onClick: () =>
+                                saveAs(
+                                    new Blob([launchScript.content], {
+                                        type: "text/plain;charset=utf-8"
+                                    }),
+                                    launchScript.fileBasename
                                 )
-                            )}
-                        </div>
-                    </div>
+                        }}
+                        helpDialog={{
+                            body: t("api logs help body", {
+                                k8CredentialsHref: !k8sCodeSnippets.getIsAvailable()
+                                    ? undefined
+                                    : routes.account({
+                                          tabId: "k8sCodeSnippets"
+                                      }).href,
+                                myServicesHref: routes.myServices().href,
+                                interfacePreferenceHref: routes.account({
+                                    tabId: "user-interface"
+                                }).href
+                            })
+                        }}
+                    />
+                )}
+                <LauncherMainCard
+                    className={classes.mainCard}
+                    chartName={chartName}
+                    chartSourceLinksNode={t("sources", {
+                        helmChartName: chartName,
+                        helmChartRepositoryName: resolveLocalizedString(catalogName),
+                        labeledHelmChartSourceUrls
+                    })}
+                    chartIconUrl={chartIconUrl}
+                    willOverwriteExistingConfigOnSave={willOverwriteExistingConfigOnSave}
+                    isBookmarked={isRestorableConfigSaved}
+                    chartVersion={chartVersion}
+                    availableChartVersions={availableChartVersions}
+                    onChartVersionChange={onChartVersionChange}
+                    catalogName={catalogName}
+                    labeledHelmChartSourceUrls={labeledHelmChartSourceUrls}
+                    myServicesSavedConfigsExtendedLink={
+                        myServicesSavedConfigsExtendedLink
+                    }
+                    onRequestToggleBookmark={onRequestToggleBookmark}
+                    friendlyName={friendlyName}
+                    onFriendlyNameChange={launcher.changeFriendlyName}
+                    isSharedWrap={
+                        isShared === undefined
+                            ? undefined
+                            : {
+                                  isShared,
+                                  onIsSharedValueChange: launcher.changeIsShared
+                              }
+                    }
+                    onRequestLaunch={launcher.launch}
+                    onRequestCancel={onRequestCancel}
+                    onRequestRestoreAllDefault={
+                        isDefaultConfiguration ? undefined : launcher.restoreAllDefault
+                    }
+                    onRequestCopyLaunchUrl={
+                        isDefaultConfiguration || env.DISABLE_AUTO_LAUNCH
+                            ? undefined
+                            : onRequestCopyLaunchUrl
+                    }
+                    s3ConfigsSelect={
+                        s3ConfigSelect === undefined
+                            ? undefined
+                            : {
+                                  projectS3ConfigLink,
+                                  selectedOption: s3ConfigSelect.selectedOptionValue,
+                                  options: s3ConfigSelect.options,
+                                  onSelectedS3ConfigChange: launcher.changeS3Config
+                              }
+                    }
+                    erroredFormFields={erroredFormFields}
+                    dataTextEditorErrorMsg={dataTextEditorErrorMsg}
+                />
+                <RadioGroup
+                    className={classes.modeSwitch}
+                    value={isDataEditorModeEnabled ? "editor" : "form"}
+                    onChange={event =>
+                        setIsDataEditorModeEnabled(event.target.value === "editor")
+                    }
+                >
+                    <FormControlLabel
+                        value="form"
+                        control={
+                            <Radio disabled={dataTextEditorErrorMsg !== undefined} />
+                        }
+                        label={t("form")}
+                    />
+                    <FormControlLabel
+                        value="editor"
+                        control={<Radio />}
+                        label={t("editor")}
+                    />
+                </RadioGroup>
+                <div className={classes.rootFormWrapper}>
+                    <RootFormComponent
+                        className={classes.rootForm}
+                        rootForm={rootForm}
+                        callbacks={{
+                            onAdd: launcher.addArrayItem,
+                            onChange: launcher.changeFormFieldValue,
+                            onRemove,
+                            onFieldErrorChange
+                        }}
+                    />
+                </div>
+
+                <div
+                    ref={ref_dataTextEditorWrapper}
+                    className={classes.dataTextEditorWrapper}
+                >
+                    <DataTextEditor
+                        className={classes.dataTextEditor}
+                        value={helmValues}
+                        jsonSchema={helmValuesSchema_forDataTextEditor}
+                        maxHeight={height_dataTextEditorWrapper}
+                        onChange={helmValues => {
+                            assert(!(helmValues instanceof Array));
+                            assert(helmValues !== null);
+                            assert(typeof helmValues === "object");
+                            launcher.changeHelmValues({ helmValues });
+                        }}
+                        onErrorMsgChanged={errorMsg =>
+                            setDataTextEditorErrorMsg(errorMsg)
+                        }
+                    />
                 </div>
             </div>
             <LauncherDialogs
@@ -441,7 +506,6 @@ export default function Launcher(props: Props) {
                     evtAcknowledgeSharingOfConfigConfirmDialogOpen
                 }
                 evtAutoLaunchDisabledDialogOpen={evtAutoLaunchDisabledDialogOpen}
-                evtSensitiveConfigurationDialogOpen={evtSensitiveConfigurationDialogOpen}
                 evtNoLongerBookmarkedDialogOpen={evtNoLongerBookmarkedDialogOpen}
             />
             <MaybeAcknowledgeConfigVolatilityDialog
@@ -451,14 +515,13 @@ export default function Launcher(props: Props) {
     );
 }
 
-export const { i18n } = declareComponentKeys<
-    | "header text1"
-    | "header text2"
+const { i18n } = declareComponentKeys<
     | {
-          K: "chart sources";
+          K: "sources";
           P: {
-              chartName: string;
-              urls: string[];
+              helmChartName: string;
+              helmChartRepositoryName: JSX.Element;
+              labeledHelmChartSourceUrls: LabeledHelmChartSourceUrls;
           };
           R: JSX.Element;
       }
@@ -472,47 +535,67 @@ export const { i18n } = declareComponentKeys<
           };
           R: JSX.Element;
       }
+    | "form"
+    | "editor"
 >()({ Launcher });
+export type I18n = typeof i18n;
 
 const useStyles = tss
-    .withParams<{ isCommandBarEnabled: boolean }>()
+    .withParams<{ isCommandBarEnabled: boolean; isDataEditorModeEnabled: boolean }>()
     .withName({ Launcher })
-    .create(({ theme, isCommandBarEnabled }) => ({
-        "root": {
-            "height": "100%",
-            "display": "flex",
-            "flexDirection": "column"
-        },
-        "bodyWrapper": {
-            "flex": 1,
-            "overflow": "hidden"
-        },
-        "body": {
-            "height": "100%",
-            "overflow": "auto",
-            "paddingTop": !isCommandBarEnabled
-                ? 0
-                : theme.typography.rootFontSizePx * 1.7 +
-                  2 * theme.spacing(2) +
-                  theme.spacing(2),
-            "position": "relative"
-        },
-        "wrapperForMawWidth": {
-            "maxWidth": 1300,
-            "& > *": {
-                "marginBottom": theme.spacing(3)
+    .create(({ theme, isCommandBarEnabled, isDataEditorModeEnabled }) => {
+        const MAX_WIDTH = 1250;
+
+        return {
+            root: {
+                height: "100%",
+                paddingTop: !isCommandBarEnabled
+                    ? 0
+                    : theme.typography.rootFontSizePx * 1.7 +
+                      2 * theme.spacing(2) +
+                      theme.spacing(2),
+                position: "relative",
+                display: "flex",
+                flexDirection: "column"
+            },
+            commandBar: {
+                position: "absolute",
+                right: 0,
+                width: "min(100%, 1250px)",
+                top: 0,
+                zIndex: 1,
+                transition: "opacity 750ms linear"
+            },
+            commandBarWhenExpended: {
+                width: "min(100%, 1450px)",
+                transition: "width 70ms linear"
+            },
+            mainCard: {
+                maxWidth: MAX_WIDTH
+            },
+            modeSwitch: {
+                display: "flex",
+                flexDirection: "row",
+                ...theme.spacing.topBottom("margin", 3)
+            },
+            rootFormWrapper: {
+                flex: 1,
+                overflow: "auto",
+                display: isDataEditorModeEnabled ? "none" : undefined
+            },
+            dataTextEditorWrapper: {
+                display: isDataEditorModeEnabled ? undefined : "none",
+                flex: 1,
+                overflow: "visible",
+                position: "relative"
+            },
+            dataTextEditor: {
+                position: "absolute",
+                width: "100%",
+                overflow: "visible"
+            },
+            rootForm: {
+                maxWidth: MAX_WIDTH
             }
-        },
-        "commandBar": {
-            "position": "absolute",
-            "right": 0,
-            "width": "min(100%, 1250px)",
-            "top": 0,
-            "zIndex": 1,
-            "transition": "opacity 750ms linear"
-        },
-        "commandBarWhenExpended": {
-            "width": "min(100%, 1450px)",
-            "transition": "width 70ms linear"
-        }
-    }));
+        };
+    });

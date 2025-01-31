@@ -22,13 +22,14 @@ export default function Page404(props: Props) {
 }
 
 const useStyles = tss.withName({ Page404 }).create(({ theme }) => ({
-    "root": {
-        "height": "100%",
-        "display": "flex",
-        "alignItems": "center",
-        "justifyContent": "center",
-        "backgroundColor": theme.colors.useCases.surfaces.background
+    root: {
+        height: "100%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: theme.colors.useCases.surfaces.background
     }
 }));
 
-export const { i18n } = declareComponentKeys<"not found">()({ Page404 });
+const { i18n } = declareComponentKeys<"not found">()({ Page404 });
+export type I18n = typeof i18n;

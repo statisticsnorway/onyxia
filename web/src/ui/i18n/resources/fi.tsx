@@ -1,52 +1,69 @@
 import MuiLink from "@mui/material/Link";
 import type { Translations } from "../types";
 import { Markdown } from "ui/shared/Markdown";
-import { elementsToSentence } from "ui/tools/elementsToSentence";
 import { Icon } from "onyxia-ui/Icon";
-import type { MuiIconComponentName } from "onyxia-ui/MuiIconComponentName";
-import { id } from "tsafe/id";
+import { getIconUrlByName } from "lazy-icons";
 import { capitalize } from "tsafe/capitalize";
+import { MaybeLink } from "ui/shared/MaybeLink";
 
 export const translations: Translations<"fi"> = {
     /* spell-checker: disable */
-    "Account": {
-        "infos": "Tilin tiedot",
-        "third-party-integration": "Kolmannen osapuolen integraatio",
-        "storage": "Yhdistä tallennustilaan",
-        "k8sCodeSnippets": "Kubernetes",
+    Account: {
+        infos: "Tilin tiedot",
+        git: undefined,
+        storage: "Yhdistä tallennustilaan",
+        k8sCodeSnippets: "Kubernetes",
         "user-interface": "Käyttöliittymän asetukset",
-        "text1": "Oma tili",
-        "text2": "Pääset käsiksi erilaisiin tilin tietoihin.",
-        "text3":
-            "Määritä käyttäjänimesi, sähköpostiosoitteesi, salasanat ja henkilökohtaiset pääsytunnukset, jotka ovat suoraan yhteydessä palveluihisi.",
+        text1: "Oma tili",
+        text2: "Pääset käsiksi erilaisiin tilin tietoihin.",
+        text3: "Määritä käyttäjänimesi, sähköpostiosoitteesi, salasanat ja henkilökohtaiset pääsytunnukset, jotka ovat suoraan yhteydessä palveluihisi.",
         "personal tokens tooltip":
             "Sinulle generoidut salasanat, joilla on määritelty voimassaoloaika",
-        "vault": "Vault"
+        vault: "Vault"
     },
-    "AccountInfoTab": {
+    AccountInfoTab: {
         "general information": "Yleiset tiedot",
         "user id": "Käyttäjätunnus (IDEP)",
         "full name": "Koko nimi",
-        "email": "Sähköpostiosoite",
+        email: "Sähköpostiosoite",
         "instructions about how to change password":
             'Vaihtaaksesi salasanasi, kirjaudu vain ulos ja klikkaa "unohdin salasanani" -linkkiä.'
     },
-    "AccountIntegrationsTab": {
-        "git section title": "Git-konfiguraatio",
-        "git section helper": `Varmistaaksesi, että näyt olevan Git-kontribuutioidesi tekijä`,
-        "gitName": "Git-käyttäjänimi",
-        "gitEmail": "Git-sähköposti",
-        "third party tokens section title": "Yhdistä Gitlab-, Github- ja Kaggle-tilisi",
-        "third party tokens section helper": `
-                Yhdistä palvelusi ulkoisiin tileihin käyttämällä henkilökohtaisia pääsykoodeja ja ympäristömuuttujia
-            `,
-        "personal token": ({ serviceName }) =>
-            `${serviceName}-henkilökohtainen pääsykoodi`,
-        "link for token creation": ({ serviceName }) =>
-            `Luo ${serviceName}-pääsykoodejasi.`,
-        "accessible as env": "Käytettävissä palveluissasi ympäristömuuttujana"
+    AccountGitTab: {
+        gitName: "Käyttäjänimi Gitille",
+        "gitName helper text": ({ gitName, focusClassName }) => (
+            <>
+                Tämä komento asettaa globaalin Git-käyttäjänimesi ja suoritetaan palvelun
+                käynnistyessä:&nbsp;
+                <code className={focusClassName}>
+                    git config --global user.name "{gitName || "<käyttäjänimesi>"}"
+                </code>
+            </>
+        ),
+        gitEmail: "Sähköposti Gitille",
+        "gitEmail helper text": ({ gitEmail, focusClassName }) => (
+            <>
+                Tämä komento asettaa globaalin Git-sähköpostiosoitteesi ja suoritetaan
+                palvelun käynnistyessä:&nbsp;
+                <code className={focusClassName}>
+                    git config --global user.email "
+                    {gitEmail || "<sähköpostisi@domain.com>"}"
+                </code>
+            </>
+        ),
+        githubPersonalAccessToken: "Henkilökohtainen pääsyavain Git-alustalle",
+        "githubPersonalAccessToken helper text": ({ focusClassName }) => (
+            <>
+                Tämän avaimen antaminen mahdollistaa yksityisten GitHub- tai
+                GitLab-repositorioidesi kloonaamisen ja päivittämisen ilman, että sinun
+                tarvitsee syöttää alustan tunnistetietojasi uudelleen.
+                <br />
+                Tämä avain on myös saatavilla ympäristömuuttujana:&nbsp;
+                <span className={focusClassName}>$GIT_PERSONAL_ACCESS_TOKEN</span>
+            </>
+        )
     },
-    "AccountStorageTab": {
+    AccountStorageTab: {
         "credentials section title": "Yhdistä datat palveluihisi",
         "credentials section helper":
             "Amazon-yhteensopiva MinIO-objektivarasto (AWS S3). Tämä tieto täytetään automaattisesti.",
@@ -57,7 +74,7 @@ export const translations: Translations<"fi"> = {
             "Lataa tai kopioi alustan tukemat aloituskomenskriptit valitsemallasi ohjelmointikielellä.",
         "expires in": ({ howMuchTime }) => `Vanhenee ${howMuchTime} kuluttua`
     },
-    "AccountKubernetesTab": {
+    AccountKubernetesTab: {
         "credentials section title": "Yhdistä Kubernetes-klusteriin",
         "credentials section helper":
             "Käyttöoikeudet suoraan yhteyteen Kubernetes API-palvelimen kanssa.",
@@ -79,7 +96,7 @@ export const translations: Translations<"fi"> = {
         "expires in": ({ howMuchTime }) =>
             `Nämä käyttöoikeudet ovat voimassa seuraavat ${howMuchTime}`
     },
-    "AccountVaultTab": {
+    AccountVaultTab: {
         "credentials section title": "Vault-todennustiedot",
         "credentials section helper": ({ vaultDocHref, mySecretLink }) => (
             <>
@@ -101,7 +118,7 @@ export const translations: Translations<"fi"> = {
         ),
         "expires in": ({ howMuchTime }) => `Pääte vanhenee ${howMuchTime} kuluttua`
     },
-    "ProjectSettings": {
+    ProjectSettings: {
         "page header title": "Projektiasetukset",
         "page header help title": ({ groupProjectName }) =>
             groupProjectName === undefined
@@ -140,29 +157,29 @@ export const translations: Translations<"fi"> = {
         "security-info": "Turvallisuustiedot",
         "s3-configs": "S3-konfiguraatiot"
     },
-    "ProjectSettingsS3ConfigTab": {
+    ProjectSettingsS3ConfigTab: {
         "add custom config": "Lisää mukautettu S3-kokoonpano"
     },
-    "S3ConfigCard": {
+    S3ConfigCard: {
         "data source": "Tietolähde",
-        "credentials": "Tunnistetiedot",
+        credentials: "Tunnistetiedot",
         "sts credentials":
             "Dynaamisesti pyydetyt tokenit puolestasi Onyxian toimesta (STS)",
-        "account": "Tili",
+        account: "Tili",
         "use in services": "Käytä palveluissa",
         "use in services helper": `Jos otettu käyttöön, tätä konfiguraatiota käytetään
             oletusarvoisesti palveluissasi, jotka toteuttavat S3-integraation.`,
         "use for onyxia explorers": "Käytä Onyxia-tutkijoille",
         "use for onyxia explorers helper": `Jos otettu käyttöön, tätä konfiguraatiota käytetään
             tiedostonhallintaohjelmassa ja data-analysaattorissa.`,
-        "edit": "Muokkaa",
-        "delete": "Poista"
+        edit: "Muokkaa",
+        delete: "Poista"
     },
-    "AddCustomS3ConfigDialog": {
+    AddCustomS3ConfigDialog: {
         "dialog title": "Uusi mukautettu S3-kokoonpano",
         "dialog subtitle":
             "Määritä mukautettu palvelutili tai yhdistä toiseen S3-yhteensopivaan palveluun",
-        "cancel": "Peruuta",
+        cancel: "Peruuta",
         "save config": "Tallenna kokoonpano",
         "update config": "Päivitä kokoonpano",
         "is required": "Tämä kenttä on pakollinen",
@@ -183,9 +200,13 @@ export const translations: Translations<"fi"> = {
             </>
         ),
         "account credentials": "Tilin tunnistetiedot",
-        "accountFriendlyName textField label": "Tilin ystävällinen nimi",
-        "accountFriendlyName textField helper text":
-            "Tämä on vain avuksi tilin tunnistamisessa. Esimerkki: Oma henkilökohtainen tili",
+        "friendlyName textField label": "Konfiguraation nimi",
+        "friendlyName textField helper text":
+            "Tämä auttaa sinua tunnistamaan tämän konfiguraation. Esimerkki: Minun AWS-bucket",
+        "isAnonymous switch label": "Anonyymi pääsy",
+        "isAnonymous switch helper text":
+            "Aseta PÄÄLLE, jos salainen pääsyavain ei ole tarpeen",
+
         "accessKeyId textField label": "Pääsyavaimen tunnus",
         "accessKeyId textField helper text": "Esimerkki: 1A2B3C4D5E6F7G8H9I0J",
         "secretAccessKey textField label": "Salainen pääsyavain",
@@ -216,7 +237,7 @@ export const translations: Translations<"fi"> = {
             </>
         )
     },
-    "TestS3ConnectionButton": {
+    TestS3ConnectionButton: {
         "test connection": "Testaa yhteys",
         "test connection failed": ({ errorMessage }) => (
             <>
@@ -225,8 +246,8 @@ export const translations: Translations<"fi"> = {
             </>
         )
     },
-    "AccountUserInterfaceTab": {
-        "title": "Käyttöliittymän asetukset",
+    AccountUserInterfaceTab: {
+        title: "Käyttöliittymän asetukset",
         "enable dark mode": "Ota tumma tila käyttöön",
         "dark mode helper": "Tumma teema, jossa on tumma tausta.",
         "enable beta": "Ota käyttöön beta-testitila",
@@ -245,9 +266,9 @@ export const translations: Translations<"fi"> = {
             </>
         )
     },
-    "SettingField": {
+    SettingField: {
         "copy tooltip": "Kopioi leikepöydälle",
-        "language": "Vaihda kieltä",
+        language: "Vaihda kieltä",
         "service password": "Oletuspalvelusalasana",
         "service password helper text": ({ groupProjectName }) => (
             <>
@@ -256,12 +277,9 @@ export const translations: Translations<"fi"> = {
                 Kun käynnistät palvelun, turvallisuusvälilehden salasanakenttä täytetään
                 automaattisesti tällä salasanalla. <br />
                 Napsauttamalla{" "}
-                <Icon
-                    size="extra small"
-                    icon={id<MuiIconComponentName>("Refresh")}
-                />{" "}
-                -kuvaketta luodaan uusi satunnainen salasana. Huomaa kuitenkin, että se ei
-                päivitä salasanaa palveluille, jotka ovat parhaillaan käynnissä. <br />
+                <Icon size="extra small" icon={getIconUrlByName("Refresh")} /> -kuvaketta
+                luodaan uusi satunnainen salasana. Huomaa kuitenkin, että se ei päivitä
+                salasanaa palveluille, jotka ovat parhaillaan käynnissä. <br />
                 Palvelusalasana on se, jonka Onyxia pyytää sinua kopioimaan
                 leikepöydällesi ennen käynnissä olevan palvelun käyttöä. <br />
                 {groupProjectName !== undefined && (
@@ -274,11 +292,11 @@ export const translations: Translations<"fi"> = {
         ),
         "not yet defined": "Ei vielä määritelty",
         "reset helper dialogs": "Nollaa ohjeikkunat",
-        "reset": "Nollaa",
+        reset: "Nollaa",
         "reset helper dialogs helper text":
             "Nollaa ohjeviestit, joista on pyydetty, ettei niitä näytetä uudelleen"
     },
-    "MyFiles": {
+    MyFiles: {
         "page title - my files": "Omat tiedostot",
         "what this page is used for - my files":
             "Täällä voit selata S3 Bucket -tiedostojasi.",
@@ -293,14 +311,37 @@ export const translations: Translations<"fi"> = {
             </>
         )
     },
-    "MyFilesDisabledDialog": {
+    MyFilesDisabledDialog: {
         "dialog title": "S3-palvelinta ei ole määritetty",
         "dialog body":
             "Tälle instanssille ei ole määritetty S3-palvelinta. Voit kuitenkin lisätä sellaisen manuaalisesti ottaaksesi käyttöön S3-tiedostonhallinnan.",
-        "cancel": "Peruuta",
+        cancel: "Peruuta",
         "go to settings": "Siirry asetuksiin"
     },
-    "MySecrets": {
+    ShareDialog: {
+        title: "Jaa tietosi",
+        close: "Sulje",
+        "create and copy link": "Luo ja kopioi linkki",
+        "paragraph current policy": ({ isPublic }) =>
+            isPublic
+                ? "Tiedostosi on julkinen, kuka tahansa linkin omistava voi ladata sen."
+                : "Tiedostosi on tällä hetkellä yksityinen.",
+
+        "paragraph change policy": ({ isPublic }) =>
+            isPublic
+                ? "Rajoittaaksesi pääsyä muuta tiedostosi jakamisen tilaa."
+                : "Jaa tiedosto ja anna pääsy muuttamalla jakamisen tilaa tai luomalla väliaikainen linkki.",
+
+        "hint link access": ({ isPublic, expiration }) =>
+            isPublic
+                ? "Linkkisi on käytettävissä niin kauan kuin tiedosto on julkinen."
+                : `Tämä linkki antaa pääsyn tietoihisi ${expiration} ajaksi.`,
+        "label input link": "Pääsylinkki"
+    },
+    SelectTime: {
+        "validity duration label": "Voimassaoloaika"
+    },
+    MySecrets: {
         "page title - my secrets": "Omat salaisuudet",
         "what this page is used for - my secrets":
             "Täällä voit määrittää muuttujia, jotka ovat käytettävissä palveluissasi ympäristömuuttujina.",
@@ -312,53 +353,58 @@ export const translations: Translations<"fi"> = {
                     dokumentaatiomme
                 </MuiLink>
                 . &nbsp;
-                <MuiLink {...accountTabLink}>Määritä paikallinen Vault CLI</MuiLink>.
+                <MuiLink {...accountTabLink}>
+                    Määritä paikallinen Vault CLI
+                </MuiLink>.
             </>
         )
     },
-    "SecretsExplorerItem": {
-        "description": "kuvaus"
+    SecretsExplorerItem: {
+        description: "kuvaus"
     },
-    "ExplorerItem": {
-        "description": "kuvaus"
+    ExplorerItem: {
+        description: "kuvaus"
     },
-    "SecretsExplorerButtonBar": {
-        "secret": "salaisuus",
-        "rename": "nimeä uudelleen",
-        "delete": "poista",
+    SecretsExplorerButtonBar: {
+        secret: "salaisuus",
+        rename: "nimeä uudelleen",
+        delete: "poista",
         "create secret": "Luo salaisuus",
         "copy path": "Käytä palvelussa",
         "create directory": "Luo hakemisto",
-        "refresh": "päivitä",
+        refresh: "päivitä",
         "create what": ({ what }) => `Luo ${what}`,
-        "new": "Uusi"
+        new: "Uusi"
     },
-    "ExplorerButtonBar": {
-        "file": "tiedosto",
-        "delete": "poista",
+    ExplorerButtonBar: {
+        file: "tiedosto",
+        delete: "poista",
         "upload file": "Lataa tiedosto",
         "copy path": "Kopioi S3-objektin nimi",
         "create directory": "Luo hakemisto",
-        "refresh": "päivitä",
-        "create what": ({ what }) => `Luo ${what}`,
-        "new": "Uusi"
+        refresh: "päivitä",
+        new: "Uusi",
+        share: "Jaa",
+        "alt list view": "Näytä lista",
+        "alt block view": "Näytä lohko"
     },
-    "ExplorerItems": {
+    ExplorerItems: {
         "empty directory": "Tämä hakemisto on tyhjä"
     },
-    "SecretsExplorerItems": {
+
+    SecretsExplorerItems: {
         "empty directory": "Tämä hakemisto on tyhjä"
     },
-    "SecretsExplorer": {
-        "file": "tiedosto",
-        "secret": "salaisuus",
-        "create": "luo",
-        "cancel": "peruuta",
-        "delete": "poista",
+    SecretsExplorer: {
+        file: "tiedosto",
+        secret: "salaisuus",
+        create: "luo",
+        cancel: "peruuta",
+        delete: "poista",
         "do not display again": "Älä näytä uudelleen",
 
         "untitled what": ({ what }) => `nimetön_${what}`,
-        "directory": "hakemisto",
+        directory: "hakemisto",
         "deletion dialog title": ({ deleteWhat }) => `Poista ${deleteWhat}?`,
         "deletion dialog body": ({ deleteWhat }) => `Olet poistamassa ${deleteWhat}.
             Tätä toimintoa ei voi peruuttaa.`,
@@ -366,24 +412,27 @@ export const translations: Translations<"fi"> = {
         "can't be empty": "Ei voi olla tyhjä",
         "new directory": "Uusi hakemisto"
     },
-    "Explorer": {
-        "file": "tiedosto",
-        "secret": "salaisuus",
-        "create": "luo",
-        "cancel": "peruuta",
-        "delete": "poista",
+    Explorer: {
+        file: "tiedosto",
+        secret: "salaisuus",
+        create: "luo",
+        cancel: "peruuta",
+        delete: "poista",
         "do not display again": "Älä näytä uudelleen",
-
         "untitled what": ({ what }) => `nimetön_${what}`,
-        "directory": "hakemisto",
-        "deletion dialog title": ({ deleteWhat }) => `Poista ${deleteWhat}?`,
-        "deletion dialog body": ({ deleteWhat }) => `Olet poistamassa ${deleteWhat}.
-            Tätä toimintoa ei voi peruuttaa.`,
+        directory: "hakemisto",
+        multiple: "kohteet",
+        "deletion dialog title": ({ deleteWhat, isPlural }) =>
+            `Poistetaanko ${isPlural ? "nämä" : "tämä"} ${deleteWhat}?`,
+        "deletion dialog body": ({ deleteWhat, isPlural }) => `
+        Olet poistamassa ${isPlural ? "näitä" : "tätä"} ${deleteWhat}.
+        Tämä toiminto voi johtaa näihin liittyvien tietojen menetykseen ${isPlural ? "näihin" : "tähän"} ${deleteWhat}.
+        `,
         "already a directory with this name": "Tämän niminen hakemisto on jo olemassa",
         "can't be empty": "Ei voi olla tyhjä",
         "new directory": "Uusi hakemisto"
     },
-    "MySecretsEditor": {
+    MySecretsEditor: {
         "do not display again": "Älä näytä uudelleen",
         "add an entry": "Lisää uusi muuttuja",
         "environnement variable default name": "UUSI_MUUTTUJA",
@@ -407,134 +456,148 @@ export const translations: Translations<"fi"> = {
             `,
         "use secret dialog ok": "Selvä"
     },
-    "MySecretsEditorRow": {
+    ListExplorerItems: {
+        "header name": "Nimi",
+        "header modified date": "Muokattu",
+        "header size": "Koko",
+        "header policy": "Käytäntö"
+    },
+    MySecretsEditorRow: {
         "key input desc": "Ympäristömuuttujan nimi",
         "value input desc": "Ympäristömuuttujan arvo"
     },
-    "ExplorerUploadModalDropArea": {
+    ExplorerUploadModalDropArea: {
         "browse files": "Selaa tiedostoja",
         "drag and drop or": "Vedä ja pudota tai"
     },
-    "ExplorerUploadProgress": {
-        "over": "yli",
-        "importing": "Tuodaan"
+    ExplorerUploadProgress: {
+        over: "yli",
+        importing: "Tuodaan"
     },
-    "ExplorerUploadModal": {
+    ExplorerUploadModal: {
         "import files": "Tuo tiedostoja",
-        "cancel": "Peruuta",
-        "minimize": "Pienennä"
+        cancel: "Peruuta",
+        minimize: "Pienennä"
     },
 
-    "Header": {
-        "login": "Kirjaudu sisään",
-        "logout": "Kirjaudu ulos",
-        "project": "Projekti",
-        "region": "Alue"
+    Header: {
+        login: "Kirjaudu sisään",
+        logout: "Kirjaudu ulos",
+        project: "Projekti",
+        region: "Alue"
     },
-    "LeftBar": {
-        "reduce": "Pienennä",
-        "home": "Koti",
-        "account": "Oma tili",
-        "projectSettings": "Projektin asetukset",
-        "catalog": "Palvelukatalogi",
-        "myServices": "Omat palvelut",
-        "mySecrets": "Omat salaisuudet",
-        "myFiles": "Omat tiedostot",
+    LeftBar: {
+        reduce: "Pienennä",
+        home: "Koti",
+        account: "Oma tili",
+        projectSettings: "Projektin asetukset",
+        catalog: "Palvelukatalogi",
+        myServices: "Omat palvelut",
+        mySecrets: "Omat salaisuudet",
+        myFiles: "Omat tiedostot",
         "divider: services features": "Palvelun ominaisuudet",
         "divider: external services features": "Ulkoisten palveluiden ominaisuudet",
         "divider: onyxia instance specific features":
             "Onyxia-instanssin erityisominaisuudet",
-        "dataExplorer": "Data Explorer",
-        "sqlOlapShell": "SQL OLAP-kuori"
+        dataExplorer: "Data Explorer",
+        sqlOlapShell: "SQL OLAP-kuori"
     },
-    "AutoLogoutCountdown": {
+    AutoLogoutCountdown: {
         "are you still there": "Oletko vielä siellä?",
         "you'll soon be automatically logged out":
             "Sinut kirjataan pian automaattisesti ulos."
     },
-    "Page404": {
+    Page404: {
         "not found": "Sivua ei löydy"
     },
-    "PortraitModeUnsupported": {
-        "instructions":
+    PortraitModeUnsupported: {
+        instructions:
             "Voit käyttää tätä sovellusta puhelimellasi ottamalla käyttöön kääntöanturin ja kääntämällä puhelimesi."
     },
-    "MaybeAcknowledgeConfigVolatilityDialog": {
+    MaybeAcknowledgeConfigVolatilityDialog: {
         "dialog title": "Huomio, asetukset ovat epävakaita",
         "dialog body": `Tämä Onyxia-instanssi ei toteuta mitään pysyvyyteen liittyvää mekanismia asetusten tallentamiseksi. 
             Kaikki asetukset tallennetaan selaimen paikalliseen muistiin. Tämä tarkoittaa, että jos tyhjennät selaimesi paikallisen 
             muistin tai vaihdat selainta, menetät kaikki asetuksesi.`,
         "do not show next time": "Älä näytä tätä viestiä uudelleen",
-        "cancel": "Peruuta",
+        cancel: "Peruuta",
         "I understand": "Ymmärrän"
     },
-    "Home": {
+    Home: {
         "title authenticated": ({ userFirstname }) => `Tervetuloa, ${userFirstname}!`,
-        "title": "Tervetuloa Onyxia datalabiin",
+        title: "Tervetuloa Onyxia datalabiin",
         "new user": "Uusi käyttäjä?",
-        "login": "Kirjaudu sisään",
-        "subtitle":
+        login: "Kirjaudu sisään",
+        subtitle:
             "Työskentele Pythonin tai R:n kanssa ja nauti tarvitsemastasi laskentatehosta!",
-        "cardTitle1": "Ergonominen ympäristö ja tarvittaessa saatavilla olevat palvelut",
-        "cardTitle2": "Aktiivinen ja innostunut yhteisö palveluksessasi",
-        "cardTitle3": "Nopea, joustava ja verkkopohjainen tietovarasto",
-        "cardText1":
+        cardTitle1: "Ergonominen ympäristö ja tarvittaessa saatavilla olevat palvelut",
+        cardTitle2: "Aktiivinen ja innostunut yhteisö palveluksessasi",
+        cardTitle3: "Nopea, joustava ja verkkopohjainen tietovarasto",
+        cardText1:
             "Analysoi dataa, suorita hajautettua laskentaa ja hyödynnä laajaa palvelukatalogia. Varaa tarvitsemasi laskentateho.",
-        "cardText2":
+        cardText2:
             "Käytä ja jaa käytettävissä olevia resursseja: opetusohjelmia, koulutuksia ja keskustelufoorumeita.",
-        "cardText3":
+        cardText3:
             "Helppo tapa käyttää omia ja saatavilla olevia tietoja ohjelmissasi - S3-rajapinnan toteutus",
-        "cardButton1": "Tutustu katalogiin",
-        "cardButton2": "Liity yhteisöön",
-        "cardButton3": "Selaa tietoja"
+        cardButton1: "Tutustu katalogiin",
+        cardButton2: "Liity yhteisöön",
+        cardButton3: "Selaa tietoja"
     },
-    "Catalog": {
-        "header text1": "Palvelukatalogi",
-        "header text2":
-            "Selaa, käynnistä ja määritä palveluita muutamalla napsautuksella.",
-        "header help": ({ catalogName, catalogDescription, repositoryUrl }) => (
-            <>
-                Olet tutkimassa Helm Chart Repositorya{" "}
-                <MuiLink href={repositoryUrl} target="_blank">
-                    {catalogName}: {catalogDescription}
-                </MuiLink>
-            </>
-        ),
+    Catalog: {
+        header: "Palvelukatalogi",
         "no result found": ({ forWhat }) => `Tuloksia ei löytynyt haulle ${forWhat}`,
         "search results": "Hakutulokset",
-        "search": "Haku"
+        search: "Haku"
     },
-    "CatalogChartCard": {
-        "launch": "Käynnistä",
+    CatalogChartCard: {
+        launch: "Käynnistä",
         "learn more": "Lisätietoja"
     },
-    "CatalogNoSearchMatches": {
+    CatalogNoSearchMatches: {
         "no service found": "Palvelua ei löytynyt",
         "no result found": ({ forWhat }) => `Tuloksia ei löytynyt haulle ${forWhat}`,
         "check spelling": "Tarkista kirjoitus tai laajenna hakua.",
         "go back": "Palaa pääpalveluihin"
     },
-    "Launcher": {
-        "header text1": "Palvelukatalogi",
-        "header text2":
-            "Selaa, käynnistä ja määritä palveluita muutamalla napsautuksella.",
-        "chart sources": ({ chartName, urls }) =>
-            urls.length === 0 ? (
-                <></>
-            ) : (
-                <>
-                    Pääsy kaavion {chartName} lähteese{urls.length === 1 ? "en" : "isiin"}
-                    :&nbsp;
-                    {elementsToSentence({
-                        "elements": urls.map(source => (
-                            <MuiLink href={source} target="_blank" underline="hover">
-                                täällä
+    Launcher: {
+        sources: ({
+            helmChartName,
+            helmChartRepositoryName,
+            labeledHelmChartSourceUrls
+        }) => (
+            <>
+                Helm-kaavio{" "}
+                {
+                    <MaybeLink href={labeledHelmChartSourceUrls.helmChartSourceUrl}>
+                        {helmChartName}
+                    </MaybeLink>
+                }{" "}
+                kuuluu Helm-kaaviovarastoon{" "}
+                {
+                    <MaybeLink
+                        href={labeledHelmChartSourceUrls.helmChartRepositorySourceUrl}
+                    >
+                        {helmChartRepositoryName}
+                    </MaybeLink>
+                }
+                .
+                {labeledHelmChartSourceUrls.dockerImageSourceUrl !== undefined && (
+                    <>
+                        {" "}
+                        Se perustuu Docker-kuvaan{" "}
+                        {
+                            <MuiLink
+                                href={labeledHelmChartSourceUrls.dockerImageSourceUrl}
+                                target="_blank"
+                            >
+                                {helmChartName}
                             </MuiLink>
-                        )),
-                        "language": "fi"
-                    })}
-                </>
-            ),
+                        }
+                        .
+                    </>
+                )}
+            </>
+        ),
         "download as script": "Lataa skriptinä",
         "api logs help body": ({
             k8CredentialsHref,
@@ -558,9 +621,7 @@ export const translations: Translations<"fi"> = {
 
                     return {
                         href,
-                        ...(doOpensNewTab
-                            ? { "target": "_blank", "onClick": undefined }
-                            : {})
+                        ...(doOpensNewTab ? { target: "_blank", onClick: undefined } : {})
                     };
                 }}
             >{`Olemme suunnitelleet komentopalkin siten, että voit ottaa hallinnan Kubernetes-julkaisuistasi.
@@ -603,9 +664,11 @@ Voit poistaa komentopalkin käytöstä [\`Oma tili -> Käyttöliittymäasetukset
 
 Tutustu vapaasti ja ota hallintaan Kubernetes-julkaisusi!
         `}</Markdown>
-        )
+        ),
+        form: "Lomake",
+        editor: "Tekstieditori"
     },
-    "AcknowledgeSharingOfConfigConfirmDialog": {
+    AcknowledgeSharingOfConfigConfirmDialog: {
         "acknowledge sharing of config confirm dialog title":
             "Huomio, konfiguraatiot jaetaan",
         "acknowledge sharing of config confirm dialog subtitle": ({
@@ -614,10 +677,10 @@ Tutustu vapaasti ja ota hallintaan Kubernetes-julkaisusi!
         tämän konfiguraation, jokainen projektin ${groupProjectName} jäsen pystyy käynnistämään sen.`,
         "acknowledge sharing of config confirm dialog body": `Vaikka Onyxia ei ole automaattisesti lisännyt henkilökohtaisia tietoja,
         ole varovainen, ettet jaa arkaluonteisia tietoja palautettavassa konfiguraatiossa.`,
-        "cancel": "Peruuta",
+        cancel: "Peruuta",
         "i understand, proceed": "Ymmärrän, jatka"
     },
-    "AutoLaunchDisabledDialog": {
+    AutoLaunchDisabledDialog: {
         "auto launch disabled dialog title": "Käynnistäminen ei ole mahdollista",
         "auto launch disabled dialog body": (
             <>
@@ -629,25 +692,61 @@ Tutustu vapaasti ja ota hallintaan Kubernetes-julkaisusi!
                 Jos olet epävarma, ota yhteyttä ylläpitäjääsi.
             </>
         ),
-        "ok": "Ok"
+        ok: "Ok"
     },
-    "NoLongerBookmarkedDialog": {
+    FormFieldWrapper: {
+        "reset to default": "Palauta oletusarvoon"
+    },
+    ConfigurationTopLevelGroup: {
+        miscellaneous: "Sekalaista",
+        "Configuration that applies to all charts":
+            "Konfiguraatio, joka koskee kaikkia kaavioita",
+        "Top level configuration values": "Ylimmän tason konfiguraatioväriarvot"
+    },
+    YamlCodeBlockFormField: {
+        "not an array": "Taulukkoa odotetaan",
+        "not an object": "Oliota odotetaan",
+        "not valid yaml": "Virheellinen YAML/JSON"
+    },
+    TextFormField: {
+        "not matching pattern": ({ pattern }) => `Ei vastaa mallia ${pattern}`,
+        "toggle password visibility": "Vaihda salasanan näkyvyyttä"
+    },
+    FormFieldGroupComponent: {
+        add: "Lisää"
+    },
+    NumberFormField: {
+        "below minimum": ({ minimum }) =>
+            `Täytyy olla suurempi tai yhtä suuri kuin ${minimum}`,
+        "not a number": "Ei ole numero",
+        "not an integer": "Ei ole kokonaisluku"
+    },
+    NoLongerBookmarkedDialog: {
         "no longer bookmarked dialog title": "Muutokset eivät tallennu",
         "no longer bookmarked dialog body":
             "Päivitä tallennettu konfiguraatio napsauttamalla kirjanmerkkikuvaketta uudelleen.",
-        "ok": "Ok"
+        ok: "Ok"
     },
-    "SensitiveConfigurationDialog": {
-        "sensitive configuration dialog title":
-            "Palvelun käynnistäminen voi olla vaarallista",
-        "cancel": "Peruuta",
-        "proceed to launch": "Jatka käynnistämistä"
+    MyService: {
+        "page title": ({ helmReleaseFriendlyName }) =>
+            `${helmReleaseFriendlyName} Valvonta`
     },
-    "LauncherMainCard": {
-        "card title": "Luo omat palvelusi",
+    PodLogsTab: {
+        "not necessarily first logs":
+            "Nämä eivät välttämättä ole ensimmäiset lokit, vanhemmat lokit saattavat olla poistettu",
+        "new logs are displayed in realtime": "Uudet lokit näytetään reaaliajassa"
+    },
+    MyServiceButtonBar: {
+        back: "Takaisin",
+        "external monitoring": "Ulkoinen valvonta",
+        "helm values": "Helm-arvot",
+        reduce: "Vähennä"
+    },
+    LauncherMainCard: {
         "friendly name": "Käyttäjäystävällinen nimi",
-        "launch": "Käynnistä",
-        "cancel": "Peruuta",
+        launch: "Käynnistä",
+        "problem with": "Ongelma kohteessa:",
+        cancel: "Peruuta",
         "copy auto launch url": "Kopioi automaattisen käynnistyksen URL",
         "copy auto launch url helper": ({
             chartName
@@ -668,15 +767,26 @@ Tutustu vapaasti ja ota hallintaan Kubernetes-julkaisusi!
         ),
         "version select label": "Versio",
         "version select helper text": ({
-            chartName,
-            catalogRepositoryUrl,
-            catalogName
+            helmCharName,
+            helmRepositoryName,
+            labeledHelmChartSourceUrls
         }) => (
             <>
-                {chartName} kaavion versio&nbsp;
-                <MuiLink href={catalogRepositoryUrl}>
-                    {catalogName} Helm Repository
-                </MuiLink>
+                Version of the{" "}
+                {
+                    <MaybeLink href={labeledHelmChartSourceUrls.helmChartSourceUrl}>
+                        {helmCharName}
+                    </MaybeLink>
+                }{" "}
+                helm chart joka kuuluu helm-kaaviosäilöön{" "}
+                {
+                    <MaybeLink
+                        href={labeledHelmChartSourceUrls.helmChartRepositorySourceUrl}
+                    >
+                        {helmRepositoryName}
+                    </MaybeLink>
+                }
+                .
             </>
         ),
         "save changes": "Tallenna muutokset",
@@ -689,30 +799,28 @@ Tutustu vapaasti ja ota hallintaan Kubernetes-julkaisusi!
             </>
         )
     },
-    "LauncherConfigurationCard": {
-        "global config": "Yleinen konfiguraatio",
-        "configuration": ({ packageName }) => `${packageName} -konfiguraatiot`,
-        "dependency": ({ dependencyName }) => `${dependencyName} -riippuvuus`,
-        "launch of a service": ({ dependencyName }) =>
-            `Käynnistetään ${dependencyName} -palvelu`,
-        "mismatching pattern": ({ pattern }) => `Täsmätä ${pattern}`,
-        "Invalid YAML Object": "Virheellinen YAML-objekti",
-        "Invalid YAML Array": "Virheellinen YAML-taulukko"
-    },
-    "Footer": {
-        "contribute": "Osallistu",
+    Footer: {
+        contribute: "Osallistu",
         "terms of service": "Käyttöehdot",
         "change language": "Vaihda kieli",
         "dark mode switch": "Tumma tila"
     },
-    "MyServices": {
-        "text1": "Omat palvelut",
-        "text2": "Käytettävissä olevat palvelusi",
-        "text3":
-            "Palveluiden odotetaan olevan sammutettuina, kun et enää käytä niitä aktiivisesti.",
+    MyServices: {
+        text1: "Omat palvelut",
+        text2: "Käytettävissä olevat palvelusi",
+        text3: "Palveluiden odotetaan olevan sammutettuina, kun et enää käytä niitä aktiivisesti.",
         "running services": "Käynnissä olevat palvelut"
     },
-    "MyServicesConfirmDeleteDialog": {
+    ClusterEventsDialog: {
+        title: "Tapahtumat",
+        subtitle: (
+            <>
+                Kubernetes-nimiavaruuden tapahtumat, se on reaaliaikainen syöte komennosta{" "}
+                <code>kubectl get events</code>
+            </>
+        )
+    },
+    MyServicesConfirmDeleteDialog: {
         "confirm delete title": "Oletko varma?",
         "confirm delete subtitle":
             "Varmista, että palvelusi ovat valmiita poistettaviksi",
@@ -720,59 +828,86 @@ Tutustu vapaasti ja ota hallintaan Kubernetes-julkaisusi!
             "Huomioi, että osa palveluistasi on jaettu muiden projektiin kuuluvien jäsenten kanssa.",
         "confirm delete body":
             "Muista tallentaa koodisi GitHubiin tai GitLabiin ennen palveluiden lopettamista",
-        "cancel": "Peruuta",
-        "confirm": "Kyllä, poista"
+        cancel: "Peruuta",
+        confirm: "Kyllä, poista"
     },
-    "MyServicesButtonBar": {
-        "refresh": "Päivitä",
-        "launch": "Uusi palvelu",
-        "trash": "Tyhjennä kaikki",
+    MyServicesButtonBar: {
+        refresh: "Päivitä",
+        launch: "Uusi palvelu",
+        trash: "Tyhjennä kaikki",
         "trash my own": "Poista kaikki omat palvelut"
     },
-    "MyServicesCard": {
-        "service": "Palvelu",
-        "running since": "Käynnissä alkaen: ",
-        "open": "avata",
-        "readme": "lueminut",
-        "shared by you": "Jaettu sinun kanssasi",
+    MyServicesCard: {
+        service: "Palvelu",
+        "running since": "Käynnistetty: ",
+        open: "avata",
+        readme: "lueminut",
         "reminder to delete services": "Muista poistaa palvelusi.",
-        "this is a shared service": "Tämä palvelu on jaettu projektin jäsenten kesken",
-        "status": "Tila",
+        status: "Tila",
         "container starting": "Säiliö käynnistyy",
-        "pending": "Odottaa",
-        "failed": "Epäonnistui"
+        failed: "Epäonnistui",
+        "suspend service tooltip": "Keskeytä palvelu ja vapauta resurssit",
+        "resume service tooltip": "Jatka palvelua",
+        suspended: "Keskeytetty",
+        suspending: "Keskeyttää",
+        "share tooltip - belong to someone else": ({
+            projectName,
+            ownerUsername,
+            focusColor
+        }) => (
+            <>
+                Tämä palvelu on jaettu{" "}
+                <span style={{ color: focusColor }}>{projectName}</span>
+                projektin jäsenten kesken käyttäjän{" "}
+                <span style={{ color: focusColor }}>{ownerUsername}</span> toimesta.
+            </>
+        ),
+        "share tooltip - belong to you, shared": ({ projectName, focusColor }) => (
+            <>
+                Tämä palvelu on jaettu{" "}
+                <span style={{ color: focusColor }}>{projectName}</span> projektin
+                jäsenten kesken. Napsauta lopettaaksesi jakamisen.
+            </>
+        ),
+        "share tooltip - belong to you, not shared": ({ projectName, focusColor }) => (
+            <>
+                Vain sinä voit käyttää tätä palvelua. Napsauta jakaaksesi sen{" "}
+                <span style={{ color: focusColor }}>{projectName}</span> projektin
+                jäsenten kanssa.
+            </>
+        )
     },
-    "MyServicesRestorableConfigOptions": {
-        "edit": "Muokkaa",
+    MyServicesRestorableConfigOptions: {
+        edit: "Muokkaa",
         "copy link": "Kopioi URL-osoite",
         "remove bookmark": "Poista"
     },
-    "MyServicesRestorableConfig": {
-        "edit": "Muokkaa",
-        "launch": "Käynnistä"
+    MyServicesRestorableConfig: {
+        edit: "Muokkaa",
+        launch: "Käynnistä"
     },
-    "MyServicesRestorableConfigs": {
-        "saved": "Tallennettu",
-        "expand": "Laajenna"
+    MyServicesRestorableConfigs: {
+        saved: "Tallennettu",
+        expand: "Laajenna"
     },
-    "ReadmeAndEnvDialog": {
-        "ok": "ok",
-        "return": "Palaa"
+    ReadmeDialog: {
+        ok: "ok",
+        return: "Palaa"
     },
-    "CopyOpenButton": {
+    CopyOpenButton: {
         "first copy the password": "Klikkaa kopioidaksesi salasanan...",
         "open the service": "Avaa palvelu 🚀"
     },
-    "MyServicesCards": {
+    MyServicesCards: {
         "running services": "Käynnissä olevat palvelut"
     },
-    "NoRunningService": {
+    NoRunningService: {
         "launch one": "Käynnistä palvelu",
         "no services running": "Sinulla ei ole käynnissä olevia palveluita"
     },
-    "CircularUsage": {
-        "max": "Maksimi",
-        "used": "Käytetty",
+    CircularUsage: {
+        max: "Maksimi",
+        used: "Käytetty",
         "quota card title": ({ what, isLimit }) => {
             const whatTranslated = (() => {
                 switch (what) {
@@ -794,13 +929,13 @@ Tutustu vapaasti ja ota hallintaan Kubernetes-julkaisusi!
             return `${whatTranslated} - ${isLimit ? "Raja" : "Pyydetty"}`;
         }
     },
-    "Quotas": {
+    Quotas: {
         "show more": "Näytä lisää",
         "resource usage quotas": "Resurssien käyttökiintiöt",
         "current resource usage is reasonable":
             "Nykyinen resurssien käyttösi on kohtuullista."
     },
-    "DataExplorer": {
+    DataExplorer: {
         "page header title": "Data Explorer",
         "page header help title":
             "Esikatsele Parquet- ja CSV-tiedostoja suoraan selaimessasi!",
@@ -819,20 +954,23 @@ Tutustu vapaasti ja ota hallintaan Kubernetes-julkaisusi!
                 <MuiLink {...demoParquetFileLink}>demotiedostoa</MuiLink>!
             </>
         ),
-        "column": "sarake",
-        "density": "tiheys",
-        "download file": "lataa tiedosto"
+        column: "sarake",
+        density: "tiheys",
+        "download file": "lataa tiedosto",
+        "resize table": "Muuta taulukon kokoa",
+        "unsupported file type": ({ supportedFileTypes }) =>
+            `Tuettua tiedostomuotoa ei tunnistettu. Tuetut tyypit ovat: ${supportedFileTypes.join(", ")}.`,
+        "can't fetch file": "Tietotiedostoa ei voida hakea"
     },
-    "UrlInput": {
-        "load": "Lataa"
+    UrlInput: {
+        load: "Lataa",
+        reset: "Tyhjennä"
     },
-    "CommandBar": {
-        "ok": "ok"
+    CommandBar: {
+        ok: "ok"
     },
-    "moment": {
-        "date format": ({ isSameYear }) =>
-            `dddd, Do MMMM${isSameYear ? "" : " YYYY"}, HH:mm`,
-        "past1": ({ divisorKey }) => {
+    formattedDate: {
+        past1: ({ divisorKey }) => {
             switch (divisorKey) {
                 case "now":
                     return "juuri nyt";
@@ -852,7 +990,7 @@ Tutustu vapaasti ja ota hallintaan Kubernetes-julkaisusi!
                     return "viime vuonna";
             }
         },
-        "pastN": ({ divisorKey }) => {
+        pastN: ({ divisorKey }) => {
             switch (divisorKey) {
                 case "now":
                     return "juuri nyt";
@@ -872,7 +1010,7 @@ Tutustu vapaasti ja ota hallintaan Kubernetes-julkaisusi!
                     return "# vuotta sitten";
             }
         },
-        "future1": ({ divisorKey }) => {
+        future1: ({ divisorKey }) => {
             switch (divisorKey) {
                 case "now":
                     return "juuri nyt";
@@ -892,7 +1030,7 @@ Tutustu vapaasti ja ota hallintaan Kubernetes-julkaisusi!
                     return "ensi vuonna";
             }
         },
-        "futureN": ({ divisorKey }) => {
+        futureN: ({ divisorKey }) => {
             switch (divisorKey) {
                 case "now":
                     return "juuri nyt";
@@ -911,11 +1049,64 @@ Tutustu vapaasti ja ota hallintaan Kubernetes-julkaisusi!
                 case "year":
                     return "# vuoden kuluttua";
             }
+        },
+        singular: ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "second":
+                    return "1 sekunti";
+                case "minute":
+                    return "1 minuutti";
+                case "hour":
+                    return "1 tunti";
+                case "day":
+                    return "1 päivä";
+                case "week":
+                    return "1 viikko";
+                case "month":
+                    return "1 kuukausi";
+                case "year":
+                    return "1 vuosi";
+            }
+        },
+        plural: ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "second":
+                    return "# sekuntia";
+                case "minute":
+                    return "# minuuttia";
+                case "hour":
+                    return "# tuntia";
+                case "day":
+                    return "# päivää";
+                case "week":
+                    return "# viikkoa";
+                case "month":
+                    return "# kuukautta";
+                case "year":
+                    return "# vuotta";
+            }
         }
     },
-    "CopyToClipboardIconButton": {
+    CopyToClipboardIconButton: {
         "copied to clipboard": "Kopioitu!",
         "copy to clipboard": "Kopioi leikepöydälle"
+    },
+    CustomDataGrid: {
+        "empty directory": "Tämä hakemisto on tyhjä",
+        "label rows count": ({ count }) => {
+            const plural = count > 1 ? "tta" : "";
+            return `${count} kohde${plural} valittu`;
+        },
+        "label rows per page": "Kohteet per sivu"
+    },
+    CustomDataGridToolbarDensitySelector: {
+        toolbarDensity: "Tiheys",
+        toolbarDensityStandard: "Normaali",
+        toolbarDensityComfortable: "Mukava",
+        toolbarDensityCompact: "Tiivis"
+    },
+    CustomDataGridToolbarColumnsButton: {
+        toolbarColumnsLabel: "Sarakkeet"
     }
     /* spell-checker: enable */
 };

@@ -6,7 +6,6 @@ import { declareComponentKeys, useTranslation } from "ui/i18n";
 
 export const MyFilesDisabledDialog = memo(() => {
     const onClose = () => routes.home().push();
-
     const { t } = useTranslation({ MyFilesDisabledDialog });
 
     return (
@@ -25,12 +24,11 @@ export const MyFilesDisabledDialog = memo(() => {
                         doOpenNewTabIfHref={false}
                         {...(() => {
                             const link = routes.projectSettings({
-                                "tabId": "s3-configs"
+                                tabId: "s3-configs"
                             }).link;
-
                             return {
                                 ...link,
-                                "onClick": e => {
+                                onClick: e => {
                                     onClose();
                                     return link.onClick(e);
                                 }
@@ -45,6 +43,8 @@ export const MyFilesDisabledDialog = memo(() => {
     );
 });
 
-export const { i18n } = declareComponentKeys<
+const { i18n } = declareComponentKeys<
     "dialog title" | "dialog body" | "cancel" | "go to settings"
 >()({ MyFilesDisabledDialog });
+
+export type I18n = typeof i18n;

@@ -25,8 +25,15 @@ import {
     type Props as MyServicesConfirmDeleteDialogProps
 } from "./MyServicesConfirmDeleteDialog";
 import { Deferred } from "evt/tools/Deferred";
-import { customIcons } from "ui/theme";
 import { Quotas } from "./Quotas";
+import { assert, type Equals } from "tsafe/assert";
+import { ClusterEventsDialog } from "./ClusterEventsDialog";
+import {
+    ClusterEventsSnackbar,
+    type ClusterEventsSnackbarProps
+} from "./ClusterEventsSnackbar";
+import { useEvt } from "evt/hooks";
+import { getIconUrlByName, customIcons } from "lazy-icons";
 
 export type Props = {
     route: PageRoute;
@@ -40,25 +47,31 @@ export default function MyServices(props: Props) {
     const { t: tCatalogLauncher } = useTranslation("Launcher");
 
     /* prettier-ignore */
-    const { serviceManagement, restorableConfigManagement, k8sCodeSnippets } = useCore().functions;
+    const { serviceManagement, restorableConfigManagement, k8sCodeSnippets, clusterEventsMonitor } = useCore().functions;
     /* prettier-ignore */
-    const { restorableConfigs, chartIconAndFriendlyNameByRestorableConfigIndex } = useCoreState("restorableConfigManagement", "main");
+    const { restorableConfigs, chartIconUrlByRestorableConfigIndex } = useCoreState("restorableConfigManagement", "main");
     const {
         isUpdating,
-        runningServices,
-        deletableRunningServiceHelmReleaseNames,
-        isThereNonOwnedServices,
+        services,
         isThereOwnedSharedServices,
-        commandLogsEntries
+        commandLogsEntries,
+        isThereNonOwnedServices,
+        isThereDeletableServices,
+        groupProjectName
     } = useCoreState("serviceManagement", "main");
 
-    const { isCommandBarEnabled, isDevModeEnabled } = useCoreState(
-        "userConfigs",
-        "userConfigs"
-    );
-    const servicePassword = useCoreState("projectManagement", "servicePassword");
+    const { isCommandBarEnabled } = useCoreState("userConfigs", "userConfigs");
 
     const evtQuotasActionUpdate = useConst(() => Evt.create());
+
+    const eventsNotificationCount = useCoreState(
+        "clusterEventsMonitor",
+        "notificationsCount"
+    );
+
+    const lastClusterEvent = useCoreState("clusterEventsMonitor", "lastClusterEvent");
+
+    const evtClusterEventsDialogOpen = useConst(() => Evt.create<void>());
 
     const onButtonBarClick = useConstCallback(async (buttonId: ButtonId) => {
         switch (buttonId) {
@@ -69,28 +82,36 @@ export default function MyServices(props: Props) {
                 serviceManagement.update();
                 evtQuotasActionUpdate.post();
                 return;
-            case "trash":
+            case "trash": {
                 const dDoProceed = new Deferred<boolean>();
 
                 evtConfirmDeleteDialogOpen.post({
                     isThereOwnedSharedServices,
-                    "resolveDoProceed": dDoProceed.resolve
+                    resolveDoProceed: dDoProceed.resolve
                 });
 
                 if (!(await dDoProceed.pr)) {
                     return;
                 }
 
-                deletableRunningServiceHelmReleaseNames.map(helmReleaseName =>
-                    serviceManagement.stopService({ helmReleaseName })
-                );
+                serviceManagement.deleteAllServices();
 
                 return;
+            }
+            case "events":
+                evtClusterEventsDialogOpen.post();
+                return;
         }
+        assert<Equals<typeof buttonId, never>>(false);
     });
 
     useEffect(() => {
         const { setInactive } = serviceManagement.setActive();
+        return () => setInactive();
+    }, []);
+
+    useEffect(() => {
+        const { setInactive } = clusterEventsMonitor.setActive();
         return () => setInactive();
     }, []);
 
@@ -105,7 +126,7 @@ export default function MyServices(props: Props) {
 
     const {
         domRect: { height: bellowHeaderHeight }
-    } = useDomRect({ "ref": belowHeaderRef });
+    } = useDomRect({ ref: belowHeaderRef });
 
     const { classes, cx } = useStyles({
         isSavedConfigsExtended,
@@ -117,7 +138,7 @@ export default function MyServices(props: Props) {
     const onRequestToggleIsShortVariant = useConstCallback(() =>
         routes
             .myServices({
-                "isSavedConfigsExtended": !isSavedConfigsExtended ? true : undefined
+                isSavedConfigsExtended: !isSavedConfigsExtended ? true : undefined
             })
             .push()
     );
@@ -126,74 +147,54 @@ export default function MyServices(props: Props) {
         MyServicesRestorableConfigsProps["onRequestDelete"]
     >(({ restorableConfigIndex }) => {
         restorableConfigManagement.deleteRestorableConfig({
-            "restorableConfig": restorableConfigs[restorableConfigIndex]
+            restorableConfig: restorableConfigs[restorableConfigIndex]
         });
     });
 
     const restorableConfigEntires = useMemo(
         (): MyServicesRestorableConfigsProps["entries"] =>
             restorableConfigs.map((restorableConfig, restorableConfigIndex) => {
-                const buildLink = (autoLaunch: boolean) =>
-                    routes.launcher({
-                        "catalogId": restorableConfig.catalogId,
-                        "chartName": restorableConfig.chartName,
-                        "version": restorableConfig.chartVersion,
-                        "formFieldsValueDifferentFromDefault":
-                            restorableConfig.formFieldsValueDifferentFromDefault,
-                        "autoLaunch": autoLaunch ? true : undefined
-                    }).link;
+                const buildLink = (autoLaunch: boolean) => {
+                    const {
+                        catalogId,
+                        chartName,
+                        chartVersion,
+                        friendlyName,
+                        isShared,
+                        s3ConfigId,
+                        helmValuesPatch,
+                        ...rest
+                    } = restorableConfig;
 
-                const { chartIconUrl, friendlyName } =
-                    chartIconAndFriendlyNameByRestorableConfigIndex[
-                        restorableConfigIndex
-                    ];
+                    // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+                    assert<Equals<typeof rest, {}>>(true);
+
+                    return routes.launcher({
+                        catalogId,
+                        chartName,
+                        name: friendlyName,
+                        shared: isShared,
+                        version: restorableConfig.chartVersion,
+                        s3: s3ConfigId,
+                        helmValuesPatch,
+                        autoLaunch: autoLaunch ? true : undefined
+                    }).link;
+                };
 
                 return {
                     restorableConfigIndex,
-                    chartIconUrl,
-                    friendlyName,
-                    "launchLink": buildLink(true),
-                    "editLink": buildLink(false)
+                    chartIconUrl:
+                        chartIconUrlByRestorableConfigIndex[restorableConfigIndex],
+                    friendlyName: restorableConfig.friendlyName,
+                    launchLink: buildLink(true),
+                    editLink: buildLink(false)
                 };
             }),
-        [restorableConfigs, chartIconAndFriendlyNameByRestorableConfigIndex]
+        [restorableConfigs, chartIconUrlByRestorableConfigIndex]
     );
 
-    const cards = useMemo(
-        (): MyServicesCardsProps["cards"] | undefined =>
-            runningServices?.map(
-                ({
-                    helmReleaseName,
-                    chartIconUrl,
-                    friendlyName,
-                    chartName,
-                    urls,
-                    startedAt,
-                    monitoringUrl,
-                    status,
-                    areAllTasksReady,
-                    hasPostInstallInstructions,
-                    ...rest
-                }) => ({
-                    helmReleaseName,
-                    chartIconUrl,
-                    friendlyName,
-                    chartName,
-                    "openUrl": urls[0],
-                    monitoringUrl,
-                    "startTime": startedAt,
-                    status,
-                    areAllTasksReady,
-                    hasPostInstallInstructions,
-                    "isShared": rest.isShared,
-                    "isOwned": rest.isOwned,
-                    "myServiceLink": !isDevModeEnabled
-                        ? undefined
-                        : routes.myService({ helmReleaseName }).link,
-                    "ownerUsername": rest.isOwned ? undefined : rest.ownerUsername
-                })
-            ),
-        [runningServices]
+    const getMyServiceLink = useConstCallback<MyServicesCardsProps["getMyServiceLink"]>(
+        ({ helmReleaseName }) => routes.myService({ helmReleaseName }).link
     );
 
     const evtMyServiceCardsAction = useConst(() =>
@@ -207,29 +208,26 @@ export default function MyServices(props: Props) {
             return;
         }
 
-        const runningService = (runningServices ?? []).find(
+        const service = services.find(
             ({ helmReleaseName }) => helmReleaseName === autoOpenHelmReleaseName
         );
 
-        if (runningService === undefined) {
+        if (service === undefined) {
             return;
         }
 
         routes
             .myServices({
                 ...route.params,
-                "isSavedConfigsExtended": route.params.isSavedConfigsExtended
-                    ? true
-                    : undefined,
-                "autoOpenHelmReleaseName": undefined
+                autoOpenHelmReleaseName: undefined
             })
             .replace();
 
         evtMyServiceCardsAction.post({
-            "action": "TRIGGER SHOW POST INSTALL INSTRUCTIONS",
-            "helmReleaseName": runningService.helmReleaseName
+            action: "open readme dialog",
+            helmReleaseName: service.helmReleaseName
         });
-    }, [route.params.autoOpenHelmReleaseName, runningServices]);
+    }, [route.params.autoOpenHelmReleaseName, services]);
 
     const catalogExplorerLink = useMemo(() => routes.catalog().link, []);
 
@@ -243,94 +241,161 @@ export default function MyServices(props: Props) {
 
             evtConfirmDeleteDialogOpen.post({
                 isThereOwnedSharedServices,
-                "resolveDoProceed": dDoProceed.resolve
+                resolveDoProceed: dDoProceed.resolve
             });
 
             if (!(await dDoProceed.pr)) {
                 return;
             }
 
-            serviceManagement.stopService({ helmReleaseName });
+            serviceManagement.deleteService({ helmReleaseName });
         }
     );
 
+    const onRequestPauseOrResume = useConstCallback<
+        MyServicesCardsProps["onRequestPauseOrResume"]
+    >(async ({ helmReleaseName }) =>
+        serviceManagement.suspendOrResumeService({ helmReleaseName: helmReleaseName })
+    );
+
+    const onRequestChangeFriendlyName = useConstCallback<
+        MyServicesCardsProps["onRequestChangeFriendlyName"]
+    >(({ helmReleaseName, friendlyName }) =>
+        serviceManagement.changeServiceFriendlyName({
+            helmReleaseName,
+            friendlyName
+        })
+    );
+
+    const onRequestChangeSharedStatus = useConstCallback<
+        MyServicesCardsProps["onRequestChangeSharedStatus"]
+    >(({ helmReleaseName, isShared }) =>
+        serviceManagement.changeServiceSharedStatus({
+            helmReleaseName,
+            isShared
+        })
+    );
+
+    const onOpenClusterEventsDialog = useConstCallback(() => {
+        evtClusterEventsDialogOpen.post();
+    });
+
+    const { evtClusterEventsMonitor } = useCore().evts;
+
+    const evtClusterEventsSnackbarAction = useConst(() =>
+        Evt.create<UnpackEvt<ClusterEventsSnackbarProps["evtAction"]>>()
+    );
+
+    useEvt(
+        ctx => {
+            evtClusterEventsMonitor.$attach(
+                action =>
+                    action.actionName === "display notification" ? [action] : null,
+                ctx,
+                ({ message, severity }) => {
+                    evtClusterEventsSnackbarAction.post({
+                        action: "show notification",
+                        message,
+                        severity
+                    });
+                }
+            );
+        },
+        [evtClusterEventsMonitor]
+    );
+
     return (
-        <div className={cx(classes.root, className)}>
-            <PageHeader
-                mainIcon={customIcons.servicesSvgUrl}
-                title={t("text1")}
-                helpTitle={t("text2")}
-                helpContent={t("text3")}
-                helpIcon="sentimentSatisfied"
-            />
-            <div className={classes.belowHeader} ref={belowHeaderRef}>
-                <div ref={buttonBarRef}>
-                    <MyServicesButtonBar
-                        onClick={onButtonBarClick}
-                        isThereNonOwnedServicesShown={isThereNonOwnedServices}
-                        isThereDeletableServices={
-                            deletableRunningServiceHelmReleaseNames.length !== 0
-                        }
-                    />
-                </div>
-                {isCommandBarEnabled && (
-                    <CommandBar
-                        classes={{
-                            "root": classes.commandBar,
-                            "rootWhenExpended": classes.commandBarWhenExpended
-                        }}
-                        entries={commandLogsEntries}
-                        maxHeight={commandBarMaxHeight}
-                        helpDialog={{
-                            "body": tCatalogLauncher("api logs help body", {
-                                "k8CredentialsHref": !k8sCodeSnippets.getIsAvailable()
-                                    ? undefined
-                                    : routes.account({
-                                          "tabId": "k8sCodeSnippets"
-                                      }).href,
-                                "myServicesHref": routes.myServices().href,
-                                "interfacePreferenceHref": routes.account({
-                                    "tabId": "user-interface"
-                                }).href
-                            })
-                        }}
-                    />
-                )}
-                <div className={classes.cardsAndSavedConfigs}>
-                    <>
-                        {!isSavedConfigsExtended && (
-                            <MyServicesCards
-                                isUpdating={isUpdating}
-                                className={classes.cards}
-                                cards={cards}
-                                onRequestDelete={onRequestDelete}
-                                catalogExplorerLink={catalogExplorerLink}
-                                evtAction={evtMyServiceCardsAction}
-                                projectServicePassword={servicePassword}
-                                getEnv={serviceManagement.getEnv}
-                                getPostInstallInstructions={
-                                    serviceManagement.getPostInstallInstructions
-                                }
-                            />
-                        )}
-                        <div className={classes.rightPanel}>
+        <>
+            <div className={cx(classes.root, className)}>
+                <PageHeader
+                    mainIcon={customIcons.servicesSvgUrl}
+                    title={t("text1")}
+                    helpTitle={t("text2")}
+                    helpContent={t("text3")}
+                    helpIcon={getIconUrlByName("SentimentSatisfied")}
+                />
+                <div className={classes.belowHeader} ref={belowHeaderRef}>
+                    <div ref={buttonBarRef}>
+                        <MyServicesButtonBar
+                            onClick={onButtonBarClick}
+                            isThereNonOwnedServicesShown={isThereNonOwnedServices}
+                            isThereDeletableServices={isThereDeletableServices}
+                            eventsNotificationCount={eventsNotificationCount}
+                        />
+                    </div>
+                    {isCommandBarEnabled && (
+                        <CommandBar
+                            classes={{
+                                root: classes.commandBar,
+                                rootWhenExpended: classes.commandBarWhenExpended
+                            }}
+                            entries={commandLogsEntries}
+                            maxHeight={commandBarMaxHeight}
+                            helpDialog={{
+                                body: tCatalogLauncher("api logs help body", {
+                                    k8CredentialsHref: !k8sCodeSnippets.getIsAvailable()
+                                        ? undefined
+                                        : routes.account({
+                                              tabId: "k8sCodeSnippets"
+                                          }).href,
+                                    myServicesHref: routes.myServices().href,
+                                    interfacePreferenceHref: routes.account({
+                                        tabId: "user-interface"
+                                    }).href
+                                })
+                            }}
+                        />
+                    )}
+                    <div className={classes.cardsAndSavedConfigs}>
+                        <>
                             {!isSavedConfigsExtended && (
-                                <Quotas evtActionUpdate={evtQuotasActionUpdate} />
+                                <MyServicesCards
+                                    className={classes.cards}
+                                    isUpdating={isUpdating}
+                                    services={services}
+                                    getMyServiceLink={getMyServiceLink}
+                                    catalogExplorerLink={catalogExplorerLink}
+                                    onRequestDelete={onRequestDelete}
+                                    onRequestPauseOrResume={onRequestPauseOrResume}
+                                    onRequestLogHelmGetNotes={
+                                        serviceManagement.logHelmGetNotes
+                                    }
+                                    onRequestChangeFriendlyName={
+                                        onRequestChangeFriendlyName
+                                    }
+                                    evtAction={evtMyServiceCardsAction}
+                                    lastClusterEvent={lastClusterEvent}
+                                    onOpenClusterEventsDialog={onOpenClusterEventsDialog}
+                                    onRequestChangeSharedStatus={
+                                        onRequestChangeSharedStatus
+                                    }
+                                    groupProjectName={groupProjectName}
+                                />
                             )}
-                            <MyServicesRestorableConfigs
-                                isShortVariant={!isSavedConfigsExtended}
-                                entries={restorableConfigEntires}
-                                onRequestDelete={onRequestDeleteRestorableConfig}
-                                onRequestToggleIsShortVariant={
-                                    onRequestToggleIsShortVariant
-                                }
-                            />
-                        </div>
-                    </>
+                            <div className={classes.rightPanel}>
+                                {!isSavedConfigsExtended && (
+                                    <Quotas evtActionUpdate={evtQuotasActionUpdate} />
+                                )}
+                                <MyServicesRestorableConfigs
+                                    isShortVariant={!isSavedConfigsExtended}
+                                    entries={restorableConfigEntires}
+                                    onRequestDelete={onRequestDeleteRestorableConfig}
+                                    onRequestToggleIsShortVariant={
+                                        onRequestToggleIsShortVariant
+                                    }
+                                />
+                            </div>
+                        </>
+                    </div>
+                    <MyServicesConfirmDeleteDialog evtOpen={evtConfirmDeleteDialogOpen} />
                 </div>
-                <MyServicesConfirmDeleteDialog evtOpen={evtConfirmDeleteDialogOpen} />
             </div>
-        </div>
+            <ClusterEventsDialog evtOpen={evtClusterEventsDialogOpen} />
+            <ClusterEventsSnackbar
+                evtAction={evtClusterEventsSnackbarAction}
+                onOpenClusterEventsDialog={onOpenClusterEventsDialog}
+            />
+        </>
     );
 }
 
@@ -364,9 +429,10 @@ function useCommandBarPositioning() {
     };
 }
 
-export const { i18n } = declareComponentKeys<
-    "text1" | "text2" | "text3" | "running services"
->()({ MyServices });
+const { i18n } = declareComponentKeys<"text1" | "text2" | "text3" | "running services">()(
+    { MyServices }
+);
+export type I18n = typeof i18n;
 
 const useStyles = tss
     .withName({ MyServices })
@@ -376,52 +442,52 @@ const useStyles = tss
         isSavedConfigsExtended: boolean;
     }>()
     .create(({ theme, isCommandBarEnabled, isSavedConfigsExtended, commandBarTop }) => ({
-        "root": {
-            "height": "100%",
-            "display": "flex",
-            "flexDirection": "column"
+        root: {
+            height: "100%",
+            display: "flex",
+            flexDirection: "column"
         },
-        "belowHeader": {
-            "position": "relative",
-            "flex": 1,
-            "display": "flex",
-            "flexDirection": "column",
-            "overflow": "hidden"
+        belowHeader: {
+            position: "relative",
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden"
         },
-        "cardsAndSavedConfigs": {
-            "overflow": "hidden",
-            "flex": 1,
-            "display": "flex"
+        cardsAndSavedConfigs: {
+            overflow: "hidden",
+            flex: 1,
+            display: "flex"
         },
         ...(() => {
-            const ratio = 0.65;
+            const ratio = 0.6;
 
             return {
-                "cards": {
-                    "flex": ratio,
-                    "marginRight": theme.spacing(5)
+                cards: {
+                    flex: ratio,
+                    marginRight: theme.spacing(5)
                 },
-                "rightPanel": {
-                    "flex": isSavedConfigsExtended ? 1 : 1 - ratio,
-                    "paddingRight": "2%",
+                rightPanel: {
+                    flex: isSavedConfigsExtended ? 1 : 1 - ratio,
+                    paddingRight: "2%",
                     //NOTE: It's not great to have a fixed width here but measuring would needlessly complexity the code too much.
-                    "marginTop": isCommandBarEnabled ? 40 : undefined,
-                    "height": `calc(100% - ${commandBarTop}px)`,
-                    "overflow": "auto"
+                    marginTop: isCommandBarEnabled ? 40 : undefined,
+                    height: `calc(100% - ${commandBarTop}px)`,
+                    overflow: "auto"
                 }
             };
         })(),
-        "commandBar": {
-            "position": "absolute",
-            "right": 0,
-            "top": commandBarTop,
-            "zIndex": 1,
-            "opacity": commandBarTop === 0 ? 0 : 1,
-            "transition": "opacity 750ms linear",
-            "width": "min(100%, 900px)"
+        commandBar: {
+            position: "absolute",
+            right: 0,
+            top: commandBarTop,
+            zIndex: 1,
+            opacity: commandBarTop === 0 ? 0 : 1,
+            transition: "opacity 750ms linear",
+            width: "min(100%, 900px)"
         },
-        "commandBarWhenExpended": {
-            "width": "min(100%, 1350px)",
-            "transition": "width 70ms linear"
+        commandBarWhenExpended: {
+            width: "min(100%, 1350px)",
+            transition: "width 70ms linear"
         }
     }));

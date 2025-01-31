@@ -1,4 +1,4 @@
-import { Fragment, useMemo, memo } from "react";
+import { useState, Fragment, useMemo, memo } from "react";
 import { tss } from "tss";
 import { Button } from "onyxia-ui/Button";
 import { Text } from "onyxia-ui/Text";
@@ -8,121 +8,211 @@ import { useTranslation } from "ui/i18n";
 import { capitalize } from "tsafe/capitalize";
 import { MyServicesRoundLogo } from "./MyServicesRoundLogo";
 import { MyServicesRunningTime } from "./MyServicesRunningTime";
-import { Tag } from "onyxia-ui/Tag";
 import { Tooltip } from "onyxia-ui/Tooltip";
 import { declareComponentKeys } from "i18nifty";
-import { ReadmeAndEnvDialog } from "./ReadmeAndEnvDialog";
+import { ReadmeDialog } from "./ReadmeDialog";
 import { Evt, NonPostableEvt } from "evt";
 import { useConst } from "powerhooks/useConst";
 import { useEvt } from "evt/hooks";
-import type { MuiIconComponentName } from "onyxia-ui/MuiIconComponentName";
-import { id } from "tsafe/id";
+import { getIconUrlByName } from "lazy-icons";
 import { CircularProgress } from "onyxia-ui/CircularProgress";
 import type { Link } from "type-route";
+import type { Service } from "core/usecases/serviceManagement";
+import { assert, type Equals } from "tsafe/assert";
+import { TextField, TextFieldProps } from "onyxia-ui/TextField";
+import MuiLink from "@mui/material/Link";
+import { env } from "env";
 
-const runningTimeThreshold = 7 * 24 * 3600 * 1000;
+const THRESHOLD_MS = 1000 * 60 * 60 * env.RUNNING_TIME_THRESHOLD_HOURS;
 
 function getDoesHaveBeenRunningForTooLong(params: { startTime: number }): boolean {
     const { startTime } = params;
 
-    return Date.now() - startTime > runningTimeThreshold;
+    return Date.now() - startTime > THRESHOLD_MS;
 }
 
 export type Props = {
     className?: string;
-    evtAction: NonPostableEvt<"SHOW POST INSTALL INSTRUCTIONS">;
-    chartIconUrl: string | undefined;
-    friendlyName: string;
-    chartName: string;
-    onRequestDelete: (() => void) | undefined;
-    getPoseInstallInstructions: (() => string) | undefined;
-    getEnv: () => Record<string, string>;
-    projectServicePassword: string;
-    openUrl: string | undefined;
-    monitoringUrl: string | undefined;
-    startTime: number;
-    status: "deployed" | "pending" | "failed";
-    areAllTasksReady: boolean;
-    isShared: boolean;
-    isOwned: boolean;
-    /** undefined when isOwned === true*/
-    ownerUsername: string | undefined;
-    myServiceLink: Link | undefined;
+    evtAction: NonPostableEvt<"open readme dialog">;
+    onRequestDelete: () => void;
+    onRequestPauseOrResume: () => void;
+    onRequestLogHelmGetNotes: () => void;
+    myServiceLink: Link;
+    lastClusterEvent:
+        | { message: string; severity: "error" | "info" | "warning" }
+        | undefined;
+    onOpenClusterEventsDialog: () => void;
+    onRequestChangeFriendlyName: (friendlyName: string) => void;
+    onRequestChangeSharedStatus: (isShared: boolean) => void;
+    groupProjectName: string | undefined;
+    service: Service;
 };
 
 export const MyServicesCard = memo((props: Props) => {
-    let {
+    const {
         className,
         evtAction,
-        chartIconUrl,
-        friendlyName,
-        chartName,
         onRequestDelete,
-        getEnv,
-        getPoseInstallInstructions,
-        projectServicePassword,
-        monitoringUrl,
-        openUrl,
-        startTime,
-        status,
-        areAllTasksReady,
-        isShared,
-        isOwned,
-        ownerUsername,
-        myServiceLink
+        onRequestPauseOrResume,
+        onRequestLogHelmGetNotes,
+        myServiceLink,
+        lastClusterEvent,
+        onOpenClusterEventsDialog,
+        onRequestChangeFriendlyName,
+        onRequestChangeSharedStatus,
+        groupProjectName,
+        service
     } = props;
 
     const { t } = useTranslation({ MyServicesCard });
 
     const severity = useMemo(() => {
-        if (status === "failed") {
-            return "error";
+        switch (service.state) {
+            case "failed":
+                return "error";
+            case "starting":
+            case "suspending":
+            case "suspended":
+                return "pending";
+            case "running":
+                return getDoesHaveBeenRunningForTooLong({
+                    startTime: service.startedAt
+                })
+                    ? "warning"
+                    : "success";
         }
 
-        if (status === "pending" || !areAllTasksReady) {
-            return "pending";
-        }
+        assert<Equals<typeof service.state, never>>(false);
+    }, [service]);
 
-        return getDoesHaveBeenRunningForTooLong({ startTime }) ? "warning" : "success";
-    }, [status, areAllTasksReady, startTime]);
+    const isServiceTitleALink =
+        service.state === "running" && !service.areInteractionLocked;
 
     const { classes, cx, theme } = useStyles({
-        "hasBeenRunningForTooLong": severity === "warning"
+        hasBeenRunningForTooLong: severity === "warning",
+        isServiceTitleALink
     });
 
-    const evtReadmeAndEnvDialogAction = useConst(() =>
-        Evt.create<"SHOW ENV" | "SHOW POST INSTALL INSTRUCTIONS">()
-    );
+    const evtOpenReadmeDialog = useConst(() => Evt.create());
 
     useEvt(
         ctx => {
             evtAction.attach(
-                action => action === "SHOW POST INSTALL INSTRUCTIONS",
+                action => action === "open readme dialog",
                 ctx,
                 async () => {
-                    if (getPoseInstallInstructions === undefined) {
+                    if (service.postInstallInstructions === undefined) {
                         return;
                     }
-                    evtReadmeAndEnvDialogAction.post("SHOW POST INSTALL INSTRUCTIONS");
+                    evtOpenReadmeDialog.post();
                 }
             );
         },
         [evtAction]
     );
 
+    const [isEditingFriendlyName, setIsEditingFriendlyName] = useState(false);
+
+    const evtFriendlyNameTextFieldAction = useConst(() =>
+        Evt.create<TextFieldProps["evtAction"]>()
+    );
+
     return (
         <div className={cx(classes.root, className)}>
-            <a className={classes.aboveDivider} {...myServiceLink}>
-                <MyServicesRoundLogo url={chartIconUrl} severity={severity} />
-                <Text className={classes.title} typo="object heading">
-                    {capitalize(friendlyName)}
-                </Text>
-                <div style={{ "flex": 1 }} />
-                {isShared && (
-                    <Tooltip title={t("this is a shared service")}>
-                        <Icon icon={id<MuiIconComponentName>("People")} />
-                    </Tooltip>
+            <div className={classes.aboveDivider}>
+                <MyServicesRoundLogo url={service.iconUrl} severity={severity} />
+                {isEditingFriendlyName ? (
+                    <TextField
+                        className={classes.friendlyNameTextField}
+                        inputProps_autoFocus={true}
+                        selectAllTextOnFocus={true}
+                        defaultValue={capitalize(service.friendlyName)}
+                        evtAction={evtFriendlyNameTextFieldAction}
+                        onEnterKeyDown={() =>
+                            evtFriendlyNameTextFieldAction.post("TRIGGER SUBMIT")
+                        }
+                        onSubmit={friendlyName => {
+                            setIsEditingFriendlyName(false);
+
+                            onRequestChangeFriendlyName(friendlyName);
+                        }}
+                        onEscapeKeyDown={() => {
+                            setIsEditingFriendlyName(false);
+                        }}
+                    />
+                ) : (
+                    <MuiLink {...myServiceLink}>
+                        <Text className={classes.title} typo="object heading">
+                            {capitalize(service.friendlyName)}
+                        </Text>
+                    </MuiLink>
                 )}
+                {isEditingFriendlyName ? (
+                    <IconButton
+                        icon={getIconUrlByName("Check")}
+                        onClick={() =>
+                            evtFriendlyNameTextFieldAction.post("TRIGGER SUBMIT")
+                        }
+                    />
+                ) : (
+                    <IconButton
+                        icon={getIconUrlByName("Edit")}
+                        disabled={service.areInteractionLocked}
+                        onClick={() => setIsEditingFriendlyName(true)}
+                    />
+                )}
+                <div style={{ flex: 1 }} />
+                {(() => {
+                    if (groupProjectName === undefined) {
+                        return null;
+                    }
+
+                    if (!service.ownership.isOwned) {
+                        return (
+                            <Tooltip
+                                title={t("share tooltip - belong to someone else", {
+                                    ownerUsername: service.ownership.ownerUsername,
+                                    projectName: groupProjectName,
+                                    focusColor: theme.colors.useCases.typography.textFocus
+                                })}
+                            >
+                                <Icon icon={getIconUrlByName("Diversity3")} />
+                            </Tooltip>
+                        );
+                    }
+
+                    if (service.ownership.isShared) {
+                        return (
+                            <Tooltip
+                                title={t("share tooltip - belong to you, shared", {
+                                    projectName: groupProjectName,
+                                    focusColor: theme.colors.useCases.typography.textFocus
+                                })}
+                            >
+                                <IconButton
+                                    disabled={service.areInteractionLocked}
+                                    onClick={() => onRequestChangeSharedStatus(false)}
+                                    icon={getIconUrlByName("Diversity3")}
+                                />
+                            </Tooltip>
+                        );
+                    }
+
+                    return (
+                        <Tooltip
+                            title={t("share tooltip - belong to you, not shared", {
+                                projectName: groupProjectName,
+                                focusColor: theme.colors.useCases.typography.textFocus
+                            })}
+                        >
+                            <IconButton
+                                disabled={service.areInteractionLocked}
+                                onClick={() => onRequestChangeSharedStatus(true)}
+                                icon={getIconUrlByName("AdminPanelSettings")}
+                            />
+                        </Tooltip>
+                    );
+                })()}
                 <Tooltip
                     title={
                         <Fragment key={"reminder"}>
@@ -131,11 +221,11 @@ export const MyServicesCard = memo((props: Props) => {
                     }
                 >
                     <Icon
-                        icon={id<MuiIconComponentName>("ErrorOutline")}
+                        icon={getIconUrlByName("ErrorOutline")}
                         className={classes.errorOutlineIcon}
                     />
                 </Tooltip>
-            </a>
+            </div>
             <div className={classes.belowDivider}>
                 <div className={classes.belowDividerTop}>
                     <div>
@@ -143,88 +233,101 @@ export const MyServicesCard = memo((props: Props) => {
                             {t("service")}
                         </Text>
                         <div className={classes.packageNameWrapper}>
-                            <Text typo="label 1">{capitalize(chartName)}</Text>
-                            {isShared && (
-                                <Tag
-                                    className={classes.sharedTag}
-                                    text={isOwned ? t("shared by you") : ownerUsername!}
-                                />
-                            )}
+                            <Text typo="label 1">{capitalize(service.chartName)}</Text>
                         </div>
                     </div>
                     <div className={classes.timeAndStatusContainer}>
                         <Text typo="caption" className={classes.captions}>
-                            {status === "deployed" && areAllTasksReady
+                            {service.state === "running"
                                 ? t("running since")
                                 : t("status")}
                         </Text>
                         {(() => {
-                            switch (status) {
-                                case "pending":
-                                    return <Text typo="label 1">{t("pending")}</Text>;
+                            switch (service.state) {
                                 case "failed":
                                     return <Text typo="label 1">{t("failed")}</Text>;
-                                case "deployed":
-                                    if (!areAllTasksReady) {
-                                        return (
-                                            <Text typo="label 1">
-                                                {t("container starting")}
-                                                &nbsp;
-                                                <CircularProgress
-                                                    className={classes.circularProgress}
-                                                    size={
-                                                        theme.typography.variants[
-                                                            "label 1"
-                                                        ].style.fontSize
-                                                    }
-                                                />
-                                            </Text>
-                                        );
-                                    }
+                                case "suspended":
+                                    return <Text typo="label 1">{t("suspended")}</Text>;
+                                case "suspending":
+                                    return (
+                                        <Text typo="label 1">{t("suspending")}...</Text>
+                                    );
+                                case "starting":
+                                    return (
+                                        <Text typo="label 1">
+                                            {t("container starting")}
+                                            &nbsp;
+                                            <CircularProgress
+                                                className={classes.circularProgress}
+                                                size={
+                                                    theme.typography.variants["label 1"]
+                                                        .style.fontSize
+                                                }
+                                            />
+                                        </Text>
+                                    );
+                                case "running":
                                     return (
                                         <MyServicesRunningTime
                                             doesHaveBeenRunningForTooLong={getDoesHaveBeenRunningForTooLong(
-                                                { startTime }
+                                                { startTime: service.startedAt }
                                             )}
-                                            startTime={startTime}
+                                            startTime={service.startedAt}
                                         />
                                     );
                             }
+                            assert<Equals<typeof service.state, never>>(false);
                         })()}
                     </div>
                 </div>
                 <div className={classes.belowDividerBottom}>
-                    <IconButton
-                        icon={id<MuiIconComponentName>("InfoOutlined")}
-                        onClick={() => evtReadmeAndEnvDialogAction.post("SHOW ENV")}
-                    />
                     {onRequestDelete !== undefined && (
                         <IconButton
-                            icon={id<MuiIconComponentName>("Delete")}
+                            disabled={service.areInteractionLocked}
+                            icon={getIconUrlByName("Delete")}
                             onClick={onRequestDelete}
                         />
                     )}
-                    {monitoringUrl !== undefined && (
-                        <IconButton
-                            icon={id<MuiIconComponentName>("Equalizer")}
-                            href={monitoringUrl}
-                        />
+                    {service.doesSupportSuspend && service.state === "running" && (
+                        <Tooltip title={t("suspend service tooltip")}>
+                            <span>
+                                <IconButton
+                                    disabled={service.areInteractionLocked}
+                                    icon={getIconUrlByName("Pause")}
+                                    onClick={event => {
+                                        onRequestPauseOrResume();
+                                        event.stopPropagation();
+                                        event.preventDefault();
+                                    }}
+                                />
+                            </span>
+                        </Tooltip>
                     )}
-                    <div style={{ "flex": 1 }} />
-                    {status === "deployed" &&
-                        areAllTasksReady &&
-                        (openUrl !== undefined ||
-                            getPoseInstallInstructions !== undefined) && (
+                    <div style={{ flex: 1 }} />
+                    {service.state === "suspended" && (
+                        <Tooltip title={t("resume service tooltip")}>
+                            <span>
+                                <IconButton
+                                    disabled={service.areInteractionLocked}
+                                    icon={getIconUrlByName("PlayArrow")}
+                                    onClick={onRequestPauseOrResume}
+                                />
+                            </span>
+                        </Tooltip>
+                    )}
+                    {(service.state === "running" || service.state === "starting") &&
+                        (service.openUrl !== undefined ||
+                            service.postInstallInstructions !== undefined) && (
                             <Button
-                                onClick={() =>
-                                    evtReadmeAndEnvDialogAction.post(
-                                        "SHOW POST INSTALL INSTRUCTIONS"
-                                    )
+                                onClick={() => evtOpenReadmeDialog.post()}
+                                variant={
+                                    service.openUrl === undefined
+                                        ? "ternary"
+                                        : "secondary"
                                 }
-                                variant={openUrl === undefined ? "ternary" : "secondary"}
                             >
                                 <span>
-                                    {openUrl !== undefined
+                                    {service.openUrl !== undefined
                                         ? capitalize(t("open"))
                                         : t("readme").toUpperCase()}
                                 </span>
@@ -232,99 +335,124 @@ export const MyServicesCard = memo((props: Props) => {
                         )}
                 </div>
             </div>
-            <ReadmeAndEnvDialog
-                evtAction={evtReadmeAndEnvDialogAction}
-                getEnv={getEnv}
-                getPostInstallInstructions={getPoseInstallInstructions}
-                projectServicePassword={projectServicePassword}
-                openUrl={openUrl}
-                isReady={status === "deployed" && areAllTasksReady}
+            <ReadmeDialog
+                evtOpen={evtOpenReadmeDialog}
+                isReady={service.state === "running"}
+                openUrl={service.openUrl}
+                servicePassword={service.servicePassword}
+                postInstallInstructions={service.postInstallInstructions}
+                onRequestLogHelmGetNotes={onRequestLogHelmGetNotes}
+                lastClusterEvent={lastClusterEvent}
+                onOpenClusterEventsDialog={onOpenClusterEventsDialog}
             />
         </div>
     );
 });
 
-export const { i18n } = declareComponentKeys<
+const { i18n } = declareComponentKeys<
     | "service"
     | "running since"
     | "open"
     | "readme"
-    | "shared by you"
     | "reminder to delete services"
-    | "this is a shared service"
     | "status"
     | "container starting"
-    | "pending"
     | "failed"
+    | "suspend service tooltip"
+    | "resume service tooltip"
+    | "suspended"
+    | "suspending"
+    | {
+          K: "share tooltip - belong to someone else";
+          P: { ownerUsername: string; projectName: string; focusColor: string };
+          R: JSX.Element;
+      }
+    | {
+          K: "share tooltip - belong to you, not shared";
+          P: { projectName: string; focusColor: string };
+          R: JSX.Element;
+      }
+    | {
+          K: "share tooltip - belong to you, shared";
+          P: { projectName: string; focusColor: string };
+          R: JSX.Element;
+      }
 >()({ MyServicesCard });
+export type I18n = typeof i18n;
 
 const useStyles = tss
     .withParams<{
         hasBeenRunningForTooLong: boolean;
+        isServiceTitleALink: boolean;
     }>()
     .withName({ MyServicesCard })
-    .create(({ theme, hasBeenRunningForTooLong }) => ({
-        "root": {
-            "borderRadius": 8,
-            "boxShadow": theme.shadows[1],
-            "backgroundColor": theme.colors.useCases.surfaces.surface1,
+    .create(({ theme, hasBeenRunningForTooLong, isServiceTitleALink }) => ({
+        root: {
+            borderRadius: 8,
+            boxShadow: theme.shadows[1],
+            backgroundColor: theme.colors.useCases.surfaces.surface1,
             "&:hover": {
-                "boxShadow": theme.shadows[6]
+                boxShadow: theme.shadows[6]
             },
-            "display": "flex",
-            "flexDirection": "column"
+            display: "flex",
+            flexDirection: "column"
         },
-        "aboveDivider": {
-            "padding": theme.spacing({ "topBottom": 3, "rightLeft": 4 }),
-            "borderBottom": `1px solid ${theme.colors.useCases.typography.textTertiary}`,
-            "boxSizing": "border-box",
-            "display": "flex",
-            "alignItems": "center",
-            "color": "inherit",
-            "textDecoration": "none"
+        aboveDivider: {
+            padding: theme.spacing({ topBottom: 3, rightLeft: 4 }),
+            borderBottom: `1px solid ${theme.colors.useCases.typography.textTertiary}`,
+            boxSizing: "border-box",
+            display: "flex",
+            alignItems: "center",
+            color: "inherit",
+            textDecoration: "none"
         },
-        "title": {
-            "marginLeft": theme.spacing(3)
-        },
-        "errorOutlineIcon": !hasBeenRunningForTooLong
-            ? { "display": "none" }
-            : {
-                  "marginLeft": theme.spacing(3),
-                  "color": theme.colors.useCases.alertSeverity.warning.main
-              },
-        "belowDivider": {
-            "padding": theme.spacing(4),
-            "paddingTop": theme.spacing(3),
-            "flex": 1
-        },
-        "timeAndStatusContainer": {
-            "flex": 1,
-            "paddingLeft": theme.spacing(6)
-        },
-        "circularProgress": {
-            "color": "inherit",
-            "position": "relative",
-            "top": 3,
-            "left": theme.spacing(2)
-        },
-        "belowDividerTop": {
-            "display": "flex",
-            "marginBottom": theme.spacing(4)
-        },
-        "captions": {
-            "display": "inline-block",
-            "marginBottom": theme.spacing(2)
-        },
-        "packageNameWrapper": {
-            "& > *": {
-                "display": "inline-block"
+        title: {
+            marginLeft: theme.spacing(3),
+            "&:hover": {
+                color: isServiceTitleALink
+                    ? theme.colors.useCases.typography.textFocus
+                    : undefined
             }
         },
-        "sharedTag": {
-            "marginLeft": theme.spacing(2)
+        errorOutlineIcon: !hasBeenRunningForTooLong
+            ? { display: "none" }
+            : {
+                  marginLeft: theme.spacing(3),
+                  color: theme.colors.useCases.alertSeverity.warning.main
+              },
+        belowDivider: {
+            padding: theme.spacing(4),
+            paddingTop: theme.spacing(3),
+            flex: 1
         },
-        "belowDividerBottom": {
-            "display": "flex",
-            "alignItems": "center"
+        timeAndStatusContainer: {
+            flex: 1,
+            paddingLeft: theme.spacing(6)
+        },
+        circularProgress: {
+            color: "inherit",
+            position: "relative",
+            top: 3,
+            left: theme.spacing(2)
+        },
+        belowDividerTop: {
+            display: "flex",
+            marginBottom: theme.spacing(4)
+        },
+        captions: {
+            display: "inline-block",
+            marginBottom: theme.spacing(2)
+        },
+        packageNameWrapper: {
+            "& > *": {
+                display: "inline-block"
+            }
+        },
+        belowDividerBottom: {
+            display: "flex",
+            alignItems: "center"
+        },
+        friendlyNameTextField: {
+            marginLeft: theme.spacing(3)
         }
     }));

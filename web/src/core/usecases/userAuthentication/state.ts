@@ -16,15 +16,16 @@ namespace State {
     export type LoggedIn = {
         isUserLoggedIn: true;
         user: User;
+        decodedIdToken: Record<string, unknown>;
     };
 }
 
 export const { reducer, actions } = createUsecaseActions({
     name,
-    "initialState": createObjectThatThrowsIfAccessed<State>({
-        "debugMessage": "Not initialized yet"
+    initialState: createObjectThatThrowsIfAccessed<State>({
+        debugMessage: "Not initialized yet"
     }),
-    "reducers": {
-        "initialized": (_, { payload }: { payload: State }) => payload
+    reducers: {
+        initialized: (_, { payload }: { payload: State }) => payload
     }
 });
