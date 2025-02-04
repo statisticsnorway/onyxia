@@ -1,29 +1,42 @@
-
-console.log("Initializing Onyxia plugin at /custom-resources/my-plugin.js");
-
-window.addEventListener("onyxiaready", ()=> {
-
-    const onyxia = window.onyxia;
-
-    onyxia.addEventListener(eventName=> {
-        switch(eventName){
-            case "theme updated": 
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var updatePrice = function () {
+    if (document.getElementById("estimated-cost") == undefined) {
+        document.querySelector("div[class$='-LauncherMainCard-belowDivider']")
+            .insertAdjacentHTML("beforeend", '<div style="margin-top: 1em;">Estimated price: <span id="estimated-cost">xx</span> per hour</div>');
+    }
+    var onyxia = window.onyxia;
+    var resources = onyxia.core.states.launcher.getMain().helmValues.resources;
+    var cpu = resources.cpu.replace("m", "");
+    var memory = resources.memory.replace("Gi", "");
+    // todo: get numbers
+    var cpuCostPerCorePerHourEuro = 0.0995106;
+    var memoryCostPerGiPerHourEuro = 0.5;
+    var estimatedCost = (cpu / 1000 * cpuCostPerCorePerHourEuro) + (memory * memoryCostPerGiPerHourEuro);
+    document.getElementById("estimated-cost").innerText = new Intl.NumberFormat('nb-NO', { style: 'currency', currency: 'EUR' }).format(estimatedCost);
+};
+window.addEventListener("onyxiaready", function () {
+    var onyxia = window.onyxia;
+    onyxia.addEventListener(function (eventName) {
+        switch (eventName) {
+            case "theme updated":
                 console.log("Onyxia theme updated: ", onyxia.theme);
                 break;
-            case "language changed": 
-                console.log(`Language changed to ${onyxia.lang}`);
+            case "language changed":
+                console.log("Language changed to ".concat(onyxia.lang));
                 break;
             case "route changed":
-                console.log(`Route changed: ${onyxia.route.name}`);
+                console.log("Route changed: ".concat(onyxia.route.name));
                 break;
             case "route params changed":
-                console.log(`Route params changed: `, onyxia.route.params);
+                console.log("Route params changed: ", onyxia.route.params);
+                if (onyxia.route.name == 'launcher') {
+                    updatePrice();
+                }
                 break;
             default:
+                debugger;
         }
-
     });
-
     console.log("Onyxia Global API ready", onyxia);
-
 });
