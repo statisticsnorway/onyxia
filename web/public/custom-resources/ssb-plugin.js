@@ -1,5 +1,3 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 var updatePrice = function () {
     if (document.getElementById("estimated-cost") == undefined) {
         document
