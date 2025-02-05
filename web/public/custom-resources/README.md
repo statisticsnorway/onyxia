@@ -8,5 +8,5 @@ variable. See `.env` file for more infos.
 ZIP can be created with this snippet:
 ```shell
 # cd to this directory
-zip custom-resources.zip dapla_lang.svg team_add.svg ssb_logo.svg custom.css ssb_logo_lang.svg
+zip custom-resources-20250205.zip dapla_lang.svg team_add.svg ssb_logo.svg custom.css ssb_logo_lang.svg ssb_and_dapla_logo.svg my-plugin.js
 ```

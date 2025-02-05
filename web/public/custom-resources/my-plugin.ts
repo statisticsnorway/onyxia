@@ -17,9 +17,9 @@ const updatePrice = () => {
     const cpu = resources.cpu.replace("m", "");
     const memory = resources.memory.replace("Gi", "");
 
-    // todo: get numbers
-    const cpuCostPerCorePerHourEuro = 0.0995106;
-    const memoryCostPerGiPerHourEuro = 0.5;
+    // Prices fetched 5. feb 2025: https://cloud.google.com/compute/vm-instance-pricing?hl=nb
+    const cpuCostPerCorePerHourEuro = 0.034802;
+    const memoryCostPerGiPerHourEuro = 0.004664;
 
     const estimatedCost =
         (cpu / 1000) * cpuCostPerCorePerHourEuro + memory * memoryCostPerGiPerHourEuro;
