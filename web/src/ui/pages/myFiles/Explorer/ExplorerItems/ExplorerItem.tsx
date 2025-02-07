@@ -5,7 +5,7 @@ import { Icon } from "onyxia-ui/Icon";
 import { getIconUrlByName } from "lazy-icons";
 import Tooltip from "@mui/material/Tooltip";
 import { fileSizePrettyPrint } from "ui/tools/fileSizePrettyPrint";
-import { ExplorerIcon } from "../ExplorerIcon";
+import { ExplorerIcon, getIconIdFromExtension } from "../ExplorerIcon";
 import { declareComponentKeys } from "i18nifty";
 import { Item } from "../../shared/types";
 import { PolicySwitch } from "../PolicySwitch";
@@ -13,7 +13,7 @@ import { PolicySwitch } from "../PolicySwitch";
 export type ExplorerItemProps = {
     className?: string;
 
-    /** Tell if we are displaying an directory or a secret */
+    /** Tell if we are displaying an directory or a file */
     kind: "file" | "directory";
 
     /** Name displayed under the folder icon*/
@@ -27,7 +27,7 @@ export type ExplorerItemProps = {
 
     /** File size in bytes */
     size: number | undefined;
-
+    isBucketPolicyFeatureEnabled: boolean;
     policy: Item["policy"];
     onPolicyChange: () => void;
     onDoubleClick: () => void;
@@ -45,7 +45,8 @@ export const ExplorerItem = memo((props: ExplorerItemProps) => {
         onDoubleClick,
         onPolicyChange,
         onClick,
-        isPolicyChanging
+        isPolicyChanging,
+        isBucketPolicyFeatureEnabled
     } = props;
 
     const prettySize = size ? fileSizePrettyPrint({ bytes: size }) : null;
@@ -91,17 +92,19 @@ export const ExplorerItem = memo((props: ExplorerItemProps) => {
                             case "directory":
                                 return "directory";
                             case "file":
-                                return "data";
+                                return getIconIdFromExtension(fileType);
                         }
                     })()}
                     hasShadow={true}
                 />
-                <PolicySwitch
-                    policy={policy}
-                    className={classes.policyIcon}
-                    changePolicy={onPolicyChange}
-                    isPolicyChanging={isPolicyChanging}
-                />
+                {isBucketPolicyFeatureEnabled && (
+                    <PolicySwitch
+                        policy={policy}
+                        className={classes.policyIcon}
+                        changePolicy={onPolicyChange}
+                        isPolicyChanging={isPolicyChanging}
+                    />
+                )}
             </div>
 
             <div className={classes.textContainer}>

@@ -313,13 +313,41 @@ export const translations: Translations<"fr"> = {
                     notre documentation
                 </MuiLink>
                 . &nbsp;
-                <MuiLink {...accountTabLink}>Configurer les clients MinIO</MuiLink>.
+                <MuiLink {...accountTabLink}>
+                    Configurer les clients MinIO
+                </MuiLink>.
             </>
         )
     },
-    MyFilesShareDialog: {
+    MyFilesDisabledDialog: {
+        "dialog title": "Aucun serveur S3 configuré",
+        "dialog body":
+            "Il n'y a aucun serveur S3 configuré pour cette instance. Mais vous pouvez en ajouter un manuellement pour activer l'explorateur de fichiers S3.",
         cancel: "Annuler",
-        "create and copy link": "Créer et copier le lien"
+        "go to settings": "Aller aux paramètres"
+    },
+    ShareDialog: {
+        title: "Partager vos données",
+        close: "Fermer",
+        "create and copy link": "Créer et copier le lien",
+        "paragraph current policy": ({ isPublic }) =>
+            isPublic
+                ? "Votre fichier est public, toute personne ayant le lien peut télécharger votre fichier."
+                : "Votre fichier est actuellement privé.",
+
+        "paragraph change policy": ({ isPublic }) =>
+            isPublic
+                ? "Pour restreindre son accès, changez le statut de diffusion de votre fichier."
+                : "Pour partager et donner accès à votre fichier, changez le statut de diffusion ou créez un lien d’accès temporaire.",
+
+        "hint link access": ({ isPublic, expiration }) =>
+            isPublic
+                ? "Votre lien est disponible tant que le fichier est public."
+                : `Ce lien donnera un accès à vos données pendant ${expiration}.`,
+        "label input link": "Lien d'accès"
+    },
+    SelectTime: {
+        "validity duration label": "Durée de validité"
     },
     MySecrets: {
         "page title - my secrets": "My Secrets",
@@ -333,7 +361,9 @@ export const translations: Translations<"fr"> = {
                     notre documentation
                 </MuiLink>
                 . &nbsp;
-                <MuiLink {...accountTabLink}>Configurer votre Vault CLI local</MuiLink>.
+                <MuiLink {...accountTabLink}>
+                    Configurer votre Vault CLI local
+                </MuiLink>.
             </>
         )
     },
@@ -648,7 +678,9 @@ Vous pouvez désactiver la barre de commande dans l'onglet [\`Mon compte -> Pré
 
 N'hésitez pas à explorer et à prendre en main vos déploiements Kubernetes !
         `}</Markdown>
-        )
+        ),
+        form: "Formulaire",
+        editor: "Éditeur de texte"
     },
     AcknowledgeSharingOfConfigConfirmDialog: {
         "acknowledge sharing of config confirm dialog title":
@@ -679,6 +711,12 @@ N'hésitez pas à explorer et à prendre en main vos déploiements Kubernetes !
     },
     FormFieldWrapper: {
         "reset to default": "Réinitialiser à la valeur par défaut"
+    },
+    ConfigurationTopLevelGroup: {
+        miscellaneous: "Divers",
+        "Configuration that applies to all charts":
+            "Configurations qui s'appliquent à tous les charts",
+        "Top level configuration values": "Configuration racine"
     },
     YamlCodeBlockFormField: {
         "not an array": "Un tableau est attendu",
@@ -933,23 +971,27 @@ N'hésitez pas à explorer et à prendre en main vos déploiements Kubernetes !
                 spécifique du fichier en copiant l'URL de la barre d'adresse.
                 <br />
                 Vous ne savez pas par où commencer ? Essayez ce{" "}
-                <MuiLink {...demoParquetFileLink}>fichier de démonstration</MuiLink> !
+                <MuiLink {...demoParquetFileLink}>
+                    fichier de démonstration
+                </MuiLink> !
             </>
         ),
         column: "colonne",
         density: "densité",
         "download file": "télécharger le fichier",
-        "resize table": "Redimensionner"
+        "resize table": "Redimensionner",
+        "unsupported file type": ({ supportedFileTypes }) =>
+            `Format de données non pris en charge. Les types pris en charge sont : ${supportedFileTypes.join(", ")}.`,
+        "can't fetch file": "Impossible de récupérer le fichier de données"
     },
     UrlInput: {
-        load: "Charger"
+        load: "Charger",
+        reset: "Vider"
     },
     CommandBar: {
         ok: "ok"
     },
-    moment: {
-        "date format": ({ isSameYear }) =>
-            `dddd Do MMMM${isSameYear ? "" : " YYYY"} à H[h]mm`,
+    formattedDate: {
         past1: ({ divisorKey }) => {
             switch (divisorKey) {
                 case "now":
@@ -1028,6 +1070,42 @@ N'hésitez pas à explorer et à prendre en main vos déploiements Kubernetes !
                     return "dans # mois";
                 case "year":
                     return "dans # ans";
+            }
+        },
+        singular: ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "second":
+                    return "1 seconde";
+                case "minute":
+                    return "1 minute";
+                case "hour":
+                    return "1 heure";
+                case "day":
+                    return "1 jour";
+                case "week":
+                    return "1 semaine";
+                case "month":
+                    return "1 mois";
+                case "year":
+                    return "1 an";
+            }
+        },
+        plural: ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "second":
+                    return "# secondes";
+                case "minute":
+                    return "# minutes";
+                case "hour":
+                    return "# heures";
+                case "day":
+                    return "# jours";
+                case "week":
+                    return "# semaines";
+                case "month":
+                    return "# mois";
+                case "year":
+                    return "# ans";
             }
         }
     },

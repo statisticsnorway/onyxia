@@ -281,9 +281,34 @@ export const translations: Translations<"zh-CN"> = {
             </>
         )
     },
-    MyFilesShareDialog: {
+    MyFilesDisabledDialog: {
+        "dialog title": "未配置S3服务器",
+        "dialog body": "此实例未配置S3服务器。但您可以手动添加一个，以启用S3文件浏览器。",
         cancel: "取消",
-        "create and copy link": "创建并复制链接"
+        "go to settings": "前往设置"
+    },
+    ShareDialog: {
+        title: "分享您的数据",
+        close: "关闭",
+        "create and copy link": "创建并复制链接",
+        "paragraph current policy": ({ isPublic }) =>
+            isPublic
+                ? "您的文件是公开的，任何拥有链接的人都可以下载。"
+                : "您的文件当前是私密的。",
+
+        "paragraph change policy": ({ isPublic }) =>
+            isPublic
+                ? "要限制访问，请更改文件的共享状态。"
+                : "要分享并提供对文件的访问，请更改共享状态或创建一个临时访问链接。",
+
+        "hint link access": ({ isPublic, expiration }) =>
+            isPublic
+                ? "只要文件是公开的，您的链接就可用。"
+                : `此链接将在 ${expiration} 内提供对您的数据的访问权限。`,
+        "label input link": "访问链接"
+    },
+    SelectTime: {
+        "validity duration label": "有效期"
     },
     MySecrets: {
         "page title - my secrets": "我的密钥",
@@ -598,7 +623,9 @@ ${
 
 随意探索并掌握您的 Kubernetes 部署！
         `}</Markdown>
-        )
+        ),
+        form: "表单",
+        editor: "文本编辑器"
     },
     AcknowledgeSharingOfConfigConfirmDialog: {
         "acknowledge sharing of config confirm dialog title": "请注意，配置是共享的",
@@ -627,6 +654,11 @@ ${
     },
     FormFieldWrapper: {
         "reset to default": "重置为默认值"
+    },
+    ConfigurationTopLevelGroup: {
+        miscellaneous: "杂项",
+        "Configuration that applies to all charts": "适用于所有图表的配置",
+        "Top level configuration values": "顶级配置值"
     },
     YamlCodeBlockFormField: {
         "not an array": "需要是数组",
@@ -787,7 +819,9 @@ ${
         "share tooltip - belong to you, not shared": ({ projectName, focusColor }) => (
             <>
                 只有您可以访问此服务。点击共享给
-                <span style={{ color: focusColor }}>{projectName}</span>项目成员。
+                <span style={{ color: focusColor }}>
+                    {projectName}
+                </span>项目成员。
             </>
         )
     },
@@ -862,23 +896,27 @@ ${
                 URL，分享文件的永久链接，甚至是文件中某个特定行的链接。
                 <br />
                 不知道从哪里开始？尝试这个{" "}
-                <MuiLink {...demoParquetFileLink}>演示文件</MuiLink>！
+                <MuiLink {...demoParquetFileLink}>
+                    演示文件
+                </MuiLink>！
             </>
         ),
         column: "列",
         density: "密度",
         "download file": "下载文件",
-        "resize table": "调整大小"
+        "resize table": "调整大小",
+        "unsupported file type": ({ supportedFileTypes }) =>
+            `不支持的数据格式。支持的类型有：${supportedFileTypes.join(", ")}。`,
+        "can't fetch file": "无法获取数据文件"
     },
     UrlInput: {
-        load: "加载"
+        load: "加载",
+        reset: "清空"
     },
     CommandBar: {
         ok: "是"
     },
-    moment: {
-        "date format": ({ isSameYear }) =>
-            `dddd, MMMM Do${isSameYear ? "" : " YYYY"}, h:mm a`,
+    formattedDate: {
         past1: ({ divisorKey }) => {
             switch (divisorKey) {
                 case "now":
@@ -957,6 +995,42 @@ ${
                     return "# 个月后";
                 case "year":
                     return "# 年后";
+            }
+        },
+        singular: ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "second":
+                    return "1秒";
+                case "minute":
+                    return "1分钟";
+                case "hour":
+                    return "1小时";
+                case "day":
+                    return "1天";
+                case "week":
+                    return "1周";
+                case "month":
+                    return "1个月";
+                case "year":
+                    return "1年";
+            }
+        },
+        plural: ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "second":
+                    return "#秒";
+                case "minute":
+                    return "#分钟";
+                case "hour":
+                    return "#小时";
+                case "day":
+                    return "#天";
+                case "week":
+                    return "#周";
+                case "month":
+                    return "#个月";
+                case "year":
+                    return "#年";
             }
         }
     },

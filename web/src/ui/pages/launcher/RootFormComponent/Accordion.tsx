@@ -12,17 +12,19 @@ import { Text } from "onyxia-ui/Text";
 import { FormFieldGroupComponent } from "./FormFieldGroupComponent";
 import type { FormCallbacks } from "./FormCallbacks";
 import { capitalize } from "tsafe/capitalize";
-import { assert } from "tsafe/assert";
 import { getScrollableParent } from "powerhooks/getScrollableParent";
 import { useConst } from "powerhooks/useConst";
 import { Evt } from "evt";
 import { getIconUrlByName } from "lazy-icons";
+import { useSessionState } from "ui/tools/useSessionState";
+import { z } from "zod";
+import { isObjectThatThrowIfAccessed } from "clean-architecture/createObjectThatThrowsIfAccessed";
 
-type Props = {
+export type Props = {
     className?: string;
     helmValuesPath: (string | number)[];
+    title: string;
     description: string | undefined;
-    title: string | undefined;
     nodes: (FormFieldGroup | FormField)[];
     canAdd: boolean;
     canRemove: boolean;
@@ -33,8 +35,8 @@ export function Accordion(props: Props) {
     const {
         className,
         helmValuesPath,
-        description,
         title,
+        description,
         nodes,
         canAdd,
         canRemove,
@@ -45,7 +47,17 @@ export function Accordion(props: Props) {
 
     const contentId = useId();
 
-    const [isExpanded, setIsExpanded] = useState(false);
+    const [isExpanded, setIsExpanded] = useSessionState({
+        initialValue: false,
+        stateUniqueId: `Accordion:${(() => {
+            if (isObjectThatThrowIfAccessed(helmValuesPath)) {
+                return title;
+            }
+
+            return JSON.stringify(helmValuesPath);
+        })()}`,
+        zState: z.boolean()
+    });
 
     const [rootElement, setRootElement] = useState<HTMLElement | null>(null);
 
@@ -135,17 +147,7 @@ export function Accordion(props: Props) {
                 aria-controls={contentId}
             >
                 <Text typo="label 1" componentProps={{ lang: "und" }}>
-                    {(() => {
-                        if (title !== undefined) {
-                            return title;
-                        }
-
-                        const lastSegment = helmValuesPath[helmValuesPath.length - 1];
-
-                        assert(typeof lastSegment === "string");
-
-                        return capitalize(lastSegment);
-                    })()}
+                    {capitalize(title)}
                 </Text>
                 <Text typo="caption" color="secondary" componentProps={{ lang: "und" }}>
                     {description}
@@ -170,7 +172,9 @@ const useStyles = tss
     .withNestedSelectors<"summary" | "summaryExpanded">()
     .create(({ theme, classes }) => ({
         root: {
-            backgroundColor: theme.colors.useCases.surfaces.surface1
+            backgroundColor: theme.colors.useCases.surfaces.surface1,
+            marginBottom: 2,
+            boxShadow: "unset"
         },
         summaryExpanded: {},
         summary: {

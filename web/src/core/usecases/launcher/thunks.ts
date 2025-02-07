@@ -12,7 +12,7 @@ import { actions } from "./state";
 import { generateRandomPassword } from "core/tools/generateRandomPassword";
 import { privateSelectors } from "./selectors";
 import { Evt } from "evt";
-import type { StringifyableAtomic } from "core/tools/Stringifyable";
+import type { StringifyableAtomic, Stringifyable } from "core/tools/Stringifyable";
 import { type XOnyxiaContext } from "core/ports/OnyxiaApi";
 import { createUsecaseContextApi } from "clean-architecture";
 import { computeHelmValues, type FormFieldValue } from "./decoupledLogic";
@@ -153,17 +153,8 @@ export const thunks = {
                     return;
                 }
 
-                const { doInjectPersonalInfos } = (() => {
-                    const project =
-                        projectManagement.protectedSelectors.currentProject(getState());
-
-                    const doInjectPersonalInfos =
-                        project.group === undefined ||
-                        !rootContext.paramsOfBootstrapCore
-                            .disablePersonalInfosInjectionInGroup;
-
-                    return { doInjectPersonalInfos };
-                })();
+                const doInjectPersonalInfos =
+                    projectManagement.selectors.canInjectPersonalInfos(getState());
 
                 const { s3ConfigId, s3ConfigId_default } = (() => {
                     const s3Configs = s3ConfigManagement.selectors
@@ -214,12 +205,15 @@ export const thunks = {
                     return;
                 }
 
-                const { helmValues: helmValues_default, isChartUsingS3 } =
-                    computeHelmValues({
-                        helmValuesSchema,
-                        xOnyxiaContext,
-                        helmValuesYaml
-                    });
+                const {
+                    helmValues: helmValues_default,
+                    helmValuesSchema_forDataTextEditor,
+                    isChartUsingS3
+                } = computeHelmValues({
+                    helmValuesSchema,
+                    xOnyxiaContext,
+                    helmValuesYaml
+                });
 
                 const friendlyName_default = chartName;
 
@@ -260,6 +254,8 @@ export const thunks = {
                             helmValuesSchema,
                             helmValues_default,
                             helmValuesYaml,
+
+                            helmValuesSchema_forDataTextEditor,
 
                             chartIconUrl,
                             catalogRepositoryUrl,
@@ -400,6 +396,15 @@ export const thunks = {
             const [dispatch] = args;
 
             dispatch(actions.isSharedChanged({ isShared }));
+        },
+    changeHelmValues:
+        (params: { helmValues: Record<string, Stringifyable> }) =>
+        (...args) => {
+            const { helmValues } = params;
+
+            const [dispatch] = args;
+
+            dispatch(actions.helmValuesChanged({ helmValues }));
         },
     launch:
         () =>

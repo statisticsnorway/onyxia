@@ -33,7 +33,7 @@ web:
   replicaCount: 1
   image:
     repository: inseefrlab/onyxia-web
-    tag: 4.34.14
+    tag: 4.39.1
     pullPolicy: IfNotPresent
 
   ## Pod priority settings
@@ -102,7 +102,7 @@ api:
   replicaCount: 1
   image:
     repository: inseefrlab/onyxia-api
-    tag: v4.0.0
+    tag: v4.2.0
     pullPolicy: IfNotPresent
   contextPath: /api
 
@@ -240,4 +240,6 @@ api:
     annotations: {}
     # The name of the service account to use.
     # If not set and create is true, a name is generated using the fullname template
-    name:
+    name: # Boolean to indicate whether the service account token must be injected into the pod or not. It can be deactivated if Onyxia doesn't use it.
+
+    automountServiceAccountToken: true

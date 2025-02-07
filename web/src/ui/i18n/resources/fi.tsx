@@ -311,9 +311,35 @@ export const translations: Translations<"fi"> = {
             </>
         )
     },
-    MyFilesShareDialog: {
+    MyFilesDisabledDialog: {
+        "dialog title": "S3-palvelinta ei ole määritetty",
+        "dialog body":
+            "Tälle instanssille ei ole määritetty S3-palvelinta. Voit kuitenkin lisätä sellaisen manuaalisesti ottaaksesi käyttöön S3-tiedostonhallinnan.",
         cancel: "Peruuta",
-        "create and copy link": "Luo ja kopioi linkki"
+        "go to settings": "Siirry asetuksiin"
+    },
+    ShareDialog: {
+        title: "Jaa tietosi",
+        close: "Sulje",
+        "create and copy link": "Luo ja kopioi linkki",
+        "paragraph current policy": ({ isPublic }) =>
+            isPublic
+                ? "Tiedostosi on julkinen, kuka tahansa linkin omistava voi ladata sen."
+                : "Tiedostosi on tällä hetkellä yksityinen.",
+
+        "paragraph change policy": ({ isPublic }) =>
+            isPublic
+                ? "Rajoittaaksesi pääsyä muuta tiedostosi jakamisen tilaa."
+                : "Jaa tiedosto ja anna pääsy muuttamalla jakamisen tilaa tai luomalla väliaikainen linkki.",
+
+        "hint link access": ({ isPublic, expiration }) =>
+            isPublic
+                ? "Linkkisi on käytettävissä niin kauan kuin tiedosto on julkinen."
+                : `Tämä linkki antaa pääsyn tietoihisi ${expiration} ajaksi.`,
+        "label input link": "Pääsylinkki"
+    },
+    SelectTime: {
+        "validity duration label": "Voimassaoloaika"
     },
     MySecrets: {
         "page title - my secrets": "Omat salaisuudet",
@@ -327,7 +353,9 @@ export const translations: Translations<"fi"> = {
                     dokumentaatiomme
                 </MuiLink>
                 . &nbsp;
-                <MuiLink {...accountTabLink}>Määritä paikallinen Vault CLI</MuiLink>.
+                <MuiLink {...accountTabLink}>
+                    Määritä paikallinen Vault CLI
+                </MuiLink>.
             </>
         )
     },
@@ -636,7 +664,9 @@ Voit poistaa komentopalkin käytöstä [\`Oma tili -> Käyttöliittymäasetukset
 
 Tutustu vapaasti ja ota hallintaan Kubernetes-julkaisusi!
         `}</Markdown>
-        )
+        ),
+        form: "Lomake",
+        editor: "Tekstieditori"
     },
     AcknowledgeSharingOfConfigConfirmDialog: {
         "acknowledge sharing of config confirm dialog title":
@@ -666,6 +696,12 @@ Tutustu vapaasti ja ota hallintaan Kubernetes-julkaisusi!
     },
     FormFieldWrapper: {
         "reset to default": "Palauta oletusarvoon"
+    },
+    ConfigurationTopLevelGroup: {
+        miscellaneous: "Sekalaista",
+        "Configuration that applies to all charts":
+            "Konfiguraatio, joka koskee kaikkia kaavioita",
+        "Top level configuration values": "Ylimmän tason konfiguraatioväriarvot"
     },
     YamlCodeBlockFormField: {
         "not an array": "Taulukkoa odotetaan",
@@ -921,17 +957,19 @@ Tutustu vapaasti ja ota hallintaan Kubernetes-julkaisusi!
         column: "sarake",
         density: "tiheys",
         "download file": "lataa tiedosto",
-        "resize table": "Muuta taulukon kokoa"
+        "resize table": "Muuta taulukon kokoa",
+        "unsupported file type": ({ supportedFileTypes }) =>
+            `Tuettua tiedostomuotoa ei tunnistettu. Tuetut tyypit ovat: ${supportedFileTypes.join(", ")}.`,
+        "can't fetch file": "Tietotiedostoa ei voida hakea"
     },
     UrlInput: {
-        load: "Lataa"
+        load: "Lataa",
+        reset: "Tyhjennä"
     },
     CommandBar: {
         ok: "ok"
     },
-    moment: {
-        "date format": ({ isSameYear }) =>
-            `dddd, Do MMMM${isSameYear ? "" : " YYYY"}, HH:mm`,
+    formattedDate: {
         past1: ({ divisorKey }) => {
             switch (divisorKey) {
                 case "now":
@@ -1010,6 +1048,42 @@ Tutustu vapaasti ja ota hallintaan Kubernetes-julkaisusi!
                     return "# kuukauden kuluttua";
                 case "year":
                     return "# vuoden kuluttua";
+            }
+        },
+        singular: ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "second":
+                    return "1 sekunti";
+                case "minute":
+                    return "1 minuutti";
+                case "hour":
+                    return "1 tunti";
+                case "day":
+                    return "1 päivä";
+                case "week":
+                    return "1 viikko";
+                case "month":
+                    return "1 kuukausi";
+                case "year":
+                    return "1 vuosi";
+            }
+        },
+        plural: ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "second":
+                    return "# sekuntia";
+                case "minute":
+                    return "# minuuttia";
+                case "hour":
+                    return "# tuntia";
+                case "day":
+                    return "# päivää";
+                case "week":
+                    return "# viikkoa";
+                case "month":
+                    return "# kuukautta";
+                case "year":
+                    return "# vuotta";
             }
         }
     },

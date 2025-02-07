@@ -8,7 +8,7 @@ import {
     useGridApiRef
 } from "@mui/x-data-grid";
 import { memo, useEffect, useMemo, useState } from "react";
-import { ExplorerIcon } from "../ExplorerIcon";
+import { ExplorerIcon, getIconIdFromExtension } from "../ExplorerIcon";
 import { tss } from "tss";
 import { Text } from "onyxia-ui/Text";
 import { fileSizePrettyPrint } from "ui/tools/fileSizePrettyPrint";
@@ -29,7 +29,7 @@ export type ListExplorerItemsProps = {
     isNavigating: boolean;
 
     items: Item[];
-
+    isBucketPolicyFeatureEnabled: boolean;
     onNavigate: (params: { basename: string }) => void;
     onOpenFile: (params: { basename: string }) => void;
     /** Assert initial value is none */
@@ -44,8 +44,9 @@ export type ListExplorerItemsProps = {
 
     onDeleteItems: (params: { items: Item[] }, onDeleteConfirmed?: () => void) => void;
     onCopyPath: (params: { basename: string }) => void;
+    onShare: (params: { fileBasename: string }) => void;
     evtAction: NonPostableEvt<
-        "DELETE SELECTED ITEM" | "COPY SELECTED ITEM PATH" //TODO: Delete, legacy from secret explorer
+        "DELETE SELECTED ITEM" | "COPY SELECTED ITEM PATH" | "SHARE SELECTED FILE"
     >;
 };
 
@@ -63,13 +64,15 @@ export const ListExplorerItems = memo((props: ListExplorerItemsProps) => {
         className,
         isNavigating,
         items,
+        isBucketPolicyFeatureEnabled,
         onNavigate,
-        evtAction,
         onCopyPath,
         onDeleteItems,
         onOpenFile,
         onPolicyChange,
-        onSelectedItemKindValueChange
+        onSelectedItemKindValueChange,
+        onShare,
+        evtAction
     } = props;
 
     const apiRef = useGridApiRef();
@@ -128,36 +131,42 @@ export const ListExplorerItems = memo((props: ListExplorerItemsProps) => {
                     field: "basename",
                     headerName: t("header name"),
                     type: "string",
-                    renderCell: params => (
-                        <>
-                            <ExplorerIcon
-                                iconId={
-                                    params.row.kind === "directory" ? "directory" : "data"
-                                }
-                                hasShadow={false}
-                                className={classes.nameIcon}
-                            />
-                            <Link
-                                onClick={e => {
-                                    e.stopPropagation();
-                                    switch (params.row.kind) {
-                                        case "directory":
-                                            return onNavigate({
-                                                basename: params.row.basename
-                                            });
+                    renderCell: params => {
+                        const fileName = params.value;
+                        const isDirectory = params.row.kind === "directory";
 
-                                        case "file":
-                                            return onOpenFile({
-                                                basename: params.row.basename
-                                            });
-                                    }
-                                }}
-                                color="inherit"
-                            >
-                                <Text typo="label 2">{params.value}</Text>
-                            </Link>
-                        </>
-                    ),
+                        const fileExtension = !isDirectory
+                            ? (fileName.split(".").pop() ?? "")
+                            : "directory";
+                        return (
+                            <>
+                                <ExplorerIcon
+                                    iconId={getIconIdFromExtension(fileExtension)}
+                                    hasShadow={false}
+                                    className={classes.nameIcon}
+                                />
+                                <Link
+                                    onClick={e => {
+                                        e.stopPropagation();
+                                        switch (params.row.kind) {
+                                            case "directory":
+                                                return onNavigate({
+                                                    basename: params.row.basename
+                                                });
+
+                                            case "file":
+                                                return onOpenFile({
+                                                    basename: params.row.basename
+                                                });
+                                        }
+                                    }}
+                                    color="inherit"
+                                >
+                                    <Text typo="label 2">{params.value}</Text>
+                                </Link>
+                            </>
+                        );
+                    },
                     cellClassName: classes.basenameCell
                 },
 
@@ -257,6 +266,14 @@ export const ListExplorerItems = memo((props: ListExplorerItemsProps) => {
                             basename: selectedItems[0].basename
                         });
                         break;
+                    case "SHARE SELECTED FILE":
+                        assert(
+                            selectedItems.length === 1 && selectedItems[0].kind === "file"
+                        );
+                        onShare({
+                            fileBasename: selectedItems[0].basename
+                        });
+                        return;
                 }
             }),
         [evtAction, onDeleteItems, onCopyPath]
@@ -303,6 +320,9 @@ export const ListExplorerItems = memo((props: ListExplorerItemsProps) => {
                 initialState={{
                     pagination: {
                         paginationModel: { pageSize: 25, page: 0 }
+                    },
+                    columns: {
+                        columnVisibilityModel: { policy: isBucketPolicyFeatureEnabled }
                     }
                 }}
                 isRowSelectable={(params: GridRowParams<Item>) =>

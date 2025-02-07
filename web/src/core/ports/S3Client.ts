@@ -33,9 +33,11 @@ export type S3Client = {
     /**
      *  In charge of creating bucket if doesn't exist.
      */
-    listObjects: (params: {
-        path: string;
-    }) => Promise<{ objects: S3Object[]; bucketPolicy: S3BucketPolicy | undefined }>;
+    listObjects: (params: { path: string }) => Promise<{
+        objects: S3Object[];
+        bucketPolicy: S3BucketPolicy | undefined;
+        isBucketPolicyAvailable: boolean;
+    }>;
 
     setPathAccessPolicy: (params: {
         path: string;
@@ -59,6 +61,8 @@ export type S3Client = {
         validityDurationSecond: number;
     }) => Promise<string>;
 
+    getFileContentType: (params: { path: string }) => Promise<string | undefined>;
+
     // getPresignedUploadUrl: (params: {
     //     path: string;
     //     validityDurationSecond: number;
@@ -69,11 +73,11 @@ type s3Action = `s3:${string}`;
 
 export type S3BucketPolicy = {
     Version: "2012-10-17";
-    Statement: Array<{
+    Statement: {
         Effect: "Allow" | "Deny";
         Principal: string | { AWS: string[] };
         Action: s3Action | s3Action[];
         Resource: string[];
         Condition?: Record<string, any>;
-    }>;
+    }[];
 };

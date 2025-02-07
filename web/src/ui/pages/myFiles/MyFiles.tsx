@@ -20,13 +20,22 @@ import type { PageRoute } from "./route";
 import { assert } from "tsafe/assert";
 import { env } from "env";
 import { getIconUrlByName, customIcons } from "lazy-icons";
+import { MyFilesDisabledDialog } from "./MyFilesDisabledDialog";
 
 export type Props = {
     route: PageRoute;
     className?: string;
 };
 
-export default function MyFiles(props: Props) {
+export default function MyFilesMaybeDisabled(props: Props) {
+    const isFileExplorerEnabled = useCoreState("fileExplorer", "isFileExplorerEnabled");
+    if (!isFileExplorerEnabled) {
+        return <MyFilesDisabledDialog />;
+    }
+    return <MyFiles {...props} />;
+}
+
+function MyFiles(props: Props) {
     const { className, route } = props;
 
     const { t } = useTranslation({ MyFiles });
@@ -38,7 +47,8 @@ export default function MyFiles(props: Props) {
         uploadProgress,
         currentWorkingDirectoryView,
         pathMinDepth,
-        viewMode
+        viewMode,
+        shareView
     } = useCoreState("fileExplorer", "main");
 
     const { fileExplorer } = useCore().functions;
@@ -131,7 +141,12 @@ export default function MyFiles(props: Props) {
     );
 
     const onOpenFile = useConstCallback<ExplorerProps["onOpenFile"]>(({ basename }) => {
-        if (basename.endsWith(".parquet") || basename.endsWith(".csv")) {
+        //TODO use dataExplorer thunk
+        if (
+            basename.endsWith(".parquet") ||
+            basename.endsWith(".csv") ||
+            basename.endsWith(".json")
+        ) {
             const { path } = route.params;
 
             assert(path !== undefined);
@@ -186,6 +201,9 @@ export default function MyFiles(props: Props) {
                 commandLogsEntries={commandLogsEntries}
                 evtAction={evtExplorerAction}
                 items={currentWorkingDirectoryView.items}
+                isBucketPolicyFeatureEnabled={
+                    currentWorkingDirectoryView.isBucketPolicyFeatureEnabled
+                }
                 changePolicy={fileExplorer.changePolicy}
                 onNavigate={fileExplorer.changeCurrentDirectory}
                 onRefresh={onRefresh}
@@ -198,6 +216,13 @@ export default function MyFiles(props: Props) {
                 onOpenFile={onOpenFile}
                 viewMode={viewMode}
                 onViewModeChange={fileExplorer.changeViewMode}
+                shareView={shareView}
+                onShareFileOpen={fileExplorer.openShare}
+                onShareFileClose={fileExplorer.closeShare}
+                onShareRequestSignedUrl={fileExplorer.requestShareSignedUrl}
+                onChangeShareSelectedValidityDuration={
+                    fileExplorer.changeShareSelectedValidityDuration
+                }
             />
         </div>
     );

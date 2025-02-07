@@ -299,13 +299,41 @@ export const translations: Translations<"en"> = {
                     our documentation
                 </MuiLink>
                 . &nbsp;
-                <MuiLink {...accountTabLink}>Configure the minio clients</MuiLink>.
+                <MuiLink {...accountTabLink}>
+                    Configure the minio clients
+                </MuiLink>.
             </>
         )
     },
-    MyFilesShareDialog: {
+    MyFilesDisabledDialog: {
+        "dialog title": "No S3 server configured",
+        "dialog body":
+            "There's no S3 server configured for this instance. But you can add one manually for enabling the S3 file explorer.",
         cancel: "Cancel",
-        "create and copy link": "Create and copy link"
+        "go to settings": "Go to settings"
+    },
+    ShareDialog: {
+        title: "Share your data",
+        close: "Close",
+        "create and copy link": "Create and copy link",
+        "paragraph current policy": ({ isPublic }) =>
+            isPublic
+                ? "Your file is public, anyone with the link can download it."
+                : "Your file is currently private.",
+
+        "paragraph change policy": ({ isPublic }) =>
+            isPublic
+                ? "To restrict its access, change your file's sharing status."
+                : "To share and provide access to your file, change the sharing status or create a temporary access link.",
+
+        "hint link access": ({ isPublic, expiration }) =>
+            isPublic
+                ? "Your link is available as long as the file is public."
+                : `This link will grant access to your data for ${expiration}.`,
+        "label input link": "Access link"
+    },
+    SelectTime: {
+        "validity duration label": "Validity duration"
     },
     MySecrets: {
         "page title - my secrets": "My Secrets",
@@ -319,7 +347,9 @@ export const translations: Translations<"en"> = {
                     our documentation
                 </MuiLink>
                 . &nbsp;
-                <MuiLink {...accountTabLink}>Configure your local Vault CLI</MuiLink>.
+                <MuiLink {...accountTabLink}>
+                    Configure your local Vault CLI
+                </MuiLink>.
             </>
         )
     },
@@ -629,7 +659,9 @@ You can disable the command bar in the [\`My Account -> Interface preference tab
 
 Feel free to explore and take charge of your Kubernetes deployments!  
         `}</Markdown>
-        )
+        ),
+        form: "Form",
+        editor: "Text Editor"
     },
     AcknowledgeSharingOfConfigConfirmDialog: {
         "acknowledge sharing of config confirm dialog title":
@@ -666,6 +698,12 @@ Feel free to explore and take charge of your Kubernetes deployments!
     },
     FormFieldWrapper: {
         "reset to default": "Reset to default"
+    },
+    ConfigurationTopLevelGroup: {
+        miscellaneous: "Miscellaneous",
+        "Configuration that applies to all charts":
+            "Configuration that applies to all charts",
+        "Top level configuration values": "Top level configuration values"
     },
     YamlCodeBlockFormField: {
         "not an array": "An array is expected",
@@ -915,17 +953,19 @@ Feel free to explore and take charge of your Kubernetes deployments!
         column: "column",
         density: "density",
         "download file": "Download file",
-        "resize table": "Resize"
+        "resize table": "Resize",
+        "unsupported file type": ({ supportedFileTypes }) =>
+            `Unsupported data format. Supported types are: ${supportedFileTypes.join(", ")}.`,
+        "can't fetch file": "Can't fetch data file"
     },
     UrlInput: {
-        load: "Load"
+        load: "Load",
+        reset: "Reset"
     },
     CommandBar: {
         ok: "Ok"
     },
-    moment: {
-        "date format": ({ isSameYear }) =>
-            `dddd, MMMM Do${isSameYear ? "" : " YYYY"}, h:mm a`,
+    formattedDate: {
         past1: ({ divisorKey }) => {
             switch (divisorKey) {
                 case "now":
@@ -1004,6 +1044,42 @@ Feel free to explore and take charge of your Kubernetes deployments!
                     return "in # months";
                 case "year":
                     return "in # years";
+            }
+        },
+        singular: ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "second":
+                    return "1 second";
+                case "minute":
+                    return "1 minute";
+                case "hour":
+                    return "1 hour";
+                case "day":
+                    return "1 day";
+                case "week":
+                    return "1 week";
+                case "month":
+                    return "1 month";
+                case "year":
+                    return "1 year";
+            }
+        },
+        plural: ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "second":
+                    return "# seconds";
+                case "minute":
+                    return "# minutes";
+                case "hour":
+                    return "# hours";
+                case "day":
+                    return "# days";
+                case "week":
+                    return "# weeks";
+                case "month":
+                    return "# months";
+                case "year":
+                    return "# years";
             }
         }
     },

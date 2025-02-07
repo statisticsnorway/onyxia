@@ -16,10 +16,12 @@ import {
     type JSONSchemaLike as JSONSchemaLike_validateValueAgainstJSONSchema,
     type XOnyxiaContextLike as XOnyxiaContextLike_validateValueAgainstJSONSchema
 } from "./shared/validateValueAgainstJSONSchema";
+import { resolveEnum } from "./shared/resolveEnum";
 import {
     getJSONSchemaType,
     type JSONSchemaLike as JSONSchemaLike_getJSONSchemaType
 } from "./shared/getJSONSchemaType";
+import structuredClone from "@ungap/structured-clone";
 
 type XOnyxiaParamsLike = {
     overwriteDefaultWith?: XOnyxiaParams["overwriteDefaultWith"];
@@ -35,6 +37,8 @@ export type JSONSchemaLike = JSONSchemaLike_getJSONSchemaType &
         default?: Stringifyable;
         const?: Stringifyable;
         properties?: Record<string, JSONSchemaLike>;
+        required?: string[];
+        enum?: Stringifyable[];
         [onyxiaReservedPropertyNameInFieldDescription]?: XOnyxiaParamsLike;
     };
 
@@ -53,14 +57,18 @@ export function computeHelmValues(params: {
     xOnyxiaContext: XOnyxiaContextLike;
 }): {
     helmValues: Record<string, Stringifyable>;
+    helmValuesSchema_forDataTextEditor: JSONSchemaLike;
     isChartUsingS3: boolean;
 } {
     const { helmValuesSchema, helmValuesYaml, xOnyxiaContext } = params;
+
+    const helmValuesSchema_forDataTextEditor = structuredClone(helmValuesSchema);
 
     let isChartUsingS3 = false;
 
     const helmValues = computeHelmValues_rec({
         helmValuesSchema,
+        helmValuesSchema_forDataTextEditor,
         helmValuesYaml_parsed: (() => {
             const helmValuesYaml_parsed = YAML.parse(helmValuesYaml);
 
@@ -92,7 +100,7 @@ export function computeHelmValues(params: {
 
     assert(helmValues instanceof Object && !(helmValues instanceof Array));
 
-    return { helmValues, isChartUsingS3 };
+    return { helmValues, isChartUsingS3, helmValuesSchema_forDataTextEditor };
 }
 
 export type XOnyxiaContextLike_computeHelmValues_rec =
@@ -105,8 +113,35 @@ export function computeHelmValues_rec(params: {
     helmValuesSchema: JSONSchemaLike;
     helmValuesYaml_parsed: Stringifyable | undefined;
     xOnyxiaContext: XOnyxiaContextLike_computeHelmValues_rec;
+    helmValuesSchema_forDataTextEditor: JSONSchemaLike | undefined;
 }): Stringifyable {
-    const { helmValuesSchema, helmValuesYaml_parsed, xOnyxiaContext } = params;
+    const {
+        helmValuesSchema,
+        helmValuesYaml_parsed,
+        xOnyxiaContext,
+        helmValuesSchema_forDataTextEditor
+    } = params;
+
+    for_text_editor_only: {
+        if (helmValuesSchema_forDataTextEditor === undefined) {
+            break for_text_editor_only;
+        }
+
+        delete helmValuesSchema_forDataTextEditor.listEnum;
+        delete helmValuesSchema_forDataTextEditor["x-onyxia"];
+        delete helmValuesSchema_forDataTextEditor.render;
+
+        {
+            const resolvedEnum = resolveEnum({
+                helmValuesSchema,
+                xOnyxiaContext
+            });
+
+            if (resolvedEnum !== undefined) {
+                helmValuesSchema_forDataTextEditor.enum = resolvedEnum;
+            }
+        }
+    }
 
     use_const: {
         const constValue = helmValuesSchema.const;
@@ -123,7 +158,60 @@ export function computeHelmValues_rec(params: {
 
         assert(isValid);
 
+        if (helmValuesSchema_forDataTextEditor !== undefined) {
+            delete helmValuesSchema_forDataTextEditor.default;
+        }
+
         return constValue;
+    }
+
+    const helmValuesSchemaType = getJSONSchemaType(helmValuesSchema);
+
+    schema_is_object_with_known_properties: {
+        if (helmValuesSchemaType !== "object") {
+            break schema_is_object_with_known_properties;
+        }
+
+        const { properties } = helmValuesSchema;
+
+        if (properties === undefined) {
+            break schema_is_object_with_known_properties;
+        }
+
+        if (helmValuesSchema_forDataTextEditor !== undefined) {
+            helmValuesSchema_forDataTextEditor.required = Object.keys(properties);
+        }
+
+        return Object.fromEntries(
+            Object.entries(properties).map(([propertyName, propertySchema]) => [
+                propertyName,
+                computeHelmValues_rec({
+                    helmValuesSchema: propertySchema,
+                    helmValuesYaml_parsed:
+                        helmValuesYaml_parsed instanceof Object &&
+                        !(helmValuesYaml_parsed instanceof Array)
+                            ? helmValuesYaml_parsed[propertyName]
+                            : undefined,
+                    xOnyxiaContext,
+                    helmValuesSchema_forDataTextEditor: (() => {
+                        if (helmValuesSchema_forDataTextEditor === undefined) {
+                            return undefined;
+                        }
+
+                        const { properties: property_forDataTextEditor } =
+                            helmValuesSchema_forDataTextEditor;
+
+                        assert(property_forDataTextEditor !== undefined);
+
+                        const out = property_forDataTextEditor[propertyName];
+
+                        assert(out !== undefined, "crash");
+
+                        return out;
+                    })()
+                })
+            ])
+        );
     }
 
     use_x_onyxia_overwriteDefaultWith: {
@@ -152,7 +240,17 @@ export function computeHelmValues_rec(params: {
             if (validationResult.reasonableApproximation === undefined) {
                 break use_x_onyxia_overwriteDefaultWith;
             }
+
+            if (helmValuesSchema_forDataTextEditor !== undefined) {
+                helmValuesSchema_forDataTextEditor.default =
+                    validationResult.reasonableApproximation;
+            }
+
             return validationResult.reasonableApproximation;
+        }
+
+        if (helmValuesSchema_forDataTextEditor !== undefined) {
+            helmValuesSchema_forDataTextEditor.default = resolvedValue;
         }
 
         return resolvedValue;
@@ -178,35 +276,6 @@ export function computeHelmValues_rec(params: {
         return defaultValue;
     }
 
-    const helmValuesSchemaType = getJSONSchemaType(helmValuesSchema);
-
-    schema_is_object_with_known_properties: {
-        if (helmValuesSchemaType !== "object") {
-            break schema_is_object_with_known_properties;
-        }
-
-        const { properties } = helmValuesSchema;
-
-        if (properties === undefined) {
-            break schema_is_object_with_known_properties;
-        }
-
-        return Object.fromEntries(
-            Object.entries(properties).map(([propertyName, propertySchema]) => [
-                propertyName,
-                computeHelmValues_rec({
-                    helmValuesSchema: propertySchema,
-                    helmValuesYaml_parsed:
-                        helmValuesYaml_parsed instanceof Object &&
-                        !(helmValuesYaml_parsed instanceof Array)
-                            ? helmValuesYaml_parsed[propertyName]
-                            : undefined,
-                    xOnyxiaContext
-                })
-            ])
-        );
-    }
-
     use_values_yaml: {
         if (helmValuesYaml_parsed === undefined) {
             break use_values_yaml;
@@ -219,6 +288,10 @@ export function computeHelmValues_rec(params: {
         });
 
         assert(isValid);
+
+        if (helmValuesSchema_forDataTextEditor !== undefined) {
+            helmValuesSchema_forDataTextEditor.default = helmValuesYaml_parsed;
+        }
 
         return helmValuesYaml_parsed;
     }
@@ -250,7 +323,19 @@ export function computeHelmValues_rec(params: {
                     defaultItem = computeHelmValues_rec({
                         helmValuesSchema: items,
                         helmValuesYaml_parsed: undefined,
-                        xOnyxiaContext
+                        xOnyxiaContext,
+                        helmValuesSchema_forDataTextEditor: (() => {
+                            if (helmValuesSchema_forDataTextEditor === undefined) {
+                                return undefined;
+                            }
+
+                            const { items: items_resolved } =
+                                helmValuesSchema_forDataTextEditor;
+
+                            assert(items_resolved !== undefined);
+
+                            return items_resolved;
+                        })()
                     });
                 } catch {
                     return undefined;

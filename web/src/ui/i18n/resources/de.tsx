@@ -314,9 +314,34 @@ export const translations: Translations<"de"> = {
             </>
         )
     },
-    MyFilesShareDialog: {
+    MyFilesDisabledDialog: {
+        "dialog title": "Kein S3-Server konfiguriert",
+        "dialog body":
+            "Für diese Instanz ist kein S3-Server konfiguriert. Sie können jedoch manuell einen hinzufügen, um den S3-Dateiexplorer zu aktivieren.",
         cancel: "Abbrechen",
-        "create and copy link": "Erstellen und kopieren"
+        "go to settings": "Zu den Einstellungen gehen"
+    },
+    ShareDialog: {
+        title: "Ihre Daten teilen",
+        close: "Schließen",
+        "create and copy link": "Link erstellen und kopieren",
+        "paragraph current policy": ({ isPublic }) =>
+            isPublic
+                ? "Ihre Datei ist öffentlich, jeder mit dem Link kann sie herunterladen."
+                : "Ihre Datei ist derzeit privat.",
+        "paragraph change policy": ({ isPublic }) =>
+            isPublic
+                ? "Um den Zugriff einzuschränken, ändern Sie den Freigabestatus Ihrer Datei."
+                : "Um Ihre Datei freizugeben und Zugriff zu gewähren, ändern Sie den Freigabestatus oder erstellen Sie einen temporären Zugriffslink.",
+
+        "hint link access": params =>
+            params.isPublic
+                ? "Ihr Link ist verfügbar, solange die Datei öffentlich ist"
+                : `Dieser Link gewährt für ${params.expiration} Zugriff auf Ihre Daten.`,
+        "label input link": "Zugriffslink"
+    },
+    SelectTime: {
+        "validity duration label": "Gültigkeitsdauer"
     },
     MySecrets: {
         "page title - my secrets": "Meine Geheimnisse",
@@ -648,7 +673,9 @@ Sie können die Befehlsleiste im [\`Mein Konto -> Benutzeroberfläche Einstellun
 
 Fühlen Sie sich frei, Ihre Kubernetes-Bereitstellungen zu erkunden und die Kontrolle zu übernehmen!
         `}</Markdown>
-        )
+        ),
+        form: "Formular",
+        editor: "Texteditor"
     },
     AcknowledgeSharingOfConfigConfirmDialog: {
         "acknowledge sharing of config confirm dialog title":
@@ -678,6 +705,12 @@ Fühlen Sie sich frei, Ihre Kubernetes-Bereitstellungen zu erkunden und die Kont
     },
     FormFieldWrapper: {
         "reset to default": "Zurücksetzen auf Standardwert"
+    },
+    ConfigurationTopLevelGroup: {
+        miscellaneous: "Verschiedenes",
+        "Configuration that applies to all charts":
+            "Konfiguration, die für alle Diagramme gilt",
+        "Top level configuration values": "Konfigurationswerte auf oberster Ebene"
     },
     YamlCodeBlockFormField: {
         "not an array": "Ein Array wird erwartet",
@@ -935,17 +968,19 @@ Fühlen Sie sich frei, Ihre Kubernetes-Bereitstellungen zu erkunden und die Kont
         column: "Spalte",
         density: "Dichte",
         "download file": "Datei herunterladen",
-        "resize table": undefined
+        "resize table": undefined,
+        "unsupported file type": ({ supportedFileTypes }) =>
+            `Nicht unterstütztes Datenformat. Unterstützte Typen sind: ${supportedFileTypes.join(", ")}.`,
+        "can't fetch file": "Daten-Datei kann nicht abgerufen werden"
     },
     UrlInput: {
-        load: "Laden"
+        load: "Laden",
+        reset: "Leeren"
     },
     CommandBar: {
         ok: "Ok"
     },
-    moment: {
-        "date format": ({ isSameYear }) =>
-            `dddd, Do MMMM${isSameYear ? "" : " YYYY"}, HH:mm`,
+    formattedDate: {
         past1: ({ divisorKey }) => {
             switch (divisorKey) {
                 case "now":
@@ -1024,6 +1059,42 @@ Fühlen Sie sich frei, Ihre Kubernetes-Bereitstellungen zu erkunden und die Kont
                     return "in # Monaten";
                 case "year":
                     return "in # Jahren";
+            }
+        },
+        singular: ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "second":
+                    return "1 Sekunde";
+                case "minute":
+                    return "1 Minute";
+                case "hour":
+                    return "1 Stunde";
+                case "day":
+                    return "1 Tag";
+                case "week":
+                    return "1 Woche";
+                case "month":
+                    return "1 Monat";
+                case "year":
+                    return "1 Jahr";
+            }
+        },
+        plural: ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "second":
+                    return "# Sekunden";
+                case "minute":
+                    return "# Minuten";
+                case "hour":
+                    return "# Stunden";
+                case "day":
+                    return "# Tage";
+                case "week":
+                    return "# Wochen";
+                case "month":
+                    return "# Monate";
+                case "year":
+                    return "# Jahre";
             }
         }
     },

@@ -5,7 +5,7 @@ import { createUsecaseActions } from "clean-architecture";
 import type { WritableDraft } from "clean-architecture/immer";
 import { S3BucketPolicy, S3Object } from "core/ports/S3Client";
 
-//All explorer path are expected to be absolute (start with /)
+//All explorer paths are expected to be absolute (start with /)
 
 export type State = {
     directoryPath: string | undefined;
@@ -30,6 +30,16 @@ export type State = {
         resp: string | undefined;
     }[];
     bucketPolicy: S3BucketPolicy;
+    isBucketPolicyAvailable: boolean;
+    share:
+        | {
+              fileBasename: string;
+              url: string | undefined;
+              validityDurationSecond: number | undefined;
+              validityDurationSecondOptions: number[] | undefined;
+              isSignedUrlBeingRequested: boolean | undefined;
+          }
+        | undefined;
 };
 
 export const name = "fileExplorer";
@@ -47,7 +57,9 @@ export const { reducer, actions } = createUsecaseActions({
         bucketPolicy: {
             Version: "2012-10-17",
             Statement: []
-        }
+        },
+        isBucketPolicyAvailable: true,
+        share: undefined
     }),
     reducers: {
         fileUploadStarted: (
@@ -105,6 +117,7 @@ export const { reducer, actions } = createUsecaseActions({
             state.s3FilesBeingUploaded = [];
         },
         navigationStarted: state => {
+            assert(state.share === undefined);
             state.isNavigationOngoing = true;
         },
         navigationCompleted: (
@@ -116,16 +129,20 @@ export const { reducer, actions } = createUsecaseActions({
                     directoryPath: string;
                     objects: S3Object[];
                     bucketPolicy: S3BucketPolicy | undefined;
+                    isBucketPolicyAvailable: boolean;
                 };
             }
         ) => {
-            const { directoryPath, objects, bucketPolicy } = payload;
+            const { directoryPath, objects, bucketPolicy, isBucketPolicyAvailable } =
+                payload;
 
             state.directoryPath = directoryPath;
             state.objects = objects;
             state.isNavigationOngoing = false;
-            bucketPolicy && (state.bucketPolicy = bucketPolicy);
-
+            if (bucketPolicy) {
+                state.bucketPolicy = bucketPolicy;
+            }
+            state.isBucketPolicyAvailable = isBucketPolicyAvailable;
             // Properly restore state when navigating back to
             // a directory with ongoing operations.
             state.ongoingOperations
@@ -319,6 +336,82 @@ export const { reducer, actions } = createUsecaseActions({
                     : o
             );
             state.bucketPolicy = payload.bucketPolicy;
+        },
+        shareOpened: (
+            state,
+            {
+                payload
+            }: {
+                payload: {
+                    fileBasename: string;
+                    url: string | undefined;
+                    validityDurationSecondOptions: number[] | undefined;
+                };
+            }
+        ) => {
+            const { fileBasename, url, validityDurationSecondOptions } = payload;
+
+            if (url !== undefined) {
+                state.share = {
+                    fileBasename,
+                    url,
+                    isSignedUrlBeingRequested: undefined,
+                    validityDurationSecondOptions: undefined,
+                    validityDurationSecond: undefined
+                };
+            } else {
+                assert(validityDurationSecondOptions !== undefined);
+
+                state.share = {
+                    fileBasename,
+                    url,
+                    isSignedUrlBeingRequested: false,
+                    validityDurationSecondOptions,
+                    validityDurationSecond: validityDurationSecondOptions[0]
+                };
+            }
+        },
+        shareClosed: state => {
+            state.share = undefined;
+        },
+        shareSelectedValidityDurationChanged: (
+            state,
+            {
+                payload
+            }: {
+                payload: {
+                    validityDurationSecond: number;
+                };
+            }
+        ) => {
+            const { validityDurationSecond } = payload;
+
+            assert(state.share !== undefined);
+            assert(state.share.validityDurationSecondOptions !== undefined);
+            assert(
+                state.share.validityDurationSecondOptions.includes(validityDurationSecond)
+            );
+            state.share.validityDurationSecond = validityDurationSecond;
+        },
+        requestSignedUrlStarted: state => {
+            assert(state.share !== undefined);
+            state.share.isSignedUrlBeingRequested = true;
+        },
+        requestSignedUrlCompleted: (
+            state,
+            {
+                payload
+            }: {
+                payload: {
+                    url: string;
+                };
+            }
+        ) => {
+            const { url } = payload;
+
+            assert(state.share !== undefined);
+            state.share.isSignedUrlBeingRequested = false;
+            state.share.url = url;
         }
     }
 });

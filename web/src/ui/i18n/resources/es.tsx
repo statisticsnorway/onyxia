@@ -311,13 +311,41 @@ export const translations: Translations<"en"> = {
                     nuestra documentación
                 </MuiLink>
                 . &nbsp;
-                <MuiLink {...accountTabLink}>Configura los clientes de minio</MuiLink>.
+                <MuiLink {...accountTabLink}>
+                    Configura los clientes de minio
+                </MuiLink>.
             </>
         )
     },
-    MyFilesShareDialog: {
+    MyFilesDisabledDialog: {
+        "dialog title": "No hay servidor S3 configurado",
+        "dialog body":
+            "No hay ningún servidor S3 configurado para esta instancia. Pero puedes agregar uno manualmente para habilitar el explorador de archivos S3.",
         cancel: "Cancelar",
-        "create and copy link": "Crear y copiar enlace"
+        "go to settings": "Ir a configuración"
+    },
+    ShareDialog: {
+        title: "Compartir tus datos",
+        close: "Cerrar",
+        "create and copy link": "Crear y copiar enlace",
+        "paragraph current policy": ({ isPublic }) =>
+            isPublic
+                ? "Tu archivo es público, cualquier persona con el enlace puede descargarlo."
+                : "Tu archivo está actualmente privado.",
+
+        "paragraph change policy": ({ isPublic }) =>
+            isPublic
+                ? "Para restringir su acceso, cambia el estado de difusión de tu archivo."
+                : "Para compartir y dar acceso a tu archivo, cambia el estado de difusión o crea un enlace de acceso temporal.",
+
+        "hint link access": ({ isPublic, expiration }) =>
+            isPublic
+                ? "Tu enlace está disponible mientras el archivo sea público."
+                : `Este enlace otorgará acceso a tus datos durante ${expiration}.`,
+        "label input link": "Enlace de acceso"
+    },
+    SelectTime: {
+        "validity duration label": "Duración de validez"
     },
     MySecrets: {
         "page title - my secrets": "Mis Secretos",
@@ -331,7 +359,9 @@ export const translations: Translations<"en"> = {
                     nuestra documentación
                 </MuiLink>
                 . &nbsp;
-                <MuiLink {...accountTabLink}>Configura tu Vault CLI local</MuiLink>.
+                <MuiLink {...accountTabLink}>
+                    Configura tu Vault CLI local
+                </MuiLink>.
             </>
         )
     },
@@ -645,7 +675,9 @@ export const translations: Translations<"en"> = {
     
     ¡Siéntete libre de explorar y tomar el control de tus implementaciones de Kubernetes!
             `}</Markdown>
-        )
+        ),
+        form: "Formulario",
+        editor: "Editor de texto"
     },
     AcknowledgeSharingOfConfigConfirmDialog: {
         "acknowledge sharing of config confirm dialog title":
@@ -674,6 +706,12 @@ export const translations: Translations<"en"> = {
     },
     FormFieldWrapper: {
         "reset to default": "Restablecer a los valores predeterminados"
+    },
+    ConfigurationTopLevelGroup: {
+        miscellaneous: "Varios",
+        "Configuration that applies to all charts":
+            "Configuración que se aplica a todos los gráficos",
+        "Top level configuration values": "Valores de configuración de nivel superior"
     },
     YamlCodeBlockFormField: {
         "not an array": "Se espera un arreglo",
@@ -923,23 +961,27 @@ export const translations: Translations<"en"> = {
                 específica del archivo copiando la URL de la barra de direcciones.
                 <br />
                 ¿No estás seguro por dónde empezar? ¡Prueba este{" "}
-                <MuiLink {...demoParquetFileLink}>archivo de demostración</MuiLink>!
+                <MuiLink {...demoParquetFileLink}>
+                    archivo de demostración
+                </MuiLink>!
             </>
         ),
         column: "columna",
         density: "densidad",
         "download file": "Descargar archivo",
-        "resize table": "Redimensionar"
+        "resize table": "Redimensionar",
+        "unsupported file type": ({ supportedFileTypes }) =>
+            `Formato de datos no compatible. Los tipos compatibles son: ${supportedFileTypes.join(", ")}.`,
+        "can't fetch file": "No se puede obtener el archivo de datos"
     },
     UrlInput: {
-        load: "Cargar"
+        load: "Cargar",
+        reset: "Vaciar"
     },
     CommandBar: {
         ok: "Aceptar"
     },
-    moment: {
-        "date format": ({ isSameYear }) =>
-            `dddd, MMMM Do${isSameYear ? "" : " YYYY"}, h:mm a`,
+    formattedDate: {
         past1: ({ divisorKey }) => {
             switch (divisorKey) {
                 case "now":
@@ -1018,6 +1060,42 @@ export const translations: Translations<"en"> = {
                     return "en # meses";
                 case "year":
                     return "en # años";
+            }
+        },
+        singular: ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "second":
+                    return "1 segundo";
+                case "minute":
+                    return "1 minuto";
+                case "hour":
+                    return "1 hora";
+                case "day":
+                    return "1 día";
+                case "week":
+                    return "1 semana";
+                case "month":
+                    return "1 mes";
+                case "year":
+                    return "1 año";
+            }
+        },
+        plural: ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "second":
+                    return "# segundos";
+                case "minute":
+                    return "# minutos";
+                case "hour":
+                    return "# horas";
+                case "day":
+                    return "# días";
+                case "week":
+                    return "# semanas";
+                case "month":
+                    return "# meses";
+                case "year":
+                    return "# años";
             }
         }
     },

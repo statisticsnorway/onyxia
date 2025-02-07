@@ -308,13 +308,41 @@ export const translations: Translations<"it"> = {
                     la nostra documentazione
                 </MuiLink>
                 . &nbsp;
-                <MuiLink {...accountTabLink}>Configurare i client MinIO</MuiLink>.
+                <MuiLink {...accountTabLink}>
+                    Configurare i client MinIO
+                </MuiLink>.
             </>
         )
     },
-    MyFilesShareDialog: {
+    MyFilesDisabledDialog: {
+        "dialog title": "Nessun server S3 configurato",
+        "dialog body":
+            "Non è stato configurato nessun server S3 per questa istanza. Tuttavia, è possibile aggiungerne uno manualmente per abilitare l'esploratore file S3.",
         cancel: "Annulla",
-        "create and copy link": "Creare e copiare il link"
+        "go to settings": "Vai alle impostazioni"
+    },
+    ShareDialog: {
+        title: "Condividi i tuoi dati",
+        close: "Chiudi",
+        "create and copy link": "Crea e copia il link",
+        "paragraph current policy": ({ isPublic }) =>
+            isPublic
+                ? "Il tuo file è pubblico, chiunque abbia il link può scaricarlo."
+                : "Il tuo file è attualmente privato.",
+
+        "paragraph change policy": ({ isPublic }) =>
+            isPublic
+                ? "Per limitare l'accesso, modifica lo stato di condivisione del tuo file."
+                : "Per condividere e dare accesso al tuo file, modifica lo stato di condivisione o crea un link di accesso temporaneo.",
+
+        "hint link access": ({ isPublic, expiration }) =>
+            isPublic
+                ? "Il tuo link è disponibile finché il file è pubblico."
+                : `Questo link garantirà l'accesso ai tuoi dati per ${expiration}.`,
+        "label input link": "Link di accesso"
+    },
+    SelectTime: {
+        "validity duration label": "Durata di validità"
     },
     MySecrets: {
         "page title - my secrets": "I miei segreti",
@@ -328,8 +356,9 @@ export const translations: Translations<"it"> = {
                     la nostra documentazione
                 </MuiLink>
                 . &nbsp;
-                <MuiLink {...accountTabLink}>Configurare il tuo Vault CLI locale</MuiLink>
-                .
+                <MuiLink {...accountTabLink}>
+                    Configurare il tuo Vault CLI locale
+                </MuiLink>.
             </>
         )
     },
@@ -642,7 +671,9 @@ Puoi disabilitare la barra dei comandi nel tab [\`Il Mio Account -> Preferenze I
 
 Sentiti libero di esplorare e prendere il controllo dei tuoi deployment Kubernetes!
         `}</Markdown>
-        )
+        ),
+        form: "Modulo",
+        editor: "Editor di testo"
     },
     AcknowledgeSharingOfConfigConfirmDialog: {
         "acknowledge sharing of config confirm dialog title":
@@ -673,6 +704,12 @@ Sentiti libero di esplorare e prendere il controllo dei tuoi deployment Kubernet
     },
     FormFieldWrapper: {
         "reset to default": "Ripristina il valore predefinito"
+    },
+    ConfigurationTopLevelGroup: {
+        miscellaneous: "Varie",
+        "Configuration that applies to all charts":
+            "Configurazione che si applica a tutti i grafici",
+        "Top level configuration values": "Valori di configurazione di livello superiore"
     },
     YamlCodeBlockFormField: {
         "not an array": "È previsto un array",
@@ -930,17 +967,19 @@ Sentiti libero di esplorare e prendere il controllo dei tuoi deployment Kubernet
         column: "colonna",
         density: "densità",
         "download file": "scarica file",
-        "resize table": "Ridimensiona"
+        "resize table": "Ridimensiona",
+        "unsupported file type": ({ supportedFileTypes }) =>
+            `Formato dati non supportato. I tipi supportati sono: ${supportedFileTypes.join(", ")}.`,
+        "can't fetch file": "Impossibile recuperare il file dei dati"
     },
     UrlInput: {
-        load: "Carica"
+        load: "Carica",
+        reset: "Svuotare"
     },
     CommandBar: {
         ok: "ok"
     },
-    moment: {
-        "date format": ({ isSameYear }) =>
-            `dddd, Do MMMM${isSameYear ? "" : " YYYY"}, HH:mm`,
+    formattedDate: {
         past1: ({ divisorKey }) => {
             switch (divisorKey) {
                 case "now":
@@ -1019,6 +1058,42 @@ Sentiti libero di esplorare e prendere il controllo dei tuoi deployment Kubernet
                     return "tra # mesi";
                 case "year":
                     return "tra # anni";
+            }
+        },
+        singular: ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "second":
+                    return "1 secondo";
+                case "minute":
+                    return "1 minuto";
+                case "hour":
+                    return "1 ora";
+                case "day":
+                    return "1 giorno";
+                case "week":
+                    return "1 settimana";
+                case "month":
+                    return "1 mese";
+                case "year":
+                    return "1 anno";
+            }
+        },
+        plural: ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "second":
+                    return "# secondi";
+                case "minute":
+                    return "# minuti";
+                case "hour":
+                    return "# ore";
+                case "day":
+                    return "# giorni";
+                case "week":
+                    return "# settimane";
+                case "month":
+                    return "# mesi";
+                case "year":
+                    return "# anni";
             }
         }
     },

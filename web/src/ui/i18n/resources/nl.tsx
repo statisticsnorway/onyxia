@@ -314,9 +314,35 @@ export const translations: Translations<"nl"> = {
             </>
         )
     },
-    MyFilesShareDialog: {
+    MyFilesDisabledDialog: {
+        "dialog title": "Geen S3-server geconfigureerd",
+        "dialog body":
+            "Er is geen S3-server geconfigureerd voor deze instantie. Je kunt er echter handmatig een toevoegen om de S3-bestandsverkenner in te schakelen.",
         cancel: "Annuleren",
-        "create and copy link": "Creare e copiare il link"
+        "go to settings": "Ga naar instellingen"
+    },
+    ShareDialog: {
+        title: "Deel je gegevens",
+        close: "Sluiten",
+        "create and copy link": "Link maken en kopiëren",
+        "paragraph current policy": ({ isPublic }) =>
+            isPublic
+                ? "Je bestand is openbaar, iedereen met de link kan het downloaden."
+                : "Je bestand is momenteel privé.",
+
+        "paragraph change policy": ({ isPublic }) =>
+            isPublic
+                ? "Om toegang te beperken, verander de deelstatus van je bestand."
+                : "Om toegang te geven tot je bestand, verander de deelstatus of maak een tijdelijke toegangslink.",
+
+        "hint link access": ({ isPublic, expiration }) =>
+            isPublic
+                ? "Je link is beschikbaar zolang het bestand openbaar is."
+                : `Deze link geeft toegang tot je gegevens gedurende ${expiration}.`,
+        "label input link": "Toegangslink"
+    },
+    SelectTime: {
+        "validity duration label": "Geldigheidsduur"
     },
     MySecrets: {
         "page title - my secrets": "My Secrets",
@@ -330,7 +356,9 @@ export const translations: Translations<"nl"> = {
                     onze documentatie
                 </MuiLink>
                 . &nbsp;
-                <MuiLink {...accountTabLink}>Uw lokale Vault CLI instellen</MuiLink>.
+                <MuiLink {...accountTabLink}>
+                    Uw lokale Vault CLI instellen
+                </MuiLink>.
             </>
         )
     },
@@ -645,7 +673,9 @@ Je kunt de commandobalk uitschakelen in het tabblad [\`Mijn Account -> Interface
 
 Voel je vrij om te verkennen en de controle over je Kubernetes-implementaties te nemen!
         `}</Markdown>
-        )
+        ),
+        form: "Formulier",
+        editor: "Teksteditor"
     },
     AcknowledgeSharingOfConfigConfirmDialog: {
         "acknowledge sharing of config confirm dialog title":
@@ -676,6 +706,12 @@ Voel je vrij om te verkennen en de controle over je Kubernetes-implementaties te
     },
     FormFieldWrapper: {
         "reset to default": "Terugzetten naar standaardwaarden"
+    },
+    ConfigurationTopLevelGroup: {
+        miscellaneous: "Diverse",
+        "Configuration that applies to all charts":
+            "Configuratie die op alle grafieken van toepassing is",
+        "Top level configuration values": "Configuratiewaarden op het hoogste niveau"
     },
     YamlCodeBlockFormField: {
         "not an array": "Een array wordt verwacht",
@@ -932,17 +968,19 @@ Voel je vrij om te verkennen en de controle over je Kubernetes-implementaties te
         column: "kolom",
         density: "dichtheid",
         "download file": "bestand downloaden",
-        "resize table": "Formaat wijzigen"
+        "resize table": "Formaat wijzigen",
+        "unsupported file type": ({ supportedFileTypes }) =>
+            `Niet-ondersteund gegevensformaat. Ondersteunde typen zijn: ${supportedFileTypes.join(", ")}.`,
+        "can't fetch file": "Kan gegevensbestand niet ophalen"
     },
     UrlInput: {
-        load: "Laden"
+        load: "Laden",
+        reset: "Leegmaken"
     },
     CommandBar: {
         ok: "ok"
     },
-    moment: {
-        "date format": ({ isSameYear }) =>
-            `dddd, Do MMMM${isSameYear ? "" : " YYYY"}, HH:mm`,
+    formattedDate: {
         past1: ({ divisorKey }) => {
             switch (divisorKey) {
                 case "now":
@@ -1021,6 +1059,42 @@ Voel je vrij om te verkennen en de controle over je Kubernetes-implementaties te
                     return "over # maanden";
                 case "year":
                     return "over # jaar";
+            }
+        },
+        singular: ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "second":
+                    return "1 seconde";
+                case "minute":
+                    return "1 minuut";
+                case "hour":
+                    return "1 uur";
+                case "day":
+                    return "1 dag";
+                case "week":
+                    return "1 week";
+                case "month":
+                    return "1 maand";
+                case "year":
+                    return "1 jaar";
+            }
+        },
+        plural: ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "second":
+                    return "# seconden";
+                case "minute":
+                    return "# minuten";
+                case "hour":
+                    return "# uren";
+                case "day":
+                    return "# dagen";
+                case "week":
+                    return "# weken";
+                case "month":
+                    return "# maanden";
+                case "year":
+                    return "# jaren";
             }
         }
     },

@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosHeaders } from "axios";
 import { join as pathJoin } from "pathe";
 import { partition } from "evt/tools/reducers";
 import type {
@@ -69,21 +69,25 @@ export async function createSecretManager(params: Params): Promise<SecretsManage
             returnCachedTokenIfStillValidForXPercentOfItsTTL: "90%"
         });
 
-    if (oidc.authMethod !== "session storage") {
+    if (oidc.isNewBrowserSession) {
         clearCachedToken();
     }
 
     const { axiosInstance } = (() => {
         const axiosInstance = createAxiosInstance();
 
-        axiosInstance.interceptors.request.use(async axiosRequestConfig => ({
-            ...axiosRequestConfig,
-            headers: {
-                "X-Vault-Token": (await getNewlyRequestedOrCachedToken()).token
-            },
-            "Content-Type": "application/json;charset=utf-8",
-            Accept: "application/json;charset=utf-8"
-        }));
+        axiosInstance.interceptors.request.use(async axiosRequestConfig => {
+            const headers = AxiosHeaders.from(axiosRequestConfig.headers);
+
+            headers.set("X-Vault-Token", (await getNewlyRequestedOrCachedToken()).token);
+            headers.set("Content-Type", "application/json;charset=utf-8");
+            headers.set("Accept", "application/json;charset=utf-8");
+
+            return {
+                ...axiosRequestConfig,
+                headers
+            };
+        });
 
         return { axiosInstance };
     })();

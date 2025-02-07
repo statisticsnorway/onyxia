@@ -8,8 +8,8 @@ const rootForm: RootForm = {
         {
             type: "group",
             helmValuesPath: ["services"],
+            title: "services",
             description: undefined,
-            title: undefined,
             nodes: [
                 {
                     type: "field",
@@ -30,8 +30,8 @@ const rootForm: RootForm = {
         {
             type: "group",
             helmValuesPath: ["resources"],
+            title: "resources",
             description: undefined,
-            title: undefined,
             nodes: [
                 {
                     type: "field",

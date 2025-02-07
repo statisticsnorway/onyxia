@@ -67,13 +67,17 @@ export const Default: Story = {
     args: {
         isNavigating: false,
         items: itemsSample,
+        isBucketPolicyFeatureEnabled: true,
         onNavigate: action("Navigate to directory"),
         onOpenFile: action("Open file"),
         onDeleteItem: action("Delete item"),
         onCopyPath: action("Copy path"),
         onSelectedItemKindValueChange: action("Selected item kind changed"),
         onPolicyChange: action("Policy change"),
-        evtAction: Evt.create<"DELETE SELECTED ITEM" | "COPY SELECTED ITEM PATH">()
+        evtAction: Evt.create<
+            "DELETE SELECTED ITEM" | "COPY SELECTED ITEM PATH" | "SHARE SELECTED FILE"
+        >(),
+        onShare: action("Share file")
     }
 };
 
@@ -81,12 +85,16 @@ export const EmptyDirectory: Story = {
     args: {
         isNavigating: false,
         items: [],
+        isBucketPolicyFeatureEnabled: true,
         onNavigate: action("Navigate to directory"),
         onOpenFile: action("Open file"),
         onDeleteItem: action("Delete item"),
         onCopyPath: action("Copy path"),
         onPolicyChange: action("Policy change"),
         onSelectedItemKindValueChange: action("Selected item kind changed"),
-        evtAction: Evt.create<"DELETE SELECTED ITEM" | "COPY SELECTED ITEM PATH">()
+        evtAction: Evt.create<
+            "DELETE SELECTED ITEM" | "COPY SELECTED ITEM PATH" | "SHARE SELECTED FILE"
+        >(),
+        onShare: action("Share file")
     }
 };

@@ -56,6 +56,7 @@ export type JSONSchemaLike = JSONSchemaLike_getJSONSchemaType &
 assert<keyof JSONSchemaLike extends keyof JSONSchema ? true : false>();
 assert<JSONSchema extends JSONSchemaLike ? true : false>();
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export type XOnyxiaContextLike = {};
 
 assert<XOnyxiaContext extends XOnyxiaContextLike ? true : false>();
@@ -88,70 +89,78 @@ function computeRootFormFieldGroup_rec(params: {
 }): FormFieldGroup | FormField | undefined {
     const { helmValuesSchema, helmValues, xOnyxiaContext, helmValuesPath } = params;
 
-    root_hidden: {
-        const { hidden } = helmValuesSchema;
+    const isHidden: boolean = (() => {
+        root_hidden: {
+            const { hidden } = helmValuesSchema;
 
-        if (hidden === undefined) {
-            break root_hidden;
+            if (hidden === undefined) {
+                break root_hidden;
+            }
+
+            if (hidden === false) {
+                break root_hidden;
+            }
+
+            if (hidden === true) {
+                return true;
+            }
+
+            const { value, path, isPathRelative = false } = hidden;
+
+            const splittedPath = path.split("/");
+
+            const helmValuesPath_target = isPathRelative
+                ? [...helmValuesPath.slice(0, -1), ...splittedPath]
+                : splittedPath;
+
+            const value_target = getValueAtPathInObject<Stringifyable>({
+                obj: helmValues,
+                path: helmValuesPath_target
+            });
+
+            if (!same(value, value_target)) {
+                break root_hidden;
+            }
+
+            return true;
         }
 
-        if (hidden === false) {
-            break root_hidden;
+        if (helmValuesSchema["x-onyxia"]?.hidden === true) {
+            return true;
         }
 
-        if (hidden === true) {
-            return undefined;
-        }
+        return false;
+    })();
 
-        const { value, path, isPathRelative = false } = hidden;
-
-        const splittedPath = path.split("/");
-
-        const helmValuesPath_target = isPathRelative
-            ? [...helmValuesPath.slice(0, -1), ...splittedPath]
-            : splittedPath;
-
-        const value_target = getValueAtPathInObject<Stringifyable>({
-            obj: helmValues,
-            path: helmValuesPath_target
-        });
-
-        if (!same(value, value_target)) {
-            break root_hidden;
-        }
-
+    if (isHidden) {
         return undefined;
     }
 
-    if (helmValuesSchema["x-onyxia"]?.hidden === true) {
-        return undefined;
-    }
+    const title = (() => {
+        const { title } = helmValuesSchema;
 
-    const getTitle = () => {
-        assert(helmValuesPath.length !== 0);
+        if (title !== undefined) {
+            return title;
+        }
 
         const lastSegment = helmValuesPath[helmValuesPath.length - 1];
 
-        let title =
-            helmValuesSchema.title ??
-            (() => {
-                if (typeof lastSegment === "number") {
-                    assert(helmValuesPath.length !== 1);
-
-                    const secondToLastSegment = helmValuesPath[helmValuesPath.length - 2];
-
-                    return `${secondToLastSegment}`;
-                }
-
-                return lastSegment;
-            })();
-
-        if (typeof lastSegment === "number") {
-            title = `${title} ${lastSegment}`;
+        if (lastSegment === undefined) {
+            return "<root>";
         }
 
-        return title;
-    };
+        if (typeof lastSegment === "string") {
+            return lastSegment;
+        }
+
+        const secondToLastSegment = helmValuesPath[helmValuesPath.length - 2];
+
+        if (secondToLastSegment === undefined) {
+            return `item ${lastSegment}`;
+        }
+
+        return `${secondToLastSegment} ${lastSegment}`;
+    })();
 
     const isReadonly =
         (helmValuesSchema["x-onyxia"]?.readonly ?? false) ||
@@ -189,7 +198,7 @@ function computeRootFormFieldGroup_rec(params: {
         return id<FormField.YamlCodeBlock>({
             type: "field",
             isReadonly,
-            title: getTitle(),
+            title,
             fieldType: "yaml code block",
             helmValuesPath,
             description: helmValuesSchema.description,
@@ -216,7 +225,7 @@ function computeRootFormFieldGroup_rec(params: {
 
         return id<FormField.Select>({
             type: "field",
-            title: getTitle(),
+            title,
             isReadonly,
             fieldType: "select",
             helmValuesPath,
@@ -257,7 +266,7 @@ function computeRootFormFieldGroup_rec(params: {
 
         return id<FormField.Slider>({
             type: "field",
-            title: getTitle(),
+            title,
             isReadonly,
             fieldType: "slider",
             helmValuesPath,
@@ -340,7 +349,7 @@ function computeRootFormFieldGroup_rec(params: {
                     ...(() => {
                         switch (sliderExtremity) {
                             case "down":
-                                return { sliderExtremity: "down", title: getTitle() };
+                                return { sliderExtremity: "down", title };
                             case "up":
                                 return { sliderExtremity: "up" };
                         }
@@ -352,26 +361,30 @@ function computeRootFormFieldGroup_rec(params: {
     }
 
     switch (helmValuesSchemaType) {
-        case "object":
+        case "object": {
             assert(helmValuesSchema.properties !== undefined);
+
+            const nodes = Object.entries(helmValuesSchema.properties)
+                .map(([segment, helmValuesSchema_child]) =>
+                    computeRootFormFieldGroup_rec({
+                        helmValues,
+                        helmValuesPath: [...helmValuesPath, segment],
+                        xOnyxiaContext,
+                        helmValuesSchema: helmValuesSchema_child
+                    })
+                )
+                .filter(exclude(undefined));
+
             return id<FormFieldGroup>({
                 type: "group",
                 helmValuesPath,
+                title,
                 description: helmValuesSchema.description,
-                title: helmValuesSchema.title ?? undefined,
-                nodes: Object.entries(helmValuesSchema.properties)
-                    .map(([segment, helmValuesSchema_child]) =>
-                        computeRootFormFieldGroup_rec({
-                            helmValues,
-                            helmValuesPath: [...helmValuesPath, segment],
-                            xOnyxiaContext,
-                            helmValuesSchema: helmValuesSchema_child
-                        })
-                    )
-                    .filter(exclude(undefined)),
+                nodes,
                 canAdd: false,
                 canRemove: false
             });
+        }
         case "array": {
             const itemSchema = helmValuesSchema.items;
 
@@ -385,21 +398,23 @@ function computeRootFormFieldGroup_rec(params: {
             assert(values !== undefined);
             assert(values instanceof Array);
 
+            const nodes = values
+                .map((...[, index]) =>
+                    computeRootFormFieldGroup_rec({
+                        helmValues,
+                        helmValuesPath: [...helmValuesPath, index],
+                        xOnyxiaContext,
+                        helmValuesSchema: itemSchema
+                    })
+                )
+                .filter(exclude(undefined));
+
             return id<FormFieldGroup>({
                 type: "group",
                 helmValuesPath,
+                title,
                 description: helmValuesSchema.description,
-                title: undefined,
-                nodes: values
-                    .map((...[, index]) =>
-                        computeRootFormFieldGroup_rec({
-                            helmValues,
-                            helmValuesPath: [...helmValuesPath, index],
-                            xOnyxiaContext,
-                            helmValuesSchema: itemSchema
-                        })
-                    )
-                    .filter(exclude(undefined)),
+                nodes,
                 canAdd: values.length < (helmValuesSchema.maxItems ?? Infinity),
                 canRemove: values.length > (helmValuesSchema.minItems ?? 0)
             });
@@ -407,7 +422,7 @@ function computeRootFormFieldGroup_rec(params: {
         case "boolean":
             return id<FormField.Checkbox>({
                 type: "field",
-                title: getTitle(),
+                title,
                 isReadonly,
                 fieldType: "checkbox",
                 helmValuesPath,
@@ -423,7 +438,7 @@ function computeRootFormFieldGroup_rec(params: {
         case "string":
             return id<FormField.TextField>({
                 type: "field",
-                title: getTitle(),
+                title,
                 isReadonly,
                 fieldType: "text field",
                 helmValuesPath,
@@ -443,7 +458,7 @@ function computeRootFormFieldGroup_rec(params: {
         case "number":
             return id<FormField.NumberField>({
                 type: "field",
-                title: getTitle(),
+                title,
                 isReadonly,
                 fieldType: "number field",
                 helmValuesPath,
@@ -460,5 +475,5 @@ function computeRootFormFieldGroup_rec(params: {
             });
     }
 
-    assert<Equals<typeof helmValuesSchemaType, never>>(false);
+    assert<Equals<typeof helmValuesSchemaType, never>>();
 }

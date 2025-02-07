@@ -117,8 +117,8 @@ describe(symToStr({ mutateHelmValues_update }), () => {
                     createObjectWithSomePropertiesThatThrowIfAccessed<FormFieldGroup>({
                         type: "group",
                         helmValuesPath: ["resources"],
-                        description: THROW_IF_ACCESSED,
                         title: THROW_IF_ACCESSED,
+                        description: THROW_IF_ACCESSED,
                         canAdd: THROW_IF_ACCESSED,
                         canRemove: THROW_IF_ACCESSED,
                         nodes: [

@@ -119,13 +119,14 @@ const chartVersion = createSelector(readyState, state => {
 const s3ConfigSelect = createSelector(
     s3ConfigManagement.selectors.s3Configs,
     isReady,
+    projectManagement.selectors.canInjectPersonalInfos,
     createSelector(readyState, state => {
         if (state === null) {
             return null;
         }
         return state.s3Config;
     }),
-    (s3Configs, isReady, s3Config) => {
+    (s3Configs, isReady, canInjectPersonalInfos, s3Config) => {
         if (!isReady) {
             return null;
         }
@@ -137,13 +138,17 @@ const s3ConfigSelect = createSelector(
             return undefined;
         }
 
+        const availableConfigs = s3Configs.filter(
+            config => canInjectPersonalInfos || config.origin !== "deploymentRegion"
+        );
+
         // We don't display the s3 config selector if there is no config or only one
         if (s3Configs.length <= 1) {
             return undefined;
         }
 
         return {
-            options: s3Configs.map(s3Config => ({
+            options: availableConfigs.map(s3Config => ({
                 optionValue: s3Config.id,
                 label: {
                     dataSource: s3Config.dataSource,
@@ -559,6 +564,14 @@ const main = createSelector(
     groupProjectName,
     s3ConfigSelect,
     labeledHelmChartSourceUrls,
+    helmValues,
+    createSelector(readyState, state => {
+        if (state === null) {
+            return null;
+        }
+
+        return state.helmValuesSchema_forDataTextEditor;
+    }),
     (
         isReady,
         friendlyName,
@@ -577,7 +590,9 @@ const main = createSelector(
         commandLogsEntries,
         groupProjectName,
         s3ConfigSelect,
-        labeledHelmChartSourceUrls
+        labeledHelmChartSourceUrls,
+        helmValues,
+        helmValuesSchema_forDataTextEditor
     ) => {
         if (!isReady) {
             return {
@@ -602,6 +617,8 @@ const main = createSelector(
         assert(groupProjectName !== null);
         assert(s3ConfigSelect !== null);
         assert(labeledHelmChartSourceUrls !== null);
+        assert(helmValues !== null);
+        assert(helmValuesSchema_forDataTextEditor !== null);
 
         return {
             isReady: true as const,
@@ -621,7 +638,9 @@ const main = createSelector(
             commandLogsEntries,
             groupProjectName,
             s3ConfigSelect,
-            labeledHelmChartSourceUrls
+            labeledHelmChartSourceUrls,
+            helmValues,
+            helmValuesSchema_forDataTextEditor
         };
     }
 );

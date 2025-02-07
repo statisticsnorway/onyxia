@@ -33,7 +33,8 @@ export function FormFieldWrapper(props: Props) {
 
     const { classes } = useStyles({
         isErrored: error !== undefined,
-        isResetToDefaultButtonVisible: onResetToDefault !== undefined
+        isResetToDefaultButtonVisible: onResetToDefault !== undefined,
+        hasEmptyTitle: title === ""
     });
 
     const { t } = useTranslation({ FormFieldWrapper });
@@ -90,8 +91,12 @@ export function FormFieldWrapper(props: Props) {
 
 const useStyles = tss
     .withName({ FormFieldWrapper })
-    .withParams<{ isErrored: boolean; isResetToDefaultButtonVisible: boolean }>()
-    .create(({ theme, isErrored, isResetToDefaultButtonVisible }) => ({
+    .withParams<{
+        isErrored: boolean;
+        isResetToDefaultButtonVisible: boolean;
+        hasEmptyTitle: boolean;
+    }>()
+    .create(({ theme, isErrored, isResetToDefaultButtonVisible, hasEmptyTitle }) => ({
         title: {
             color: !isErrored ? undefined : theme.colors.useCases.alertSeverity.error.main
         },
@@ -112,7 +117,7 @@ const useStyles = tss
             color: theme.colors.useCases.alertSeverity.error.main
         },
         childrenWrapper: {
-            marginTop: theme.spacing(4)
+            marginTop: hasEmptyTitle ? undefined : theme.spacing(4)
         },
         errorWrapper: {
             marginTop: theme.spacing(3),
@@ -122,7 +127,8 @@ const useStyles = tss
             color: theme.colors.useCases.alertSeverity.error.main
         },
         resetToDefaultButton: {
-            opacity: isResetToDefaultButtonVisible ? 1 : 0
+            visibility: isResetToDefaultButtonVisible ? "visible" : "hidden",
+            paddingTop: hasEmptyTitle ? 0 : undefined
         }
     }));
 

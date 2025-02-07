@@ -29,7 +29,7 @@ export const Footer = memo((props: Props) => {
 
     return (
         <footer className={cx(classes.root, className)}>
-            <Text typo="body 2">2017 - 2024 Onyxia</Text>
+            <Text typo="body 2">2017 - 2025 Onyxia</Text>
             {spacing}
             <a
                 href="https://github.com/InseeFrLab/onyxia"
@@ -51,11 +51,15 @@ export const Footer = memo((props: Props) => {
                     changeLanguageText={t("change language")}
                 />
             )}
-            {spacing}
-            <a {...routes.terms().link}>
-                {" "}
-                <Text typo="body 2">{t("terms of service")}</Text>{" "}
-            </a>
+            {env.TERMS_OF_SERVICES !== undefined && (
+                <>
+                    {spacing}
+                    <a {...routes.terms().link}>
+                        {" "}
+                        <Text typo="body 2">{t("terms of service")}</Text>{" "}
+                    </a>
+                </>
+            )}
             {spacing}
             {env.ONYXIA_VERSION !== undefined && (
                 <a href={env.ONYXIA_VERSION_URL} target="_blank" rel="noreferrer">

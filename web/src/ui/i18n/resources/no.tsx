@@ -310,9 +310,35 @@ export const translations: Translations<"no"> = {
             </>
         )
     },
-    MyFilesShareDialog: {
+    MyFilesDisabledDialog: {
+        "dialog title": "Ingen S3-server konfigurert",
+        "dialog body":
+            "Det er ingen S3-server konfigurert for denne instansen. Men du kan legge til en manuelt for å aktivere S3-filutforskeren.",
         cancel: "Avbryt",
-        "create and copy link": "Opprett og kopier lenke"
+        "go to settings": "Gå til innstillinger"
+    },
+    ShareDialog: {
+        title: "Del dataene dine",
+        close: "Lukk",
+        "create and copy link": "Opprett og kopier lenke",
+        "paragraph current policy": ({ isPublic }) =>
+            isPublic
+                ? "Filen din er offentlig, alle med lenken kan laste den ned."
+                : "Filen din er for øyeblikket privat.",
+
+        "paragraph change policy": ({ isPublic }) =>
+            isPublic
+                ? "For å begrense tilgangen, endre delingsstatusen til filen din."
+                : "For å dele og gi tilgang til filen din, endre delingsstatusen eller opprett en midlertidig tilgangslenke.",
+
+        "hint link access": ({ isPublic, expiration }) =>
+            isPublic
+                ? "Lenken din er tilgjengelig så lenge filen er offentlig."
+                : `Denne lenken gir tilgang til dataene dine i ${expiration}.`,
+        "label input link": "Tilgangslenke"
+    },
+    SelectTime: {
+        "validity duration label": "Gyldighetsperiode"
     },
     MySecrets: {
         "page title - my secrets": "Mine hemmeligheter",
@@ -541,13 +567,13 @@ export const translations: Translations<"no"> = {
             labeledHelmChartSourceUrls
         }) => (
             <>
-                Helm-diagrammet{" "}
+                Du er i ferd med å starte{" "}
                 {
                     <MaybeLink href={labeledHelmChartSourceUrls.helmChartSourceUrl}>
                         {helmChartName}
                     </MaybeLink>
                 }{" "}
-                tilhører Helm-diagramlageret{" "}
+                fra tjenestekatalogen{" "}
                 {
                     <MaybeLink
                         href={labeledHelmChartSourceUrls.helmChartRepositorySourceUrl}
@@ -559,7 +585,7 @@ export const translations: Translations<"no"> = {
                 {labeledHelmChartSourceUrls.dockerImageSourceUrl !== undefined && (
                     <>
                         {" "}
-                        Det er basert på Docker-bildet{" "}
+                        Den er basert på Docker-malen{" "}
                         {
                             <MuiLink
                                 href={labeledHelmChartSourceUrls.dockerImageSourceUrl}
@@ -643,7 +669,9 @@ Du kan deaktivere kommandolinjen i [\`Min konto -> Grensesnitt preferanse-fanen\
 
 Utforsk gjerne og ta kontroll over tjenestene du kjører på Kubernetes!
         `}</Markdown>
-        )
+        ),
+        form: "Skjema",
+        editor: "Teksteditor"
     },
     AcknowledgeSharingOfConfigConfirmDialog: {
         "acknowledge sharing of config confirm dialog title":
@@ -673,6 +701,12 @@ Utforsk gjerne og ta kontroll over tjenestene du kjører på Kubernetes!
     },
     FormFieldWrapper: {
         "reset to default": "Tilbakestill til standard"
+    },
+    ConfigurationTopLevelGroup: {
+        miscellaneous: "Diverse",
+        "Configuration that applies to all charts":
+            "Konfigurasjon som gjelder for alle diagrammer",
+        "Top level configuration values": "Konfigurasjonsverdier på toppnivå"
     },
     YamlCodeBlockFormField: {
         "not an array": "En matrise forventes",
@@ -926,17 +960,19 @@ Utforsk gjerne og ta kontroll over tjenestene du kjører på Kubernetes!
         column: "kolonne",
         density: "tetthet",
         "download file": "last ned fil",
-        "resize table": "Endre størrelse"
+        "resize table": "Endre størrelse",
+        "unsupported file type": ({ supportedFileTypes }) =>
+            `Ikke støttet dataformat. Støttede typer er: ${supportedFileTypes.join(", ")}.`,
+        "can't fetch file": "Kan ikke hente datafilen"
     },
     UrlInput: {
-        load: "Last"
+        load: "Last",
+        reset: "Tøm"
     },
     CommandBar: {
         ok: "ok"
     },
-    moment: {
-        "date format": ({ isSameYear }) =>
-            `dddd, Do MMMM${isSameYear ? "" : " YYYY"}, HH:mm`,
+    formattedDate: {
         past1: ({ divisorKey }) => {
             switch (divisorKey) {
                 case "now":
@@ -1015,6 +1051,42 @@ Utforsk gjerne og ta kontroll over tjenestene du kjører på Kubernetes!
                     return "om # måneder";
                 case "year":
                     return "om # år";
+            }
+        },
+        singular: ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "second":
+                    return "1 sekund";
+                case "minute":
+                    return "1 minutt";
+                case "hour":
+                    return "1 time";
+                case "day":
+                    return "1 dag";
+                case "week":
+                    return "1 uke";
+                case "month":
+                    return "1 måned";
+                case "year":
+                    return "1 år";
+            }
+        },
+        plural: ({ divisorKey }) => {
+            switch (divisorKey) {
+                case "second":
+                    return "# sekunder";
+                case "minute":
+                    return "# minutter";
+                case "hour":
+                    return "# timer";
+                case "day":
+                    return "# dager";
+                case "week":
+                    return "# uker";
+                case "month":
+                    return "# måneder";
+                case "year":
+                    return "# år";
             }
         }
     },

@@ -124,7 +124,7 @@ export function FormFieldGroupComponent(props: Props) {
             })
     );
 
-    const { cx, classes } = useStyles_inner();
+    const { cx, classes } = useStyles();
 
     const { t } = useTranslation({ FormFieldGroupComponent });
 
@@ -147,18 +147,7 @@ export function FormFieldGroupComponent(props: Props) {
                         <FormFieldGroupComponentWrapper
                             key={key}
                             className={classes.group}
-                            title={(() => {
-                                const { helmValuesPath } = node;
-
-                                const lastSegment =
-                                    helmValuesPath[helmValuesPath.length - 1];
-
-                                if (typeof lastSegment === "number") {
-                                    return undefined;
-                                }
-
-                                return lastSegment;
-                            })()}
+                            title={node.title}
                             onRemove={onRemove_child}
                             description={node.description}
                         >
@@ -328,7 +317,7 @@ export function FormFieldGroupComponent(props: Props) {
 const { i18n } = declareComponentKeys<"add">()({ FormFieldGroupComponent });
 export type I18n = typeof i18n;
 
-const useStyles_inner = tss.withName({ FormFieldGroupComponent }).create(({ theme }) => {
+const useStyles = tss.withName({ FormFieldGroupComponent }).create(({ theme }) => {
     const gap = theme.spacing(6);
 
     return {
@@ -336,7 +325,7 @@ const useStyles_inner = tss.withName({ FormFieldGroupComponent }).create(({ them
             display: "flex",
             flexWrap: "wrap",
             gap,
-            alignItems: "center"
+            alignItems: "baseline"
         },
         group: {
             flex: "0 0 100%"
