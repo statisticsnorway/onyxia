@@ -5,9 +5,9 @@ import type { Onyxia } from "../../src/pluginSystem";
 const updatePrice = () => {
     if (document.getElementById("estimated-cost") == undefined) {
         document
-            .querySelector("div[class$='-LauncherMainCard-belowDivider']")
+            .querySelector("[data-title='Ressurser'] .MuiAccordionDetails-root")
             .insertAdjacentHTML(
-                "beforeend",
+                "afterbegin",
                 '<div style="margin-top: 1em;">Estimated price: <span id="estimated-cost">xx</span> per hour</div>'
             );
     }
@@ -34,15 +34,6 @@ window.addEventListener("onyxiaready", () => {
 
     onyxia.addEventListener(eventName => {
         switch (eventName) {
-            case "theme updated":
-                console.log("Onyxia theme updated: ", onyxia.theme);
-                break;
-            case "language changed":
-                console.log(`Language changed to ${onyxia.lang}`);
-                break;
-            case "route changed":
-                console.log(`Route changed: ${onyxia.route.name}`);
-                break;
             case "route params changed":
                 console.log(`Route params changed: `, onyxia.route.params);
                 if (onyxia.route.name === "launcher") {
@@ -50,7 +41,7 @@ window.addEventListener("onyxiaready", () => {
                 }
                 break;
             default:
-                debugger;
+                break;
         }
     });
 

@@ -1,8 +1,8 @@
 var updatePrice = function () {
     if (document.getElementById("estimated-cost") == undefined) {
         document
-            .querySelector("div[class$='-LauncherMainCard-belowDivider']")
-            .insertAdjacentHTML("beforeend", '<div style="margin-top: 1em;">Estimated price: <span id="estimated-cost">xx</span> per hour</div>');
+            .querySelector("[data-title='Ressurser'] .MuiAccordionDetails-root")
+            .insertAdjacentHTML("afterbegin", '<div style="margin-top: 1em;">Estimated price: <span id="estimated-cost">xx</span> per hour</div>');
     }
     var onyxia = window.onyxia;
     var resources = onyxia.core.states.launcher.getMain().helmValues.resources;
@@ -21,15 +21,6 @@ window.addEventListener("onyxiaready", function () {
     var onyxia = window.onyxia;
     onyxia.addEventListener(function (eventName) {
         switch (eventName) {
-            case "theme updated":
-                console.log("Onyxia theme updated: ", onyxia.theme);
-                break;
-            case "language changed":
-                console.log("Language changed to ".concat(onyxia.lang));
-                break;
-            case "route changed":
-                console.log("Route changed: ".concat(onyxia.route.name));
-                break;
             case "route params changed":
                 console.log("Route params changed: ", onyxia.route.params);
                 if (onyxia.route.name === "launcher") {
@@ -37,7 +28,7 @@ window.addEventListener("onyxiaready", function () {
                 }
                 break;
             default:
-                debugger;
+                break;
         }
     });
     console.log("Onyxia Global API ready", onyxia);
