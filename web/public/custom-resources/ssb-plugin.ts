@@ -8,7 +8,7 @@ const updatePrice = () => {
             .querySelector("[data-title='Ressurser'] .MuiAccordionDetails-root")
             .insertAdjacentHTML(
                 "afterbegin",
-                '<div style="margin-top: 1em;">Estimated price: <span id="estimated-cost">xx</span> per hour</div>'
+                '<div style="margin-top: 1em;">Estimated price: <span id="estimated-cost">_</span> per work day (8 hours)</div>'
             );
     }
 
@@ -18,15 +18,17 @@ const updatePrice = () => {
     const memory = resources.memory.replace("Gi", "");
 
     // Prices fetched 5. feb 2025: https://cloud.google.com/compute/vm-instance-pricing?hl=nb
-    const cpuCostPerCorePerHourEuro = 0.034802;
-    const memoryCostPerGiPerHourEuro = 0.004664;
+    const cpuCostPerCorePerHour = 0.034802 * 11.7;
+    const memoryCostPerGiPerHour = 0.004664 * 11.7;
 
-    const estimatedCost =
-        (cpu / 1000) * cpuCostPerCorePerHourEuro + memory * memoryCostPerGiPerHourEuro;
+    const estimatedCostPerHour =
+        (cpu / 1000) * cpuCostPerCorePerHour + memory * memoryCostPerGiPerHour;
+    const estimatedCostPerWorkDay = estimatedCostPerHour * 8;
+
     document.getElementById("estimated-cost").innerText = new Intl.NumberFormat("nb-NO", {
         style: "currency",
-        currency: "EUR"
-    }).format(estimatedCost);
+        currency: "NOK"
+    }).format(estimatedCostPerWorkDay);
 };
 
 window.addEventListener("onyxiaready", () => {
