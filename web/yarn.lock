@@ -4961,10 +4961,10 @@ jsonify@^0.0.1:
   resolved "https://registry.yarnpkg.com/jsonify/-/jsonify-0.0.1.tgz#2aa3111dae3d34a0f151c63f3a45d995d9420978"
   integrity sha512-2/Ki0GcmuqSrgFyelQq9M05y7PS0mEwuIzrf3f1fPqkVDVRvZrPZtVSMHxdgo8Aq0sxAOb/cr2aqqA3LeWHVPg==
 
-keycloakify@^11.8.9:
-  version "11.8.9"
-  resolved "https://registry.yarnpkg.com/keycloakify/-/keycloakify-11.8.9.tgz#0e603e544e37c4dafac518f506c7200103c9077a"
-  integrity sha512-puYkK+4VfkmDfcfT4XkDAEUQfoObAon2+L+8YchBCvcGFcL8c1JkF8S1lLHX9AMuFWX1FW0r7Ye7zGJIpvcz1w==
+keycloakify@^11.8.13:
+  version "11.8.13"
+  resolved "https://registry.yarnpkg.com/keycloakify/-/keycloakify-11.8.13.tgz#fc6c11e61fdc51eb3fa7357338fbc6c669577ef6"
+  integrity sha512-eR9Kp7CHselq4+mrK0VLVOIjSXuwXh8uT7pSA3yaoTljTBwCCu5STWjWpPrRdYseTkWcIcGXCyyTMkgDIjN2wA==
   dependencies:
     tsafe "^1.8.5"
 
@@ -5613,10 +5613,10 @@ object-keys@^1.1.1:
   resolved "https://registry.yarnpkg.com/object-keys/-/object-keys-1.1.1.tgz#1c47f272df277f3b1daf061677d9c82e2322c60e"
   integrity sha512-NuAESUOUMrlIXOfHKzD6bpPu3tYt3xvjNdRIQ+FeT0lNb4K8WR70CaDxhuNguS2XG+GjkyMwOzsN5ZktImfhLA==
 
-oidc-spa@^6.0.5:
-  version "6.0.5"
-  resolved "https://registry.yarnpkg.com/oidc-spa/-/oidc-spa-6.0.5.tgz#1a1e9c36df224a741e558ee796626ecf63b487c8"
-  integrity sha512-QnkgskiKziT0T7Oe87BrAKIUVYuub4Iv8WFP/SVTtOzQs3AYN7jxi0q2q7UOCpFa7Biyzn8PvtTmqjaaBwdR7g==
+oidc-spa@^6.1.5:
+  version "6.1.5"
+  resolved "https://registry.yarnpkg.com/oidc-spa/-/oidc-spa-6.1.5.tgz#37c2e3c1b7d44d7ea4688d3c5b7d61fe82da1a0b"
+  integrity sha512-24JUQ8hkwSgXEB+BPZ2sVtfx66n4DINZvurbhk7aKGDlXEy8acg+1/nLN7tycWhygJlx2oedJOzhfbITCJerNw==
 
 once@^1.3.0:
   version "1.4.0"
