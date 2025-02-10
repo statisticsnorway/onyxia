@@ -11,26 +11,18 @@ import { Button } from "onyxia-ui/Button";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import { Checkbox } from "onyxia-ui/Checkbox";
 import { ThemedImage } from "onyxia-ui/ThemedImage";
-import agentconnectBtnPrincipalSvgUrl from "ui/assets/svg/agentconnect-btn-principal.svg";
-import agentconnectBtnPrincipalHoverSvgUrl from "ui/assets/svg/agentconnect-btn-principal-hover.svg";
-import agentconnectBtnAlternatifSvgUrl from "ui/assets/svg/agentconnect-btn-alternatif.svg";
-import agentconnectBtnAlternatifHoverSvgUrl from "ui/assets/svg/agentconnect-btn-alternatif-hover.svg";
+import proConnectLightWebpUrl from "ui/assets/img/ProConnect_light.webp";
+import proConnectLightHoverWebpUrl from "ui/assets/img/ProConnect_light_hover.webp";
+import proConnectDarkWebpUrl from "ui/assets/img/ProConnect_dark.webp";
+import proConnectDarkHoverWebpUrl from "ui/assets/img/ProConnect_dark_hover.webp";
 
 export default function Login(
     props: PageProps<Extract<KcContext, { pageId: "login.ftl" }>, I18n>
 ) {
     const { kcContext, i18n, doUseDefaultCss, Template, classes: classes_props } = props;
 
-    const {
-        messagesPerField,
-        social,
-        realm,
-        url,
-        usernameHidden,
-        login,
-        auth,
-        registrationDisabled
-    } = kcContext;
+    const { social, realm, url, usernameHidden, login, auth, registrationDisabled } =
+        kcContext;
 
     const { msg, msgStr } = i18n;
 
@@ -63,7 +55,7 @@ export default function Login(
             }
             headerNode={msg("doLogIn")}
             i18n={i18n}
-            displayMessage={!messagesPerField.existsError("username", "password")}
+            displayMessage={true}
             infoNode={
                 <div className={classes.linkToRegisterWrapper}>
                     <Text typo="body 2" color="secondary">
@@ -88,16 +80,27 @@ export default function Login(
                                 <ul className={classes.providers}>
                                     {social.providers.map(p => (
                                         <li key={p.providerId}>
-                                            {p.displayName
-                                                .toLocaleLowerCase()
-                                                .replace(/ /g, "")
-                                                .includes("agentconnect") ? (
-                                                <AgentConnectButton url={p.loginUrl} />
-                                            ) : (
-                                                <Button href={p.loginUrl}>
-                                                    {p.displayName}
-                                                </Button>
-                                            )}
+                                            {(() => {
+                                                if (
+                                                    p.providerId === "agentconnect" ||
+                                                    p.providerId === "proconnect"
+                                                ) {
+                                                    return (
+                                                        <ProConnectButton
+                                                            url={p.loginUrl}
+                                                        />
+                                                    );
+                                                }
+
+                                                return (
+                                                    <Button
+                                                        href={p.loginUrl}
+                                                        doOpenNewTabIfHref={false}
+                                                    >
+                                                        {p.displayName}
+                                                    </Button>
+                                                );
+                                            })()}
                                         </li>
                                     ))}
                                 </ul>
@@ -243,13 +246,13 @@ const useStyles = tss.withName({ Login }).create(({ theme }) => ({
     }
 }));
 
-const { AgentConnectButton } = (() => {
+const { ProConnectButton } = (() => {
     type Props = {
         className?: string;
         url: string;
     };
 
-    function AgentConnectButton(props: Props) {
+    function ProConnectButton(props: Props) {
         const { className, url } = props;
 
         const [isMouseHover, setIsMouseHover] = useState(false);
@@ -265,34 +268,39 @@ const { AgentConnectButton } = (() => {
                     onMouseLeave={() => setIsMouseHover(false)}
                 >
                     <ThemedImage
+                        className={classes.img}
                         url={
                             theme.isDarkModeEnabled
                                 ? isMouseHover
-                                    ? agentconnectBtnAlternatifHoverSvgUrl
-                                    : agentconnectBtnAlternatifSvgUrl
+                                    ? proConnectDarkHoverWebpUrl
+                                    : proConnectDarkWebpUrl
                                 : isMouseHover
-                                  ? agentconnectBtnPrincipalHoverSvgUrl
-                                  : agentconnectBtnPrincipalSvgUrl
+                                  ? proConnectLightHoverWebpUrl
+                                  : proConnectLightWebpUrl
                         }
                     />
                 </a>
                 <Link
                     className={classes.docLink}
-                    href="https://agentconnect.gouv.fr/"
+                    href="https://www.proconnect.gouv.fr/"
                     target="_blank"
                 >
-                    Qu'est-ce qu'AgentConnect?
+                    Qu'est-ce que ProConnect?
                 </Link>
             </div>
         );
     }
 
-    const useStyles = tss.withName({ AgentConnectButton }).create({
+    const useStyles = tss.withName({ ProConnectButton }).create({
         root: {
             textAlign: "center"
         },
         link: {
             display: "block"
+        },
+        img: {
+            width: 214,
+            height: 55
         },
         docLink: {
             display: "inline-block",
@@ -300,7 +308,7 @@ const { AgentConnectButton } = (() => {
         }
     });
 
-    return { AgentConnectButton };
+    return { ProConnectButton };
 })();
 
 const { LoginDivider } = (() => {

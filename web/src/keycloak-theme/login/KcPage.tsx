@@ -94,6 +94,7 @@ function ContextualizedKcApp(props: Props) {
                             />
                         );
                     default:
+                        //setBrowserColorSchemeToLight();
                         return (
                             <DefaultPage
                                 kcContext={kcContext}
@@ -127,6 +128,25 @@ const useStyles = tss
         ({ theme, backgroundUrl, classes }) =>
             ({
                 kcHtmlClass: {
+                    ":root": {
+                        colorScheme: "light"
+                    },
+                    "*": {
+                        color: `${theme.colors.getUseCases({ isDarkModeEnabled: false }).typography.textPrimary}`
+                    },
+                    "& .kcLabelClass": {
+                        color: `${theme.colors.getUseCases({ isDarkModeEnabled: false }).typography.textPrimary} !important`
+                    },
+                    "& .kcFormOptionsWrapperClass": {
+                        "& span": {
+                            color: `${theme.colors.getUseCases({ isDarkModeEnabled: false }).typography.textPrimary} !important`
+                        }
+                    },
+                    /*
+                    "& .kcButtonClass:hover": {
+                        "outline": `2px solid ${theme.colors.useCases.typography.textFocus}`,
+                    },
+                    */
                     background: `${theme.colors.useCases.surfaces.background}`,
                     "& a": {
                         color: `${theme.colors.useCases.typography.textFocus}`
@@ -175,8 +195,13 @@ const useStyles = tss
                     borderColor: `${theme.colors.useCases.typography.textFocus}`,
                     borderWidth: "2px",
                     borderRadius: `20px`,
-                    color: `${theme.colors.useCases.typography.textFocus}`,
-                    textTransform: "uppercase"
+                    borderStyle: "solid",
+                    color: theme.colors.useCases.typography.textFocus,
+                    textTransform: "uppercase",
+                    "&:hover:not(:active)": {
+                        backgroundColor: theme.colors.useCases.typography.textFocus,
+                        color: theme.colors.palette.light.greyVariant1
+                    }
                 },
                 kcInputClass: {
                     borderRadius: "unset",
@@ -185,8 +210,10 @@ const useStyles = tss
                     borderBottom: `1px solid ${theme.colors.useCases.typography.textTertiary}`,
                     "&:focus": {
                         borderColor: "unset",
-                        borderBottom: `1px solid ${theme.colors.useCases.typography.textFocus}`
-                    }
+                        borderBottom: `1px solid ${theme.colors.useCases.typography.textFocus}`,
+                        outline: "none"
+                    },
+                    color: `${theme.colors.getUseCases({ isDarkModeEnabled: false }).typography.textPrimary} !important`
                 },
                 kcHeaderWrapperClass: {},
                 kcAlertClass: {
