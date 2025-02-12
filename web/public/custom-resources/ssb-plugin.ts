@@ -8,7 +8,7 @@ const updatePrice = () => {
             .querySelector("[data-title='Ressurser'] .MuiAccordionDetails-root")
             .insertAdjacentHTML(
                 "afterbegin",
-                '<div style="margin-top: 1em;">Estimated price: <span id="estimated-cost">_</span> per work day (8 hours)</div>'
+                '<div style="margin-top: 1em;">Estimert pris per arbeidsdag (8 timer): <span id="estimated-cost">_</span></div>'
             );
     }
 

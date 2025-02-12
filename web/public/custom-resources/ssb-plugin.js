@@ -2,7 +2,7 @@ var updatePrice = function () {
     if (document.getElementById("estimated-cost") == undefined) {
         document
             .querySelector("[data-title='Ressurser'] .MuiAccordionDetails-root")
-            .insertAdjacentHTML("afterbegin", '<div style="margin-top: 1em;">Estimated price: <span id="estimated-cost">_</span> per work day (8 hours)</div>');
+            .insertAdjacentHTML("afterbegin", '<div style="margin-top: 1em;">Estimert pris per arbeidsdag (8 timer): <span id="estimated-cost">_</span></div>');
     }
     var onyxia = window.onyxia;
     var resources = onyxia.core.states.launcher.getMain().helmValues.resources;
