@@ -1,4 +1,7 @@
 var updatePrice = function () {
+    if (document.querySelector("[data-title='Ressurser'] .MuiAccordionDetails-root") == undefined) {
+        return;
+    }
     if (document.getElementById("estimated-cost") == undefined) {
         document
             .querySelector("[data-title='Ressurser'] .MuiAccordionDetails-root")

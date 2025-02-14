@@ -3,6 +3,9 @@
 import type { Onyxia } from "../../src/pluginSystem";
 
 const updatePrice = () => {
+    if (document.querySelector("[data-title='Ressurser'] .MuiAccordionDetails-root") == undefined) {
+        return;
+    }
     if (document.getElementById("estimated-cost") == undefined) {
         document
             .querySelector("[data-title='Ressurser'] .MuiAccordionDetails-root")
