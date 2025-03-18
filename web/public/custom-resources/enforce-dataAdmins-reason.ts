@@ -6,10 +6,19 @@ interface ErrorEnforcedHTMLElement extends HTMLElement {
   _muiErrorObserver?: MutationObserver;
 }
 
+interface LauncherState {
+  isReady: boolean;
+  helmValues?: {
+    dapla?: {
+      group?: string;
+    };
+  };
+}
+
 window.addEventListener("onyxiaready", () => {
   const onyxia: Onyxia = (window as any).onyxia;
 
-  // Helper to set the state of a button
+  // Helper to set the state of a button.
   function setLaunchButtonState(
     button: HTMLButtonElement,
     enabled: boolean
@@ -45,8 +54,6 @@ window.addEventListener("onyxiaready", () => {
   // Helper to add error style and a nicely styled error message underneath the input.
   function addErrorStyle(input: HTMLInputElement): void {
     const parent = input.parentElement as ErrorEnforcedHTMLElement;
-    if (!parent) return;
-
     parent.classList.add("Mui-error");
     input.style.border = "1px solid red";
     parent.style.transition = "none";
@@ -54,7 +61,7 @@ window.addEventListener("onyxiaready", () => {
     // Check if an error message element exists already.
     let errorMessage = parent.querySelector(
       ".error-message"
-    ) as HTMLElement | null;
+    ) as HTMLDivElement | null;
     if (!errorMessage) {
       errorMessage = document.createElement("div");
       errorMessage.className = "error-message";
@@ -84,8 +91,6 @@ window.addEventListener("onyxiaready", () => {
   // It also disables enforcement before disconnecting the observer.
   function removeErrorStyle(input: HTMLInputElement): void {
     const parent = input.parentElement as ErrorEnforcedHTMLElement;
-    if (!parent) return;
-
     // Disable further enforcement.
     parent._shouldEnforceError = false;
     // Remove the observer if it exists.
@@ -96,7 +101,7 @@ window.addEventListener("onyxiaready", () => {
     input.style.border = "";
     parent.classList.remove("Mui-error");
     parent.style.transition = "";
-    const errorMessage = parent.querySelector(".error-message");
+    let errorMessage = parent.querySelector(".error-message");
     if (errorMessage) {
       errorMessage.remove();
     }
@@ -107,9 +112,9 @@ window.addEventListener("onyxiaready", () => {
     const fieldsets = document.querySelectorAll("fieldset");
     const kildedataDialog = Array.from(fieldsets).find((fs) =>
       fs.innerText.startsWith("Kildedata")
-    ) as HTMLFieldSetElement | undefined;
+    );
     if (kildedataDialog) {
-      kildedataDialog.hidden = !isDataAdmin;
+      (kildedataDialog as HTMLFieldSetElement).hidden = !isDataAdmin;
     }
   }
 
@@ -120,59 +125,68 @@ window.addEventListener("onyxiaready", () => {
     );
     const targetGroup = Array.from(formGroups).find((group) => {
       const label = group.querySelector("label");
-      return label !== null && label.textContent?.trim() === "Begrunnelse";
+      return label && label.textContent?.trim() === "Begrunnelse";
     });
-    return targetGroup
-      ? (targetGroup.querySelector("input") as HTMLInputElement)
-      : null;
+    return targetGroup ? targetGroup.querySelector("input") : null;
   }
 
   // Main update function for the launch button state and error handling.
   function updateLaunchButton(): void {
-    // Assuming onyxia is defined globally
     if (onyxia.route?.name !== "launcher") return;
-    const launcherState = onyxia.core.states.launcher.getMain?.();
-    if (!launcherState?.isReady) return;
 
-    // Determine if the user is a data admin.
-    const group = launcherState.helmValues?.dapla?.group;
-    const isDataAdmin =
-      typeof group === "string" && group.endsWith("-data-admins");
+    let attempts = 0;
+    const maxAttempts = 10;
 
-    // Toggle the visibility of the Kildedata dialog accordingly.
-    toggleKildedataDialog(isDataAdmin);
+    function tryGetLauncherState(): void {
+      const launcherState: LauncherState | undefined =
+        onyxia.core.states.launcher.getMain?.();
+      if (launcherState?.isReady || attempts >= maxAttempts) {
+        if (!launcherState?.isReady) return;
+        // Determine if the user is a data admin.
+        const group = launcherState.helmValues?.dapla?.group;
+        const isDataAdmin =
+          typeof group === "string" && group.endsWith("-data-admins");
 
-    // Find the launch button.
-    const launchButton = document.querySelector(
-      "button[class$='-launchButton']"
-    ) as HTMLButtonElement | null;
-    if (!launchButton) return;
+        // Toggle the visibility of the Kildedata dialog accordingly.
+        toggleKildedataDialog(isDataAdmin);
 
-    // For non-data-admin users, remove error styling and disconnect the observer.
-    if (!isDataAdmin) {
-      const reasonInput = getDataAdminReasonInput();
-      if (reasonInput) {
-        removeErrorStyle(reasonInput);
+        // Find the launch button.
+        const launchButton = document.querySelector(
+          "button[class$='-launchButton']"
+        ) as HTMLButtonElement | null;
+        if (!launchButton) return;
+
+        // For non-data-admin users, remove error styling.
+        if (!isDataAdmin) {
+          const reasonInput = getDataAdminReasonInput();
+          if (reasonInput) {
+            removeErrorStyle(reasonInput);
+          }
+          setLaunchButtonState(launchButton, true);
+          return;
+        }
+
+        // For data-admin users, check the "Begrunnelse" input.
+        const reasonInput = getDataAdminReasonInput();
+        if (!reasonInput) return;
+
+        if (reasonInput.value.trim() === "") {
+          addErrorStyle(reasonInput);
+          setLaunchButtonState(launchButton, false);
+        } else {
+          removeErrorStyle(reasonInput);
+          setLaunchButtonState(launchButton, true);
+        }
+      } else {
+        attempts++;
+        setTimeout(tryGetLauncherState, 200); // Retry after 200ms
       }
-      setLaunchButtonState(launchButton, true);
-      return;
     }
 
-    // For data-admin users, check the "Begrunnelse" input.
-    const reasonInput = getDataAdminReasonInput();
-    if (!reasonInput) return;
-
-    if (reasonInput.value.trim() === "") {
-      addErrorStyle(reasonInput);
-      setLaunchButtonState(launchButton, false);
-    } else {
-      removeErrorStyle(reasonInput);
-      setLaunchButtonState(launchButton, true);
-    }
+    tryGetLauncherState();
   }
 
   // Listen for route change events and update the button and validation as needed.
-  // onyxia is assumed to have an addEventListener method that accepts a callback with an event name.
   onyxia.addEventListener((eventName: string) => {
     if (!["route params changed", "route changed"].includes(eventName)) return;
     updateLaunchButton();

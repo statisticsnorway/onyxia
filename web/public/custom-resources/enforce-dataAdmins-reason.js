@@ -108,41 +108,53 @@ window.addEventListener("onyxiaready", () => {
     // Main update function for the launch button state and error handling.
     function updateLaunchButton() {
         if (onyxia.route?.name !== "launcher") return;
-        const launcherState = onyxia.core.states.launcher.getMain?.();
-        if (!launcherState?.isReady) return;
 
-        // Determine if the user is a data admin.
-        const group = launcherState.helmValues?.dapla?.group;
-        const isDataAdmin = typeof group === "string" && group.endsWith("-data-admins");
+        let attempts = 0;
+        const maxAttempts = 5;
 
-        // Toggle the visibility of the Kildedata dialog accordingly.
-        toggleKildedataDialog(isDataAdmin);
+        function tryGetLauncherState() {
+            const launcherState = onyxia.core.states.launcher.getMain?.();
+            if (launcherState?.isReady || attempts >= maxAttempts) {
+                if (!launcherState?.isReady) return;
+                // Determine if the user is a data admin.
+                const group = launcherState.helmValues?.dapla?.group;
+                const isDataAdmin = typeof group === "string" && group.endsWith("-data-admins");
 
-        // Find the launch button.
-        const launchButton = document.querySelector("button[class$='-launchButton']");
-        if (!launchButton) return;
+                // Toggle the visibility of the Kildedata dialog accordingly.
+                toggleKildedataDialog(isDataAdmin);
 
-        // For non-data-admin users (e.g. switching to -developers), remove error styling and disconnect the observer.
-        if (!isDataAdmin) {
-            const reasonInput = getDataAdminReasonInput();
-            if (reasonInput) {
-                removeErrorStyle(reasonInput);
+                // Find the launch button.
+                const launchButton = document.querySelector("button[class$='-launchButton']");
+                if (!launchButton) return;
+
+                // For non-data-admin users, remove error styling.
+                if (!isDataAdmin) {
+                    const reasonInput = getDataAdminReasonInput();
+                    if (reasonInput) {
+                        removeErrorStyle(reasonInput);
+                    }
+                    setLaunchButtonState(launchButton, true);
+                    return;
+                }
+
+                // For data-admin users, check the "Begrunnelse" input.
+                const reasonInput = getDataAdminReasonInput();
+                if (!reasonInput) return;
+
+                if (reasonInput.value.trim() === "") {
+                    addErrorStyle(reasonInput);
+                    setLaunchButtonState(launchButton, false);
+                } else {
+                    removeErrorStyle(reasonInput);
+                    setLaunchButtonState(launchButton, true);
+                }
+            } else {
+                attempts++;
+                setTimeout(tryGetLauncherState, 200); // Retry after 200ms
             }
-            setLaunchButtonState(launchButton, true);
-            return;
         }
 
-        // For data-admin users, check the "Begrunnelse" input.
-        const reasonInput = getDataAdminReasonInput();
-        if (!reasonInput) return;
-
-        if (reasonInput.value.trim() === "") {
-            addErrorStyle(reasonInput);
-            setLaunchButtonState(launchButton, false);
-        } else {
-            removeErrorStyle(reasonInput);
-            setLaunchButtonState(launchButton, true);
-        }
+        tryGetLauncherState();
     }
 
     // Listen for route change events and update the button and validation as needed.
