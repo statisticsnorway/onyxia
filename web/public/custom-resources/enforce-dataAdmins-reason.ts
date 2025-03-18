@@ -109,10 +109,11 @@ window.addEventListener("onyxiaready", () => {
 
   // Show or hide the Kildedata dialog based on user role.
   function toggleKildedataDialog(isDataAdmin: boolean): void {
-    const fieldsets = document.querySelectorAll("fieldset");
-    const kildedataDialog = Array.from(fieldsets).find((fs) =>
-      fs.innerText.startsWith("Kildedata")
-    );
+    const fieldsets = document.querySelectorAll("fieldset[class$='-FormFieldGroupComponent-group']");
+    const kildedataDialog = Array.from(fieldsets).find(fs => {
+      const heading = fs.querySelector("h6");
+      return heading && heading.textContent?.trim() === "Kildedata";
+    });
     if (kildedataDialog) {
       (kildedataDialog as HTMLFieldSetElement).hidden = !isDataAdmin;
     }
