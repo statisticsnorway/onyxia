@@ -139,8 +139,12 @@ window.addEventListener("onyxiaready", () => {
     const maxAttempts = 10;
 
     function tryGetLauncherState(): void {
-      const launcherState: LauncherState | undefined =
-        onyxia.core.states.launcher.getMain?.();
+      let launcherState: LauncherState | undefined;
+      try {
+        launcherState = onyxia.core.states.launcher.getMain?.();
+      } catch {
+          return;
+      }
       if (launcherState?.isReady || attempts >= maxAttempts) {
         if (!launcherState?.isReady) return;
         // Determine if the user is a data admin.
