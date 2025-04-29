@@ -23,3 +23,10 @@ Target the label, since we want the padding the div provides.
 div[class$="-Launcher-modeSwitch"] label {
     display: none;
 }
+
+/*
+Hide Account management button, after yet another user changed email in keycloak settings
+ */
+div[class$="-Tabs-content"] button[class$="-Button-root"] {
+    display: none;
+}
