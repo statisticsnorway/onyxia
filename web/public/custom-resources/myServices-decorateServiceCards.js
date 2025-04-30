@@ -1,47 +1,42 @@
-// Can be transpiled to JavaScript with the following command:
-// npx tsc --module esnext --target es2017 --noEmitOnError false --isolatedModules false myServices-decorateServiceCards.ts
-window.addEventListener("onyxiaready", () => {
+window.addEventListener("onyxiaready", function () {
     const onyxia = window.onyxia;
-    async function decorateServiceCards(root) {
-        const releases = await onyxia.coreAdapters.onyxiaApi.listHelmReleases();
-        (root
-            ? Array.from(root.querySelectorAll(`[href^="/my-service/"]`))
-            : Array.from(document.querySelectorAll(`[href^="/my-service/"]`))).forEach(a => {
-            const name = a.getAttribute("href").replace("/my-service/", "");
-            const rel = releases.find(r => r.helmReleaseName === name);
-            if (!rel)
-                return;
-            const group = rel.values["dapla.group"];
-            const card = a.closest(".serviceCard");
-            if (!card || card.dataset.groupDecorated === "true")
-                return;
-            const status = card.querySelector('[class$="timeAndStatusContainer"]');
-            const badge = status.cloneNode(true);
-            badge.querySelector("p").textContent = "Group";
-            badge.querySelector("h6").textContent = group;
-            status.insertAdjacentElement("afterend", badge);
-            card.dataset.groupDecorated = "true";
-        });
-    }
-    onyxia.addEventListener(eventName => {
-        var _a;
-        if (eventName === "route changed" && ((_a = onyxia.route) === null || _a === void 0 ? void 0 : _a.name) === "myServices") {
-            decorateServiceCards();
-        }
-    });
-    const servicesContainer = document.querySelector(".servicesContainer");
-    if (servicesContainer) {
-        const mo = new MutationObserver(muts => {
-            muts.forEach(m => {
-                m.addedNodes.forEach(n => {
-                    if (n instanceof HTMLElement &&
-                        n.querySelector(`[href^="/my-service/"]`)) {
-                        decorateServiceCards(n);
-                    }
-                });
+    // Function to decorate the service cards with the group information the service started with.
+    function decorateServiceCardsWithGroup() {
+        if (onyxia.route === null || onyxia.route.name !== "myServices")
+            return;
+        onyxia.coreAdapters.onyxiaApi.listHelmReleases().then((ss) => {
+            ss.forEach((s) => {
+                var group = s.values["dapla.group"];
+                var serviceName = s.helmReleaseName;
+                var serviceHref = `/my-service/${serviceName}`;
+                var statusElement = document.querySelector(`[href$="${serviceHref}"]`);
+                if (!statusElement || !statusElement.parentElement || !statusElement.parentElement.parentElement) {
+                    console.warn(`Could not find status element for service: ${serviceName}`);
+                    return;
+                }
+                var status = statusElement.parentElement.parentElement.querySelector('[class$="timeAndStatusContainer"]');
+                if (!status) {
+                    console.warn(`Could not find timeAndStatusContainer for service: ${serviceName}`);
+                    return;
+                }
+                var groupElement = status.cloneNode(true);
+                groupElement.querySelector("p").innerText = "Group";
+                const h6Element = groupElement.querySelector("h6");
+                if (h6Element) {
+                    h6Element.innerText = group;
+                }
+                else {
+                    console.warn("Could not find 'h6' element in groupElement");
+                }
+                status.insertAdjacentElement("afterend", groupElement);
             });
         });
-        mo.observe(servicesContainer, { childList: true, subtree: true });
     }
+    // Listen for route change events and update the button and validation as needed.
+    onyxia.addEventListener(function (eventName) {
+        if (!["route params changed", "route changed"].includes(eventName))
+            return;
+        decorateServiceCardsWithGroup();
+    });
     console.log("Started services-displayGroup plugin");
 });
