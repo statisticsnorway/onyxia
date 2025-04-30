@@ -4,6 +4,11 @@ window.addEventListener("onyxiaready", function () {
     function decorateServiceCardsWithGroup() {
         if (onyxia.route === null || onyxia.route.name !== "myServices")
             return;
+        if (!onyxia.coreAdapters || !onyxia.coreAdapters.onyxiaApi) {
+            console.warn("Onyxia API not ready yet—retrying...");
+            setTimeout(decorateServiceCardsWithGroup, 1000);
+            return;
+        }
         onyxia.coreAdapters.onyxiaApi.listHelmReleases().then((ss) => {
             ss.forEach((s) => {
                 let group = s.values["dapla.group"];
@@ -32,11 +37,6 @@ window.addEventListener("onyxiaready", function () {
             });
         });
     }
-    // Listen for route change events and update the button and validation as needed.
-    onyxia.addEventListener(function (eventName) {
-        if (!["route params changed", "route changed"].includes(eventName))
-            return;
-        decorateServiceCardsWithGroup();
-    });
+    decorateServiceCardsWithGroup();
     console.log("Started services-decorateServiceCards plugin");
 });
