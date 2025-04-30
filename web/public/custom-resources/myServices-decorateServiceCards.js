@@ -45,4 +45,3 @@ window.addEventListener("onyxiaready", () => {
     }
     console.log("Started services-displayGroup plugin");
 });
-export {};
