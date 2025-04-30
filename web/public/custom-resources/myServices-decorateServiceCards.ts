@@ -40,8 +40,12 @@ window.addEventListener("onyxiaready", function () {
     
     // Listen for route change events and update the button and validation as needed.
     onyxia.addEventListener(function (eventName) {
-        if (!["route params changed", "route changed"].includes(eventName))
-            return;
+        // Remove safeguard and rely on the in-function safeguard
+        // to prevent the function from running when not on the myServices page.
+
+        //if (!["route params changed", "route changed"].includes(eventName))
+        //    return;
+
         decorateServiceCardsWithGroup();
     });
     console.log("Started services-decorateServiceCards plugin");
