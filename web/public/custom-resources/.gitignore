@@ -8,4 +8,6 @@
 !my-plugin.ts
 !enforce-dataAdmins-reason.js
 !enforce-dataAdmins-reason.ts
+!myServices-decorateServiceCards.js
+!myServices-decorateServiceCards.ts
 !*.zip
