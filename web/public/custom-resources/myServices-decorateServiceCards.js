@@ -22,6 +22,8 @@ window.addEventListener("onyxiaready", () => {
                 const statusContainer = (_b = (_a = statusAnchor === null || statusAnchor === void 0 ? void 0 : statusAnchor.parentElement) === null || _a === void 0 ? void 0 : _a.parentElement) === null || _b === void 0 ? void 0 : _b.querySelector('[class$="timeAndStatusContainer"]');
                 if (!statusContainer) {
                     console.warn(`Could not find timeAndStatusContainer for service: ${serviceName}`);
+                    console.warn("Tryin again in 100ms...");
+                    setTimeout(decorateServiceCardsWithGroup, 100);
                     return;
                 }
                 // if we already injected a group label, skip

@@ -32,6 +32,8 @@ window.addEventListener("onyxiaready", () => {
 
         if (!statusContainer) {
           console.warn(`Could not find timeAndStatusContainer for service: ${serviceName}`);
+          console.warn("Tryin again in 100ms...");
+          setTimeout(decorateServiceCardsWithGroup, 100);
           return;
         }
 
