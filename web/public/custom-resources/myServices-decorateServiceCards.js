@@ -40,4 +40,4 @@ window.addEventListener("onyxiaready", function () {
     });
     console.log("Started services-decorateServiceCards plugin");
 });
-export {};
+
