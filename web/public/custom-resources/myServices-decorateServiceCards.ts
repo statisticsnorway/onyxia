@@ -1,5 +1,6 @@
 // Can be transpiled to JavaScript with the following command:
-// node -e "require('child_process').exec('npx tsc --module commonjs --esModuleInterop false --noEmitOnError false --isolatedModules myServices-decorateServiceCards.ts', ()=>{})"
+// npx tsc --module esnext --target es2017 --noEmitOnError false --isolatedModules false myServices-decorateServiceCards.ts
+
 import type { Onyxia } from "../../src/pluginSystem";
 
 window.addEventListener("onyxiaready", () => {
