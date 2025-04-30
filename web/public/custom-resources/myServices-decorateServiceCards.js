@@ -6,20 +6,20 @@ window.addEventListener("onyxiaready", function () {
             return;
         onyxia.coreAdapters.onyxiaApi.listHelmReleases().then((ss) => {
             ss.forEach((s) => {
-                var group = s.values["dapla.group"];
-                var serviceName = s.helmReleaseName;
-                var serviceHref = `/my-service/${serviceName}`;
-                var statusElement = document.querySelector(`[href$="${serviceHref}"]`);
+                let group = s.values["dapla.group"];
+                let serviceName = s.helmReleaseName;
+                let serviceHref = `/my-service/${serviceName}`;
+                let statusElement = document.querySelector(`[href$="${serviceHref}"]`);
                 if (!statusElement || !statusElement.parentElement || !statusElement.parentElement.parentElement) {
                     console.warn(`Could not find status element for service: ${serviceName}`);
                     return;
                 }
-                var status = statusElement.parentElement.parentElement.querySelector('[class$="timeAndStatusContainer"]');
+                let status = statusElement.parentElement.parentElement.querySelector('[class$="timeAndStatusContainer"]');
                 if (!status) {
                     console.warn(`Could not find timeAndStatusContainer for service: ${serviceName}`);
                     return;
                 }
-                var groupElement = status.cloneNode(true);
+                let groupElement = status.cloneNode(true);
                 groupElement.querySelector("p").innerText = "Group";
                 const h6Element = groupElement.querySelector("h6");
                 if (h6Element) {
@@ -34,9 +34,12 @@ window.addEventListener("onyxiaready", function () {
     }
     // Listen for route change events and update the button and validation as needed.
     onyxia.addEventListener(function (eventName) {
-        if (!["route params changed", "route changed"].includes(eventName))
-            return;
+        // Remove safeguard and rely on the in-function safeguard
+        // to prevent the function from running when not on the myServices page.
+        //if (!["route params changed", "route changed"].includes(eventName))
+        //    return;
         decorateServiceCardsWithGroup();
     });
-    console.log("Started services-displayGroup plugin");
+    console.log("Started services-decorateServiceCards plugin");
 });
+export {};
