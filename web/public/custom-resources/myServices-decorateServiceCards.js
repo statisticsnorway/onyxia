@@ -4,6 +4,10 @@ window.addEventListener("onyxiaready", function () {
     function decorateServiceCardsWithGroup() {
         if (onyxia.route === null || onyxia.route.name !== "myServices")
             return;
+        if (!onyxia.coreAdapters || !onyxia.coreAdapters.onyxiaApi) {
+            console.warn("Onyxia API not initialized yet, skipping decorateServiceCardsWithGroup");
+            return;
+        }
         onyxia.coreAdapters.onyxiaApi.listHelmReleases().then((ss) => {
             ss.forEach((s) => {
                 let group = s.values["dapla.group"];
