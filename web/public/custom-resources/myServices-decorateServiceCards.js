@@ -1,42 +1,55 @@
-window.addEventListener("onyxiaready", function () {
+window.addEventListener("onyxiaready", () => {
     const onyxia = window.onyxia;
-    // Function to decorate the service cards with the group information the service started with.
+    console.log("Started services-decorateServiceCards plugin");
     function decorateServiceCardsWithGroup() {
+        var _a;
+        // only run on the /myServices page
         if (onyxia.route === null || onyxia.route.name !== "myServices")
             return;
-        if (!onyxia.coreAdapters || !onyxia.coreAdapters.onyxiaApi) {
-            console.warn("Onyxia API not ready yet—retrying...");
-            setTimeout(decorateServiceCardsWithGroup, 1000);
+        if (!((_a = onyxia.coreAdapters) === null || _a === void 0 ? void 0 : _a.onyxiaApi)) {
+            console.warn("Onyxia API not ready yet—retrying in 100ms...");
+            setTimeout(decorateServiceCardsWithGroup, 100);
             return;
         }
-        onyxia.coreAdapters.onyxiaApi.listHelmReleases().then((ss) => {
-            ss.forEach((s) => {
-                let group = s.values["dapla.group"];
-                let serviceName = s.helmReleaseName;
-                let serviceHref = `/my-service/${serviceName}`;
-                let statusElement = document.querySelector(`[href$="${serviceHref}"]`);
-                if (!statusElement || !statusElement.parentElement || !statusElement.parentElement.parentElement) {
-                    console.warn(`Could not find status element for service: ${serviceName}`);
-                    return;
-                }
-                let status = statusElement.parentElement.parentElement.querySelector('[class$="timeAndStatusContainer"]');
-                if (!status) {
+        onyxia.coreAdapters.onyxiaApi.listHelmReleases().then((releases) => {
+            releases.forEach((release) => {
+                var _a, _b, _c;
+                const group = release.values["dapla.group"];
+                const serviceName = release.helmReleaseName;
+                const serviceHref = `/my-service/${serviceName}`;
+                // find the status container for this service card
+                const statusAnchor = document.querySelector(`[href$="${serviceHref}"]`);
+                const statusContainer = (_b = (_a = statusAnchor === null || statusAnchor === void 0 ? void 0 : statusAnchor.parentElement) === null || _a === void 0 ? void 0 : _a.parentElement) === null || _b === void 0 ? void 0 : _b.querySelector('[class$="timeAndStatusContainer"]');
+                if (!statusContainer) {
                     console.warn(`Could not find timeAndStatusContainer for service: ${serviceName}`);
                     return;
                 }
-                let groupElement = status.cloneNode(true);
-                groupElement.querySelector("p").innerText = "Group";
-                const h6Element = groupElement.querySelector("h6");
-                if (h6Element) {
-                    h6Element.innerText = group;
+                // if we already injected a group label, skip
+                if ((_c = statusContainer.nextElementSibling) === null || _c === void 0 ? void 0 : _c.classList.contains("dapla-group-label")) {
+                    return;
+                }
+                // clone the container, update it, and inject after the original
+                const groupEl = statusContainer.cloneNode(true);
+                groupEl.classList.add("dapla-group-label");
+                groupEl.querySelector("p").innerText = "Group";
+                const h6 = groupEl.querySelector("h6");
+                if (h6) {
+                    h6.innerText = group;
                 }
                 else {
-                    console.warn("Could not find 'h6' element in groupElement");
+                    console.warn("Could not find <h6> in cloned group element");
                 }
-                status.insertAdjacentElement("afterend", groupElement);
+                statusContainer.insertAdjacentElement("afterend", groupEl);
             });
         });
     }
+    // run once on load
     decorateServiceCardsWithGroup();
-    console.log("Started services-decorateServiceCards plugin");
+    // run again on route change
+    onyxia.addEventListener((eventName) => {
+        if (eventName === "route changed" || eventName === "route params changed") {
+            console.log(`Event: ${eventName}, route:`, onyxia.route);
+            decorateServiceCardsWithGroup();
+        }
+    });
 });
