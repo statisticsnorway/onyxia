@@ -24,16 +24,32 @@ window.addEventListener("onyxiaready", () => {
         const serviceHref = `/my-service/${serviceName}`;
 
         // find the status container for this service card
-        const statusAnchor = document.querySelector(`[href$="${serviceHref}"]`);
-        const statusContainer = statusAnchor
-          ?.parentElement
-          ?.parentElement
-          ?.querySelector('[class$="timeAndStatusContainer"]') as HTMLElement | null;
+        const maxRetries = 10;
+        let retryCount = 0;
 
+        function findStatusContainer() {
+          const statusAnchor = document.querySelector(`[href$="${serviceHref}"]`);
+          const statusContainer = statusAnchor
+            ?.parentElement
+            ?.parentElement
+            ?.querySelector('[class$="timeAndStatusContainer"]') as HTMLElement | null;
+
+          if (!statusContainer) {
+            if (retryCount < maxRetries) {
+              retryCount++;
+              console.warn(`Could not find timeAndStatusContainer for service: ${serviceName}. Retrying (${retryCount}/${maxRetries}) in 100ms...`);
+              setTimeout(findStatusContainer, 100);
+            } else {
+              console.error(`Max retries reached. Could not find timeAndStatusContainer for service: ${serviceName}`);
+            }
+            return null;
+          }
+
+          return statusContainer;
+        }
+
+        const statusContainer = findStatusContainer();
         if (!statusContainer) {
-          console.warn(`Could not find timeAndStatusContainer for service: ${serviceName}`);
-          console.warn("Tryin again in 100ms...");
-          setTimeout(decorateServiceCardsWithGroup, 100);
           return;
         }
 
