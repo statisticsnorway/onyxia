@@ -13,21 +13,36 @@ window.addEventListener("onyxiaready", () => {
         }
         onyxia.coreAdapters.onyxiaApi.listHelmReleases().then((releases) => {
             releases.forEach((release) => {
-                var _a, _b, _c;
+                var _a;
                 const group = release.values["dapla.group"];
                 const serviceName = release.helmReleaseName;
                 const serviceHref = `/my-service/${serviceName}`;
                 // find the status container for this service card
-                const statusAnchor = document.querySelector(`[href$="${serviceHref}"]`);
-                const statusContainer = (_b = (_a = statusAnchor === null || statusAnchor === void 0 ? void 0 : statusAnchor.parentElement) === null || _a === void 0 ? void 0 : _a.parentElement) === null || _b === void 0 ? void 0 : _b.querySelector('[class$="timeAndStatusContainer"]');
+                const maxRetries = 10;
+                let retryCount = 0;
+                function findStatusContainer() {
+                    var _a, _b;
+                    const statusAnchor = document.querySelector(`[href$="${serviceHref}"]`);
+                    const statusContainer = (_b = (_a = statusAnchor === null || statusAnchor === void 0 ? void 0 : statusAnchor.parentElement) === null || _a === void 0 ? void 0 : _a.parentElement) === null || _b === void 0 ? void 0 : _b.querySelector('[class$="timeAndStatusContainer"]');
+                    if (!statusContainer) {
+                        if (retryCount < maxRetries) {
+                            retryCount++;
+                            console.warn(`Could not find timeAndStatusContainer for service: ${serviceName}. Retrying (${retryCount}/${maxRetries}) in 100ms...`);
+                            setTimeout(findStatusContainer, 100);
+                        }
+                        else {
+                            console.error(`Max retries reached. Could not find timeAndStatusContainer for service: ${serviceName}`);
+                        }
+                        return null;
+                    }
+                    return statusContainer;
+                }
+                const statusContainer = findStatusContainer();
                 if (!statusContainer) {
-                    console.warn(`Could not find timeAndStatusContainer for service: ${serviceName}`);
-                    console.warn("Tryin again in 100ms...");
-                    setTimeout(decorateServiceCardsWithGroup, 100);
                     return;
                 }
                 // if we already injected a group label, skip
-                if ((_c = statusContainer.nextElementSibling) === null || _c === void 0 ? void 0 : _c.classList.contains("dapla-group-label")) {
+                if ((_a = statusContainer.nextElementSibling) === null || _a === void 0 ? void 0 : _a.classList.contains("dapla-group-label")) {
                     return;
                 }
                 // clone the container, update it, and inject after the original
