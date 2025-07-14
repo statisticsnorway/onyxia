@@ -9,7 +9,7 @@ import { MaybeLink } from "ui/shared/MaybeLink";
 export const translations: Translations<"it"> = {
     /* spell-checker: disable */
     Account: {
-        infos: "Informazioni dell'account",
+        profile: "Profilo",
         git: undefined,
         storage: "Connessione allo storage",
         k8sCodeSnippets: "Connessione a Kubernetes",
@@ -20,13 +20,20 @@ export const translations: Translations<"it"> = {
         "personal tokens tooltip": 'O in inglese solo "token".',
         vault: "Vault"
     },
-    AccountInfoTab: {
-        "general information": "Informazioni generali",
-        "user id": "Identificatore (IDEP)",
-        "full name": "Nome completo",
-        email: "Indirizzo email",
-        "instructions about how to change password":
-            'Per cambiare la tua password, semplicemente esci e clicca sul link "password dimenticata".'
+    AccountProfileTab: {
+        "account id": "Identificatore dell'account",
+        "account id helper":
+            "I tuoi identificatori intangibili associati all'identità che usi per accedere alla piattaforma",
+        "user id": "ID utente",
+        email: "Email",
+        "account management": "Gestione account"
+    },
+    UserProfileForm: {
+        "customizable profile": "Profilo personalizzabile",
+        "customizable profile helper":
+            "Informazioni utili per la configurazione automatica dei tuoi servizi",
+        save: "Salva",
+        restore: "Ripristina"
     },
     AccountGitTab: {
         gitName: "Nome utente per Git",
@@ -298,9 +305,9 @@ export const translations: Translations<"it"> = {
         "reset helper dialogs helper text":
             "Ripristinare le finestre di messaggi che hai richiesto di non mostrare più"
     },
-    MyFiles: {
-        "page title - my files": "I miei file",
-        "what this page is used for - my files": "Archivia qui i tuoi file di dati.",
+    FileExplorer: {
+        "page title - file explorer": "Esplora file",
+        "what this page is used for - file explorer": "Archivia qui i tuoi file di dati.",
         "help content": ({ accountTabLink, docHref }) => (
             <>
                 Leggere{" "}
@@ -312,9 +319,25 @@ export const translations: Translations<"it"> = {
                     Configurare i client MinIO
                 </MuiLink>.
             </>
-        )
+        ),
+        "title personal": "I miei dati",
+        "description personal": "I tuoi file e dataset personali.",
+        "title project": ({ projectName }) => `Progetto ${projectName}`,
+        "description project": ({ projectName }) =>
+            `Spazio di archiviazione condiviso per il progetto ${projectName}`,
+        tags: ({ type }) => {
+            switch (type) {
+                case "personal":
+                    return "I miei dati";
+                case "project":
+                    return "Dati del gruppo";
+            }
+        }
     },
-    MyFilesDisabledDialog: {
+    S3EntryCard: {
+        "space path": "Percorso dello spazio"
+    },
+    FileExplorerDisabledDialog: {
         "dialog title": "Nessun server S3 configurato",
         "dialog body":
             "Non è stato configurato nessun server S3 per questa istanza. Tuttavia, è possibile aggiungerne uno manualmente per abilitare l'esploratore file S3.",
@@ -356,9 +379,8 @@ export const translations: Translations<"it"> = {
                     la nostra documentazione
                 </MuiLink>
                 . &nbsp;
-                <MuiLink {...accountTabLink}>
-                    Configurare il tuo Vault CLI locale
-                </MuiLink>.
+                <MuiLink {...accountTabLink}>Configurare il tuo Vault CLI locale</MuiLink>
+                .
             </>
         )
     },
@@ -371,6 +393,7 @@ export const translations: Translations<"it"> = {
     ExplorerButtonBar: {
         file: "file",
         delete: "eliminare",
+        "download directory": "Scaricare",
         "upload file": "Caricare un file",
         "copy path": "Copia il nome dell'oggetto S3",
         "create directory": "Nuova cartella",
@@ -379,6 +402,9 @@ export const translations: Translations<"it"> = {
         share: "Condividi",
         "alt list view": "Mostra lista",
         "alt block view": "Mostra blocco"
+    },
+    ExplorerDownloadSnackbar: {
+        "download preparation": "Preparazione del download ..."
     },
     SecretsExplorerButtonBar: {
         secret: "segreto",
@@ -504,6 +530,7 @@ export const translations: Translations<"it"> = {
         "divider: onyxia instance specific features":
             "Funzioni specifiche di questa istanza di Onyxia",
         dataExplorer: "Esploratore di Dati",
+        fileExplorer: "Esploratore di File",
         sqlOlapShell: "Guscio SQL OLAP"
     },
     AutoLogoutCountdown: {
@@ -550,7 +577,8 @@ export const translations: Translations<"it"> = {
         header: "Catalogo di servizi",
         "no result found": ({ forWhat }) => `Nessun risultato trovato per ${forWhat}`,
         "search results": "Risultati della ricerca",
-        search: "Cercare"
+        search: "Cercare",
+        "title all catalog": "Tutti"
     },
     CatalogChartCard: {
         launch: "Avviare",
@@ -810,7 +838,6 @@ Sentiti libero di esplorare e prendere il controllo dei tuoi deployment Kubernet
         )
     },
     Footer: {
-        contribute: "Contribuire al proggetto",
         "terms of service": "Condizioni d'uso",
         "change language": "Cambiare la lingua",
         "dark mode switch": "Interruttore per la modalità scura"
@@ -890,7 +917,11 @@ Sentiti libero di esplorare e prendere il controllo dei tuoi deployment Kubernet
     MyServicesRestorableConfigOptions: {
         edit: "Modificare",
         "copy link": "Copiare l'URL",
-        "remove bookmark": "Eliminare"
+        "remove bookmark": "Eliminare",
+        "move down": "Sposta in basso",
+        "move up": "Sposta in alto",
+        "move to top": "Sposta all'inizio",
+        "move to bottom": "Sposta alla fine"
     },
     MyServicesRestorableConfig: {
         edit: "Modificare",

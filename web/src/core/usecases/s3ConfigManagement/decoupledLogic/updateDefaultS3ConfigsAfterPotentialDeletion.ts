@@ -27,9 +27,11 @@ export function updateDefaultS3ConfigsAfterPotentialDeletion(params: {
         projectConfigsS3,
         s3RegionConfigs,
         configTestResults: [],
+        resolvedAdminBookmarks: [],
         ongoingConfigTests: [],
         username: "johndoe",
-        projectGroup: undefined
+        projectGroup: undefined,
+        groupProjects: []
     });
 
     const actions: R = {

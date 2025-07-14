@@ -1,12 +1,13 @@
 import { assert } from "tsafe/assert";
 import { Evt } from "evt";
+import { Zip, ZipPassThrough } from "fflate/browser";
 import type { Thunks } from "core/bootstrap";
 import { name, actions } from "./state";
 import { protectedSelectors } from "./selectors";
 import { join as pathJoin, basename as pathBasename } from "pathe";
 import { crawlFactory } from "core/tools/crawl";
 import * as s3ConfigManagement from "core/usecases/s3ConfigManagement";
-import { S3Object } from "core/ports/S3Client";
+import type { S3Object } from "core/ports/S3Client";
 import { formatDuration } from "core/tools/timeFormat/formatDuration";
 
 export type ExplorersCreateParams =
@@ -31,7 +32,7 @@ export declare namespace ExplorersCreateParams {
 const privateThunks = {
     createOperation:
         (params: {
-            operation: "create" | "delete" | "modifyPolicy";
+            operation: "create" | "delete" | "modifyPolicy" | "downloading";
             objects: S3Object[];
             directoryPath: string;
         }) =>
@@ -178,71 +179,253 @@ const privateThunks = {
                     isBucketPolicyAvailable
                 })
             );
+        },
+    downloadObject:
+        (params: { s3Object: S3Object }) =>
+        async (...args) => {
+            const [dispatch, getState] = args;
+
+            const { directoryPath } = getState()[name];
+            assert(directoryPath !== undefined);
+
+            const { s3Object } = params;
+
+            const s3Client = await dispatch(
+                s3ConfigManagement.protectedThunks.getS3ConfigAndClientForExplorer()
+            ).then(r => {
+                assert(r !== undefined);
+                return r.s3Client;
+            });
+
+            const basename = s3Object.basename;
+            const path = pathJoin(directoryPath, basename);
+
+            const cmdId = Date.now();
+
+            dispatch(
+                actions.commandLogIssued({
+                    cmdId,
+                    cmd: `mc cp ${pathJoin("s3", path)} .`
+                })
+            );
+
+            const { stream, size } = await s3Client.getFileContent({
+                path
+            });
+
+            dispatch(
+                actions.commandLogResponseReceived({
+                    cmdId,
+                    resp: `...${path}: 100% of ${size} Bytes uploaded`
+                })
+            );
+
+            return { stream };
+        },
+    downloadObjectsAsZip:
+        (params: { s3Objects: S3Object[] }) =>
+        async (...args) => {
+            const [dispatch, getState] = args;
+
+            const { directoryPath } = getState()[name];
+            assert(directoryPath !== undefined);
+
+            const { s3Objects } = params;
+
+            const s3Client = await dispatch(
+                s3ConfigManagement.protectedThunks.getS3ConfigAndClientForExplorer()
+            ).then(r => {
+                assert(r !== undefined);
+                return r.s3Client;
+            });
+
+            const { readable, writable } = new TransformStream();
+            const writer = writable.getWriter();
+
+            const cmdId = Date.now();
+
+            dispatch(
+                actions.commandLogIssued({
+                    cmdId,
+                    cmd: `mc cp --recursive ${s3Objects
+                        .map(({ basename }) =>
+                            pathJoin("s3", pathJoin(directoryPath, basename))
+                        )
+                        .join(" ")} .`
+                })
+            );
+
+            let totalSize: number = 0;
+
+            {
+                const zip = new Zip((err, chunk, final) => {
+                    if (err) {
+                        writer.abort(err);
+                        throw err;
+                    }
+
+                    writer.write(chunk);
+
+                    if (final) {
+                        writer.close();
+                    }
+                });
+
+                const { crawl } = crawlFactory({
+                    list: async ({ directoryPath }) => {
+                        const { objects } = await s3Client.listObjects({
+                            path: directoryPath
+                        });
+
+                        return objects.reduce<{
+                            fileBasenames: string[];
+                            directoryBasenames: string[];
+                        }>(
+                            (acc, { kind, basename }) => {
+                                switch (kind) {
+                                    case "directory":
+                                        acc.directoryBasenames.push(basename);
+                                        break;
+                                    case "file":
+                                        if (basename !== ".keep") {
+                                            acc.fileBasenames.push(basename);
+                                        }
+                                        break;
+                                }
+                                return acc;
+                            },
+                            {
+                                fileBasenames: [],
+                                directoryBasenames: []
+                            }
+                        );
+                    }
+                });
+
+                const createZipEntryFromStream = async ({
+                    zipPath,
+                    stream,
+                    modifiedDate
+                }: {
+                    zipPath: string;
+                    stream: ReadableStream<Uint8Array>;
+                    modifiedDate?: string | number | Date;
+                }) => {
+                    const entry = new ZipPassThrough(zipPath);
+                    if (modifiedDate) entry.mtime = modifiedDate;
+
+                    zip.add(entry);
+
+                    const reader = stream.getReader();
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        entry.push(value);
+                    }
+
+                    entry.push(new Uint8Array(0), true);
+                };
+
+                const downloadTasks: Promise<void>[] = [];
+
+                for (const object of s3Objects) {
+                    const basePath = pathJoin(directoryPath, object.basename);
+
+                    switch (object.kind) {
+                        case "directory": {
+                            const { filePaths, directoryPaths } = await crawl({
+                                directoryPath: basePath
+                            });
+
+                            directoryPaths.forEach(path => {
+                                const zipEntry = new ZipPassThrough(
+                                    `${pathJoin(object.basename, path)}/`
+                                );
+                                zip.add(zipEntry);
+                                zipEntry.push(new Uint8Array(0), true);
+                            });
+
+                            for (const relativeFilePath of filePaths) {
+                                const absolutePath = pathJoin(basePath, relativeFilePath);
+                                const zipEntryPath = pathJoin(
+                                    object.basename,
+                                    relativeFilePath
+                                );
+
+                                const { stream, size, lastModified } =
+                                    await s3Client.getFileContent({
+                                        path: absolutePath
+                                    });
+
+                                totalSize += size ?? 0;
+                                downloadTasks.push(
+                                    createZipEntryFromStream({
+                                        zipPath: zipEntryPath,
+                                        stream,
+                                        modifiedDate: lastModified
+                                    })
+                                );
+                            }
+                            break;
+                        }
+
+                        case "file": {
+                            const { stream, size } = await s3Client.getFileContent({
+                                path: basePath
+                            });
+
+                            totalSize += size ?? 0;
+
+                            downloadTasks.push(
+                                createZipEntryFromStream({
+                                    zipPath: object.basename,
+                                    stream,
+                                    modifiedDate: object.lastModified
+                                })
+                            );
+                            break;
+                        }
+                    }
+                }
+
+                await Promise.all(downloadTasks);
+
+                zip.end();
+            }
+
+            dispatch(
+                actions.commandLogResponseReceived({
+                    cmdId,
+                    resp: `...${pathJoin(directoryPath, s3Objects.at(-1)?.basename ?? "")}: 100% of ${totalSize} Bytes uploaded`
+                })
+            );
+
+            return {
+                stream: readable,
+                zipFileName:
+                    s3Objects.length === 1
+                        ? `${s3Objects[0].basename}.zip`
+                        : `onyxia-download-${new Date().toISOString()}.zip`
+            };
         }
 } satisfies Thunks;
 
 export const thunks = {
     initialize:
-        (params: { directoryPath: string | undefined; viewMode: "list" | "block" }) =>
-        (...args): { cleanup: () => void } => {
+        (params: { directoryPath: string; viewMode: "list" | "block" }) =>
+        async (...args) => {
             const { directoryPath, viewMode } = params;
 
-            const [dispatch, getState, { evtAction }] = args;
+            const [dispatch] = args;
 
-            const ctx = Evt.newCtx();
+            dispatch(actions.viewModeChanged({ viewMode }));
 
-            evtAction.attachOnce(
-                event =>
-                    event.usecaseName === "projectManagement" &&
-                    event.actionName === "projectChanged",
-                ctx,
-                () => {
-                    dispatch(
-                        thunks.initialize({
-                            viewMode: getState()[name].viewMode,
-                            directoryPath: undefined
-                        })
-                    );
-                }
+            await dispatch(
+                privateThunks.navigate({
+                    directoryPath: directoryPath,
+                    doListAgainIfSamePath: false
+                })
             );
-
-            (async () => {
-                dispatch(actions.viewModeChanged({ viewMode }));
-
-                if (directoryPath === undefined) {
-                    const inStateDirectoryPath =
-                        protectedSelectors.directoryPath(getState());
-
-                    const currentS3WorkingDirectoryPath =
-                        protectedSelectors.workingDirectoryPath(getState());
-
-                    await dispatch(
-                        privateThunks.navigate({
-                            directoryPath:
-                                inStateDirectoryPath !== undefined &&
-                                inStateDirectoryPath.startsWith(
-                                    currentS3WorkingDirectoryPath
-                                )
-                                    ? inStateDirectoryPath //we can restore to the past state
-                                    : currentS3WorkingDirectoryPath, //project has changed since last visit of myFiles
-                            doListAgainIfSamePath: true
-                        })
-                    );
-                    return;
-                }
-                await dispatch(
-                    privateThunks.navigate({
-                        directoryPath: directoryPath,
-                        doListAgainIfSamePath: false
-                    })
-                );
-            })();
-
-            const cleanup = () => {
-                ctx.done();
-            };
-
-            return { cleanup };
         },
 
     changeCurrentDirectory:
@@ -307,8 +490,9 @@ export const thunks = {
                 return r.s3Client;
             });
 
-            const filePath = pathJoin(directoryPath, basename);
-            const s3Prefix = pathJoin("s3", filePath);
+            const itemPath =
+                pathJoin(directoryPath, basename) + (kind === "directory" ? "/" : "");
+            const s3Prefix = pathJoin("s3", itemPath);
 
             const cmdId = Date.now();
 
@@ -327,7 +511,7 @@ export const thunks = {
             );
 
             const modifiedBucketPolicy = await s3Client.setPathAccessPolicy({
-                path: filePath,
+                path: itemPath,
                 policy,
                 currentBucketPolicy: getState()[name].bucketPolicy
             });
@@ -393,7 +577,8 @@ export const thunks = {
                             basename: params.basename,
                             policy: "private",
                             size: undefined,
-                            lastModified: undefined
+                            lastModified: undefined,
+                            canChangePolicy: false
                         }
                     ],
                     directoryPath,
@@ -443,6 +628,8 @@ export const thunks = {
                 });
                 return uploadResult;
             };
+
+            //TODO policy can be public if uploaded inside public directory
             const completedObject = await (async () => {
                 switch (params.createWhat) {
                     case "file": {
@@ -470,7 +657,8 @@ export const thunks = {
                             basename: uploadResult.basename,
                             size: uploadResult.size,
                             lastModified: uploadResult.lastModified,
-                            policy: "private"
+                            policy: "private",
+                            canChangePolicy: false
                         } satisfies S3Object.File;
                     }
                     case "directory": {
@@ -485,7 +673,8 @@ export const thunks = {
                         return {
                             kind: "directory",
                             basename: params.basename,
-                            policy: "private"
+                            policy: "private",
+                            canChangePolicy: false
                         } satisfies S3Object.Directory;
                     }
                 }
@@ -852,5 +1041,56 @@ export const thunks = {
             );
 
             dispatch(actions.requestSignedUrlCompleted({ url }));
+        },
+    getBlobUrl:
+        (params: { s3Objects: S3Object[] }) =>
+        async (...args): Promise<{ url: string; filename: string }> => {
+            const { s3Objects } = params;
+
+            const [dispatch, getState] = args;
+
+            const { directoryPath } = getState()[name];
+            assert(directoryPath !== undefined);
+
+            const operationId = await dispatch(
+                privateThunks.createOperation({
+                    operation: "downloading",
+                    objects: s3Objects,
+                    directoryPath
+                })
+            );
+
+            const { stream, filename } =
+                s3Objects.length === 1 && s3Objects[0].kind === "file"
+                    ? await (async () => {
+                          const { stream } = await dispatch(
+                              privateThunks.downloadObject({ s3Object: s3Objects[0] })
+                          );
+
+                          return {
+                              stream,
+                              filename: s3Objects[0].basename
+                          };
+                      })()
+                    : await (async () => {
+                          const { stream, zipFileName } = await dispatch(
+                              privateThunks.downloadObjectsAsZip({ s3Objects })
+                          );
+                          return {
+                              stream,
+                              filename: zipFileName
+                          };
+                      })();
+
+            const blobUrl = URL.createObjectURL(await new Response(stream).blob());
+
+            dispatch(
+                actions.operationCompleted({
+                    objects: s3Objects,
+                    operationId
+                })
+            );
+
+            return { url: blobUrl, filename };
         }
 } satisfies Thunks;

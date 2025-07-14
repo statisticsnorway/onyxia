@@ -1,11 +1,6 @@
+import { Suspense, lazy } from "react";
 import { Tabs } from "onyxia-ui/Tabs";
 import { type AccountTabId, accountTabIds } from "./accountTabIds";
-import { AccountInfoTab } from "./AccountInfoTab";
-import { AccountGitTab } from "./AccountGitTab";
-import { AccountKubernetesTab } from "./AccountKubernetesTab";
-import { AccountVaultTab } from "./AccountVaultTab";
-import { AccountStorageTab } from "./AccountStorageTab";
-import { AccountUserInterfaceTab } from "./AccountUserInterfaceTab";
 import { useMemo } from "react";
 import { routes } from "ui/routes";
 import { useTranslation } from "ui/i18n";
@@ -17,13 +12,21 @@ import { useCore } from "core";
 import { assert, type Equals } from "tsafe/assert";
 import type { PageRoute } from "./route";
 import { getIconUrlByName, customIcons } from "lazy-icons";
+import { withLoginEnforced } from "ui/shared/withLoginEnforced";
+
+const AccountGitTab = lazy(() => import("./AccountGitTab"));
+const AccountKubernetesTab = lazy(() => import("./AccountKubernetesTab"));
+const AccountProfileTab = lazy(() => import("./AccountProfileTab"));
+const AccountStorageTab = lazy(() => import("./AccountStorageTab"));
+const AccountUserInterfaceTab = lazy(() => import("./AccountUserInterfaceTab"));
+const AccountVaultTab = lazy(() => import("./AccountVaultTab"));
 
 export type Props = {
     route: PageRoute;
     className?: string;
 };
 
-export default function Account(props: Props) {
+const Account = withLoginEnforced((props: Props) => {
     const { className, route } = props;
 
     const { t } = useTranslation({ Account });
@@ -71,27 +74,31 @@ export default function Account(props: Props) {
                 maxTabCount={5}
                 onRequestChangeActiveTab={onRequestChangeActiveTab}
             >
-                {(() => {
-                    switch (route.params.tabId) {
-                        case "infos":
-                            return <AccountInfoTab />;
-                        case "git":
-                            return <AccountGitTab />;
-                        case "storage":
-                            return <AccountStorageTab />;
-                        case "user-interface":
-                            return <AccountUserInterfaceTab />;
-                        case "k8sCodeSnippets":
-                            return <AccountKubernetesTab />;
-                        case "vault":
-                            return <AccountVaultTab />;
-                    }
-                    assert<Equals<typeof route.params.tabId, never>>(false);
-                })()}
+                <Suspense>
+                    {(() => {
+                        switch (route.params.tabId) {
+                            case "profile":
+                                return <AccountProfileTab />;
+                            case "git":
+                                return <AccountGitTab />;
+                            case "storage":
+                                return <AccountStorageTab />;
+                            case "user-interface":
+                                return <AccountUserInterfaceTab />;
+                            case "k8sCodeSnippets":
+                                return <AccountKubernetesTab />;
+                            case "vault":
+                                return <AccountVaultTab />;
+                        }
+                        assert<Equals<typeof route.params.tabId, never>>(false);
+                    })()}
+                </Suspense>
             </Tabs>
         </div>
     );
-}
+});
+
+export default Account;
 
 const { i18n } = declareComponentKeys<
     AccountTabId | "text1" | "text2" | "text3" | "personal tokens tooltip"

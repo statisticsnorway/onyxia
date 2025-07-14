@@ -6,6 +6,7 @@ export namespace S3Object {
     export type Base = {
         basename: string;
         policy: "public" | "private";
+        canChangePolicy: boolean;
     };
 
     export type File = Base & {
@@ -61,6 +62,13 @@ export type S3Client = {
         validityDurationSecond: number;
     }) => Promise<string>;
 
+    getFileContent: (params: { path: string; range?: string }) => Promise<{
+        stream: ReadableStream;
+        lastModified: Date | undefined;
+        size: number | undefined;
+        contentType: string | undefined;
+    }>;
+
     getFileContentType: (params: { path: string }) => Promise<string | undefined>;
 
     // getPresignedUploadUrl: (params: {
@@ -73,11 +81,13 @@ type s3Action = `s3:${string}`;
 
 export type S3BucketPolicy = {
     Version: "2012-10-17";
-    Statement: {
-        Effect: "Allow" | "Deny";
-        Principal: string | { AWS: string[] };
-        Action: s3Action | s3Action[];
-        Resource: string[];
-        Condition?: Record<string, any>;
-    }[];
+    Statement:
+        | {
+              Effect: "Allow" | "Deny";
+              Principal: string | { AWS: string[] };
+              Action: s3Action | s3Action[];
+              Resource: string[];
+              Condition?: Record<string, any>;
+          }[]
+        | null;
 };

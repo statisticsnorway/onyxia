@@ -37,10 +37,7 @@ export default function Home(props: Props) {
         hasLogo: env.HOMEPAGE_LOGO !== undefined
     });
 
-    const { isUserLoggedIn, user } = useCoreState(
-        "userAuthentication",
-        "authenticationState"
-    );
+    const { isUserLoggedIn, user } = useCoreState("userAuthentication", "main");
     const isFileExplorerEnabled = useCoreState("fileExplorer", "isFileExplorerEnabled");
 
     const { t } = useTranslation({ Home });
@@ -162,7 +159,7 @@ export default function Home(props: Props) {
                               description: t("cardText3"),
                               button: {
                                   label: t("cardButton3"),
-                                  url: routes.myFiles().link.href
+                                  url: routes.fileExplorerEntry().link.href
                               }
                           }
                       ])
@@ -266,6 +263,7 @@ const useStyles = tss
             borderTop: `1px solid ${theme.colors.useCases.typography.textPrimary}`,
             display: "flex",
             ...theme.spacing.topBottom("padding", 4),
+            paddingBottom: theme.spacing(1),
             "& > *": {
                 flex: 1
             },

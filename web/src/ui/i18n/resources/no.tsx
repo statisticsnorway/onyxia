@@ -9,7 +9,7 @@ import { MaybeLink } from "ui/shared/MaybeLink";
 export const translations: Translations<"no"> = {
     /* spell-checker: disable */
     Account: {
-        infos: "Kontoinformasjon",
+        profile: "Profil",
         git: undefined,
         storage: "Koble til lagring",
         k8sCodeSnippets: "Kubernetes",
@@ -21,13 +21,20 @@ export const translations: Translations<"no"> = {
             "Passord som genereres for deg og har en gitt gyldighetsperiode",
         vault: "Vault"
     },
-    AccountInfoTab: {
-        "general information": "Generell informasjon",
-        "user id": "Bruker-ID (IDEP)",
-        "full name": "Fullt navn",
-        email: "E-postadresse",
-        "instructions about how to change password":
-            'For å endre passordet ditt, logg ut og klikk på lenken for "glemt passord"'
+    AccountProfileTab: {
+        "account id": "Kontoidentifikator",
+        "account id helper":
+            "Dine immaterielle identifikatorer knyttet til identiteten du bruker for å logge inn på plattformen",
+        "user id": "Bruker-ID",
+        email: "E-post",
+        "account management": "Kontoadministrasjon"
+    },
+    UserProfileForm: {
+        "customizable profile": "Tilpassbar profil",
+        "customizable profile helper":
+            "Nyttig informasjon for automatisk konfigurasjon av tjenestene dine",
+        save: "Lagre",
+        restore: "Gjenopprett"
     },
     AccountGitTab: {
         gitName: "Brukernavn for Git",
@@ -296,9 +303,9 @@ export const translations: Translations<"no"> = {
         "reset helper dialogs helper text":
             "Tilbakestill meldingsvinduer som er bedt om å ikke vises igjen"
     },
-    MyFiles: {
-        "page title - my files": "Mine filer",
-        "what this page is used for - my files": "Her kan du bla gjennom S3-bøtter.",
+    FileExplorer: {
+        "page title - file explorer": "Filutforsker",
+        "what this page is used for - file explorer": "Her kan du bla gjennom S3-bøtter.",
         "help content": ({ accountTabLink, docHref }) => (
             <>
                 Les{" "}
@@ -308,9 +315,25 @@ export const translations: Translations<"no"> = {
                 . &nbsp;
                 <MuiLink {...accountTabLink}>Konfigurer minio-klientene</MuiLink>.
             </>
-        )
+        ),
+        "title personal": "Mine data",
+        "description personal": "Dine egne filer og datasett.",
+        "title project": ({ projectName }) => `Prosjekt ${projectName}`,
+        "description project": ({ projectName }) =>
+            `Felles lagringsområde for prosjektet ${projectName}`,
+        tags: ({ type }) => {
+            switch (type) {
+                case "personal":
+                    return "Mine data";
+                case "project":
+                    return "Gruppedata";
+            }
+        }
     },
-    MyFilesDisabledDialog: {
+    S3EntryCard: {
+        "space path": "Områdesti"
+    },
+    FileExplorerDisabledDialog: {
         "dialog title": "Ingen S3-server konfigurert",
         "dialog body":
             "Det er ingen S3-server konfigurert for denne instansen. Men du kan legge til en manuelt for å aktivere S3-filutforskeren.",
@@ -383,10 +406,14 @@ export const translations: Translations<"no"> = {
         "copy path": "Kopier S3-objektnavnet",
         "create directory": "Opprett katalog",
         refresh: "oppdater",
+        "download directory": "Last ned",
         new: "Ny",
         share: "Del",
         "alt list view": "Vis liste",
         "alt block view": "Vis blokk"
+    },
+    ExplorerDownloadSnackbar: {
+        "download preparation": "Forberedelse av nedlasting ..."
     },
     ExplorerItems: {
         "empty directory": "Denne katalogen er tom"
@@ -502,6 +529,7 @@ export const translations: Translations<"no"> = {
         "divider: onyxia instance specific features":
             "Onyxia-instansspesifikke funksjoner",
         dataExplorer: "Datautforsker",
+        fileExplorer: "Filutforsker",
         sqlOlapShell: "SQL OLAP-Skall"
     },
     AutoLogoutCountdown: {
@@ -548,7 +576,8 @@ export const translations: Translations<"no"> = {
         header: "Tjenestekatalog",
         "no result found": ({ forWhat }) => `Ingen resultater funnet for ${forWhat}`,
         "search results": "Søkeresultat",
-        search: "Søk"
+        search: "Søk",
+        "title all catalog": "Alle"
     },
     CatalogChartCard: {
         launch: "Start",
@@ -805,7 +834,6 @@ Utforsk gjerne og ta kontroll over tjenestene du kjører på Kubernetes!
         )
     },
     Footer: {
-        contribute: "Bidra",
         "terms of service": "Vilkår for bruk",
         "change language": "Bytt språk",
         "dark mode switch": "Mørk modus"
@@ -884,7 +912,11 @@ Utforsk gjerne og ta kontroll over tjenestene du kjører på Kubernetes!
     MyServicesRestorableConfigOptions: {
         edit: "Rediger",
         "copy link": "Kopier URL-lenke",
-        "remove bookmark": "Slett"
+        "remove bookmark": "Slett",
+        "move down": "Flytt ned",
+        "move up": "Flytt opp",
+        "move to top": "Flytt helt til toppen",
+        "move to bottom": "Flytt helt til bunnen"
     },
     MyServicesRestorableConfig: {
         edit: "Rediger",

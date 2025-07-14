@@ -1,7 +1,7 @@
 import type { Thunks } from "core/bootstrap";
 import { waitForDebounceFactory } from "core/tools/waitForDebounce";
 import { createUsecaseContextApi } from "clean-architecture";
-import { actions, name, type State } from "./state";
+import { actions, allCatalog, name, type State } from "./state";
 import { assert, is } from "tsafe/assert";
 import memoize from "memoizee";
 import FlexSearch from "flexsearch";
@@ -13,7 +13,7 @@ export const thunks = {
     changeSelectedCatalogId:
         (params: { catalogId: string | undefined }) =>
         async (...args) => {
-            const [dispatch, getState, { onyxiaApi }] = args;
+            const [dispatch, getState, { onyxiaApi, paramsOfBootstrapCore }] = args;
 
             const state = getState()[name];
 
@@ -43,12 +43,18 @@ export const thunks = {
             dispatch(actions.catalogsFetching());
 
             const { catalogs, chartsByCatalogId } = await (async () => {
-                const isInGroupProject =
-                    !userAuthentication.selectors.authenticationState(getState())
-                        .isUserLoggedIn
-                        ? false
-                        : projectManagement.protectedSelectors.currentProject(getState())
-                              .group !== undefined;
+                const isInGroupProject = (() => {
+                    const { isUserLoggedIn } =
+                        userAuthentication.selectors.main(getState());
+
+                    if (!isUserLoggedIn) {
+                        return false;
+                    }
+                    return (
+                        projectManagement.protectedSelectors.currentProject(getState())
+                            .group !== undefined
+                    );
+                })();
 
                 const { catalogs: catalogs_all, chartsByCatalogId } =
                     await onyxiaApi.getCatalogsAndCharts();
@@ -63,6 +69,9 @@ export const thunks = {
                             return !isInGroupProject;
                     }
                 });
+
+                !paramsOfBootstrapCore.disableDisplayAllCatalog &&
+                    catalogs.unshift(allCatalog);
 
                 return { catalogs, chartsByCatalogId };
             })();
@@ -83,6 +92,7 @@ export const thunks = {
                             catalogId =>
                                 (out[catalogId] = chartsByCatalogId[catalogId].map(
                                     chart => ({
+                                        id: `${catalogId}-${chart.name}`,
                                         name: chart.name,
                                         description: chart.description ?? "",
                                         iconUrl: chart.iconUrl,

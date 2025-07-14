@@ -3,7 +3,7 @@
 </p>
 <p align="center">
     <a href="https://github.com/inseefrlab/onyxia/actions">
-      <img src="https://github.com/inseefrlab/onyxia/workflows/ci/badge.svg?branch=main">
+      <img src="https://github.com/InseeFrLab/onyxia/actions/workflows/ci.yaml/badge.svg">
     </a>
     <a href="https://join.slack.com/t/3innovation/shared_invite/zt-2skhjkavr-xO~uTRLgoNOCm6ubLpKG7Q">
       <img src="https://img.shields.io/badge/slack-550_Members-brightgreen.svg?logo=slack">
@@ -17,7 +17,7 @@
     <br>
     <b>Let's get in touch! Join </b> <a href="https://join.slack.com/t/3innovation/shared_invite/zt-2skhjkavr-xO~uTRLgoNOCm6ubLpKG7Q">our Slack</a>
     <br>
-    <b>What's next? Checkout our</b> <a href="https://docs.onyxia.sh/roadmap">roadmap</a>
+    <b>What's next? Checkout our</b> <a href="https://docs.onyxia.sh/contributors-doc/roadmap">roadmap</a> and attend our <a href="https://docs.onyxia.sh/contributors-doc/community-calls">monthly community calls</a>
 </p>
 
 Onyxia is a web app that aims at being the glue between multiple open source backend technologies to
@@ -43,7 +43,21 @@ Onyxia is developed by the French National institute of statistics and economic 
     (for [secret management](https://user-images.githubusercontent.com/6702424/137820741-bed9ee77-124a-46f6-b686-8b8dff1615bd.png)).
 -   [Keycloak integration](https://user-images.githubusercontent.com/6702424/137821446-ed908862-69e3-464c-b347-bd8776a425cc.png).
 
-## Media
+## Conference talks
+
+<p align="center">
+    <i>New Technologies For Statistics 2025</i><br>
+    <a href="https://youtu.be/AuCJbipr8rs">
+        <img src="https://github.com/user-attachments/assets/d75e1ab4-c510-48ca-a9cb-c41533c216b8" width="420">
+    </a>
+</p>
+
+<p align="center">
+    <i>Offentlig PaaS</i><br>
+    <a href="https://youtu.be/7SuXRfQqdGM?si=qGSctmUdjYAjlF4D">
+        <img src="https://github.com/user-attachments/assets/ecb3f9fa-cb70-4186-8350-b41a0732e491" width="420">
+    </a>
+</p>
 
 <p align="center">
     <i>PyData Paris 2024</i><br>

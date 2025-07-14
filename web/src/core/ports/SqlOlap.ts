@@ -11,11 +11,11 @@ export type SqlOlap = {
         fileType: "parquet" | "csv" | "json";
         rowsPerPage: number;
         page: number;
-    }) => Promise<{ rows: unknown[]; columns: Column[] }>;
+    }) => Promise<{ rows: Record<string, unknown>[]; columns: Column[] }>;
 };
 
 export type Column = {
     name: string;
-    type: "string" | "number" | "bigint" | "boolean" | "date" | "dateTime" | "binary";
-    rowType: string;
+    type: "string" | "number" | "boolean" | "date" | "dateTime" | "binary" | "time";
+    displayType: string;
 };

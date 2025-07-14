@@ -9,7 +9,7 @@ import { MaybeLink } from "ui/shared/MaybeLink";
 export const translations: Translations<"nl"> = {
     /* spell-checker: disable */
     Account: {
-        infos: "Accountgegevens",
+        profile: "Profiel",
         git: undefined,
         storage: "Verbinding met opslag",
         k8sCodeSnippets: "Verbinding met Kubernetes",
@@ -20,13 +20,20 @@ export const translations: Translations<"nl"> = {
         "personal tokens tooltip": 'Of "token" in het Engels.',
         vault: "Vault"
     },
-    AccountInfoTab: {
-        "general information": "Algemene informatie",
-        "user id": "Gebruikersnaam (IDEP)",
-        "full name": "Volledige naam",
-        email: "E-mailadres",
-        "instructions about how to change password":
-            'Om uw wachtwoord te wijzigen, logt u simpelweg uit en klikt u op de link "wachtwoord vergeten".'
+    AccountProfileTab: {
+        "account id": "Account-ID",
+        "account id helper":
+            "Je ontastbare identificaties die gekoppeld zijn aan de identiteit waarmee je inlogt op het platform",
+        "user id": "Gebruikers-ID",
+        email: "E-mail",
+        "account management": "Accountbeheer"
+    },
+    UserProfileForm: {
+        "customizable profile": "Aanpasbaar profiel",
+        "customizable profile helper":
+            "Nuttige informatie voor de automatische configuratie van uw diensten",
+        save: "Opslaan",
+        restore: "Herstellen"
     },
     AccountGitTab: {
         gitName: "Gebruikersnaam voor Git",
@@ -300,9 +307,9 @@ export const translations: Translations<"nl"> = {
         "reset helper dialogs helper text":
             "De berichtvensters waarvan u heeft gevraagd ze niet meer weer te geven, opnieuw initialiseren"
     },
-    MyFiles: {
-        "page title - my files": "Mijn bestanden",
-        "what this page is used for - my files": "Sla hier uw gegevensbestanden op.",
+    FileExplorer: {
+        "page title - file explorer": "Bestandsverkenner",
+        "what this page is used for - file explorer": "Sla hier uw gegevensbestanden op.",
         "help content": ({ accountTabLink, docHref }) => (
             <>
                 Lezen{" "}
@@ -312,9 +319,25 @@ export const translations: Translations<"nl"> = {
                 . &nbsp;
                 <MuiLink {...accountTabLink}>Minio-clients instellen</MuiLink>.
             </>
-        )
+        ),
+        "title personal": "Mijn gegevens",
+        "description personal": "Je eigen bestanden en datasets.",
+        "title project": ({ projectName }) => `Project ${projectName}`,
+        "description project": ({ projectName }) =>
+            `Gedeelde opslagruimte voor project ${projectName}`,
+        tags: ({ type }) => {
+            switch (type) {
+                case "personal":
+                    return "Mijn gegevens";
+                case "project":
+                    return "Groepsgegevens";
+            }
+        }
     },
-    MyFilesDisabledDialog: {
+    S3EntryCard: {
+        "space path": "Ruimtepad"
+    },
+    FileExplorerDisabledDialog: {
         "dialog title": "Geen S3-server geconfigureerd",
         "dialog body":
             "Er is geen S3-server geconfigureerd voor deze instantie. Je kunt er echter handmatig een toevoegen om de S3-bestandsverkenner in te schakelen.",
@@ -375,10 +398,14 @@ export const translations: Translations<"nl"> = {
         "copy path": "De naam van het S3-object kopiëren",
         "create directory": "Nieuwe map",
         refresh: "vernieuwen",
+        "download directory": "Downloaden",
         new: "Nieuw",
         share: "Delen",
         "alt list view": "Toon lijst",
         "alt block view": "Toon blok"
+    },
+    ExplorerDownloadSnackbar: {
+        "download preparation": "Voorbereiding van de download ..."
     },
     SecretsExplorerButtonBar: {
         secret: "geheim",
@@ -505,6 +532,7 @@ export const translations: Translations<"nl"> = {
         "divider: onyxia instance specific features":
             "Functionaliteiten die specifiek zijn voor deze instantie van Onyxia",
         dataExplorer: "Data Verkenner",
+        fileExplorer: "Bestanden Verkenner",
         sqlOlapShell: "SQL OLAP Shell"
     },
     AutoLogoutCountdown: {
@@ -551,7 +579,8 @@ export const translations: Translations<"nl"> = {
         header: "Catalogus van de diensten",
         "no result found": ({ forWhat }) => `Geen resultaat gevonden voor ${forWhat}`,
         "search results": "Resultaten van de zoekopdracht",
-        search: "Zoeken"
+        search: "Zoeken",
+        "title all catalog": "Alle"
     },
     CatalogChartCard: {
         launch: "Opstarten",
@@ -812,7 +841,6 @@ Voel je vrij om te verkennen en de controle over je Kubernetes-implementaties te
         )
     },
     Footer: {
-        contribute: "Bijdragen aan het project",
         "terms of service": "Gebruiksvoorwaarden",
         "change language": "Taal wijzigen",
         "dark mode switch": "Schakelaar voor donkere modus"
@@ -891,7 +919,11 @@ Voel je vrij om te verkennen en de controle over je Kubernetes-implementaties te
     MyServicesRestorableConfigOptions: {
         edit: "Wijzigen",
         "copy link": "URL kopiëren",
-        "remove bookmark": "Verwijderen"
+        "remove bookmark": "Verwijderen",
+        "move down": "Verplaats omlaag",
+        "move up": "Verplaats omhoog",
+        "move to top": "Verplaats helemaal naar boven",
+        "move to bottom": "Verplaats helemaal naar beneden"
     },
     MyServicesRestorableConfig: {
         edit: "Wijzigen",

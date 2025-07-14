@@ -20,6 +20,11 @@ type UploadProgress = {
         uploadPercent: number;
     };
 };
+const isDownloadPreparing = createSelector(
+    createSelector(state, state => state.ongoingOperations),
+    (ongoingOperations): boolean =>
+        ongoingOperations.some(operation => operation.operation === "downloading")
+);
 
 const uploadProgress = createSelector(state, (state): UploadProgress => {
     const { s3FilesBeingUploaded } = state;
@@ -68,6 +73,7 @@ export namespace CurrentWorkingDirectoryView {
         export type Common = {
             basename: string;
             policy: "public" | "private";
+            canChangePolicy: boolean;
             isBeingDeleted: boolean;
             isPolicyChanging: boolean;
         };
@@ -141,6 +147,7 @@ const currentWorkingDirectoryView = createSelector(
                 const common = {
                     basename: object.basename,
                     policy: object.policy,
+                    canChangePolicy: object.canChangePolicy,
                     isBeingDeleted,
                     isPolicyChanging
                 } satisfies CurrentWorkingDirectoryView.Item.Common;
@@ -304,6 +311,7 @@ const main = createSelector(
     pathMinDepth,
     createSelector(state, state => state.viewMode),
     shareView,
+    isDownloadPreparing,
     (
         directoryPath,
         uploadProgress,
@@ -312,7 +320,8 @@ const main = createSelector(
         isNavigationOngoing,
         pathMinDepth,
         viewMode,
-        shareView
+        shareView,
+        isDownloadPreparing
     ) => {
         if (directoryPath === undefined) {
             return {
@@ -321,7 +330,8 @@ const main = createSelector(
                 uploadProgress,
                 commandLogsEntries,
                 pathMinDepth,
-                viewMode
+                viewMode,
+                isDownloadPreparing
             };
         }
 
@@ -336,14 +346,14 @@ const main = createSelector(
             pathMinDepth,
             currentWorkingDirectoryView,
             viewMode,
-            shareView
+            shareView,
+            isDownloadPreparing
         };
     }
 );
 
 const isFileExplorerEnabled = (rootState: RootState) => {
-    const { isUserLoggedIn } =
-        userAuthentication.selectors.authenticationState(rootState);
+    const { isUserLoggedIn } = userAuthentication.selectors.main(rootState);
 
     if (!isUserLoggedIn) {
         const { s3Configs } =

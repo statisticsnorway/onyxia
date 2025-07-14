@@ -77,15 +77,15 @@ export default function DataExplorer(props: Props) {
                                 typo="caption"
                                 className={classes.dataGridColumnHeaderType}
                             >
-                                {column.rowType}
+                                {column.displayType}
                             </Text>
                         </Text>
                     ),
                     headerAlign: "left",
                     type: (() => {
                         switch (column.type) {
-                            case "bigint":
                             case "binary":
+                            case "time":
                                 return "string";
                             default:
                                 return column.type;
@@ -177,11 +177,13 @@ export default function DataExplorer(props: Props) {
                                         return error.message;
                                     }
 
-                                    switch (error.kind) {
+                                    switch (error.reason) {
                                         case "unsupported file type":
-                                            return t(error.kind, { supportedFileTypes });
+                                            return t(error.reason, {
+                                                supportedFileTypes
+                                            });
                                         case "can't fetch file":
-                                            return t(error.kind);
+                                            return t(error.reason);
                                     }
                                 })()}
                             </Alert>

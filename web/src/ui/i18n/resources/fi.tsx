@@ -9,7 +9,7 @@ import { MaybeLink } from "ui/shared/MaybeLink";
 export const translations: Translations<"fi"> = {
     /* spell-checker: disable */
     Account: {
-        infos: "Tilin tiedot",
+        profile: "Profiili",
         git: undefined,
         storage: "Yhdistä tallennustilaan",
         k8sCodeSnippets: "Kubernetes",
@@ -21,13 +21,20 @@ export const translations: Translations<"fi"> = {
             "Sinulle generoidut salasanat, joilla on määritelty voimassaoloaika",
         vault: "Vault"
     },
-    AccountInfoTab: {
-        "general information": "Yleiset tiedot",
-        "user id": "Käyttäjätunnus (IDEP)",
-        "full name": "Koko nimi",
-        email: "Sähköpostiosoite",
-        "instructions about how to change password":
-            'Vaihtaaksesi salasanasi, kirjaudu vain ulos ja klikkaa "unohdin salasanani" -linkkiä.'
+    AccountProfileTab: {
+        "account id": "Tilin tunniste",
+        "account id helper":
+            "Aineettomat tunnisteesi, jotka liittyvät siihen henkilöllisyyteen, jolla kirjaudut alustalle",
+        "user id": "Käyttäjätunnus",
+        email: "Sähköposti",
+        "account management": "Tilinhallinta"
+    },
+    UserProfileForm: {
+        "customizable profile": "Mukautettava profiili",
+        "customizable profile helper":
+            "Hyödyllistä tietoa palvelujen automaattista konfigurointia varten",
+        save: "Tallenna",
+        restore: "Palauta"
     },
     AccountGitTab: {
         gitName: "Käyttäjänimi Gitille",
@@ -296,9 +303,9 @@ export const translations: Translations<"fi"> = {
         "reset helper dialogs helper text":
             "Nollaa ohjeviestit, joista on pyydetty, ettei niitä näytetä uudelleen"
     },
-    MyFiles: {
-        "page title - my files": "Omat tiedostot",
-        "what this page is used for - my files":
+    FileExplorer: {
+        "page title - file explorer": "Tiedostoselain",
+        "what this page is used for - file explorer":
             "Täällä voit selata S3 Bucket -tiedostojasi.",
         "help content": ({ accountTabLink, docHref }) => (
             <>
@@ -309,9 +316,25 @@ export const translations: Translations<"fi"> = {
                 . &nbsp;
                 <MuiLink {...accountTabLink}>Määritä Minio-asiakkaat</MuiLink>.
             </>
-        )
+        ),
+        "title personal": "Omat tietoni",
+        "description personal": "Omat tiedostosi ja tietoaineistosi.",
+        "title project": ({ projectName }) => `Projekti ${projectName}`,
+        "description project": ({ projectName }) =>
+            `Projektin ${projectName} yhteinen tallennustila`,
+        tags: ({ type }) => {
+            switch (type) {
+                case "personal":
+                    return "Omat tiedot";
+                case "project":
+                    return "Ryhmän tiedot";
+            }
+        }
     },
-    MyFilesDisabledDialog: {
+    S3EntryCard: {
+        "space path": "Tilapolku"
+    },
+    FileExplorerDisabledDialog: {
         "dialog title": "S3-palvelinta ei ole määritetty",
         "dialog body":
             "Tälle instanssille ei ole määritetty S3-palvelinta. Voit kuitenkin lisätä sellaisen manuaalisesti ottaaksesi käyttöön S3-tiedostonhallinnan.",
@@ -379,6 +402,7 @@ export const translations: Translations<"fi"> = {
     ExplorerButtonBar: {
         file: "tiedosto",
         delete: "poista",
+        "download directory": "Lataa",
         "upload file": "Lataa tiedosto",
         "copy path": "Kopioi S3-objektin nimi",
         "create directory": "Luo hakemisto",
@@ -387,6 +411,9 @@ export const translations: Translations<"fi"> = {
         share: "Jaa",
         "alt list view": "Näytä lista",
         "alt block view": "Näytä lohko"
+    },
+    ExplorerDownloadSnackbar: {
+        "download preparation": "Latauksen valmistelu ..."
     },
     ExplorerItems: {
         "empty directory": "Tämä hakemisto on tyhjä"
@@ -500,6 +527,7 @@ export const translations: Translations<"fi"> = {
         "divider: onyxia instance specific features":
             "Onyxia-instanssin erityisominaisuudet",
         dataExplorer: "Data Explorer",
+        fileExplorer: "Tiedostonhallinta",
         sqlOlapShell: "SQL OLAP-kuori"
     },
     AutoLogoutCountdown: {
@@ -547,7 +575,8 @@ export const translations: Translations<"fi"> = {
         header: "Palvelukatalogi",
         "no result found": ({ forWhat }) => `Tuloksia ei löytynyt haulle ${forWhat}`,
         "search results": "Hakutulokset",
-        search: "Haku"
+        search: "Haku",
+        "title all catalog": "Kaikki"
     },
     CatalogChartCard: {
         launch: "Käynnistä",
@@ -800,7 +829,6 @@ Tutustu vapaasti ja ota hallintaan Kubernetes-julkaisusi!
         )
     },
     Footer: {
-        contribute: "Osallistu",
         "terms of service": "Käyttöehdot",
         "change language": "Vaihda kieli",
         "dark mode switch": "Tumma tila"
@@ -880,7 +908,11 @@ Tutustu vapaasti ja ota hallintaan Kubernetes-julkaisusi!
     MyServicesRestorableConfigOptions: {
         edit: "Muokkaa",
         "copy link": "Kopioi URL-osoite",
-        "remove bookmark": "Poista"
+        "remove bookmark": "Poista",
+        "move down": "Siirrä alas",
+        "move up": "Siirrä ylös",
+        "move to top": "Siirrä ylimmäksi",
+        "move to bottom": "Siirrä alimmaksi"
     },
     MyServicesRestorableConfig: {
         edit: "Muokkaa",

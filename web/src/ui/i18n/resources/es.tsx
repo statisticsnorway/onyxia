@@ -9,7 +9,7 @@ import { MaybeLink } from "ui/shared/MaybeLink";
 export const translations: Translations<"en"> = {
     /* spell-checker: disable */
     Account: {
-        infos: "Información de la cuenta",
+        profile: "Perfil",
         git: "Git",
         storage: "Conectar al almacenamiento",
         k8sCodeSnippets: "Kubernetes",
@@ -21,13 +21,20 @@ export const translations: Translations<"en"> = {
             "Contraseñas que se generan para ti y que tienen un período de validez determinado",
         vault: "Vault"
     },
-    AccountInfoTab: {
-        "general information": "Información general",
-        "user id": "ID de usuario (IDEP)",
-        "full name": "Nombre completo",
-        email: "Dirección de correo electrónico",
-        "instructions about how to change password":
-            'Para cambiar tu contraseña, simplemente cierra sesión y haz clic en el enlace de "olvidé mi contraseña".'
+    AccountProfileTab: {
+        "account id": "Identificador de cuenta",
+        "account id helper":
+            "Tus identificadores intangibles vinculados a la identidad que utilizas para iniciar sesión en la plataforma",
+        "user id": "ID de usuario",
+        email: "Correo electrónico",
+        "account management": "Gestión de cuenta"
+    },
+    UserProfileForm: {
+        "customizable profile": "Perfil personalizable",
+        "customizable profile helper":
+            "Información útil para la configuración automática de sus servicios",
+        save: "Guardar",
+        restore: "Restaurar"
     },
     AccountGitTab: {
         gitName: "Nombre de usuario para Git",
@@ -73,7 +80,7 @@ export const translations: Translations<"en"> = {
             "Para acceder a tu almacenamiento fuera de los servicios de datalab",
         "init script section helper":
             "Descarga o copia el script de inicialización en el lenguaje de programación de tu elección.",
-        "expires in": ({ howMuchTime }) => `Expira en ${howMuchTime}`
+        "expires in": ({ howMuchTime }) => `Expira ${howMuchTime}`
     },
     AccountKubernetesTab: {
         "credentials section title": "Conéctate al clúster de Kubernetes",
@@ -117,7 +124,7 @@ export const translations: Translations<"en"> = {
                 </MuiLink>
             </>
         ),
-        "expires in": ({ howMuchTime }) => `El token expira en ${howMuchTime}`
+        "expires in": ({ howMuchTime }) => `El token expira ${howMuchTime}`
     },
     ProjectSettings: {
         "page header title": "Configuración del Proyecto",
@@ -300,9 +307,9 @@ export const translations: Translations<"en"> = {
         "reset helper dialogs helper text":
             "Restablecer ventanas de mensajes que se han solicitado no mostrar nuevamente"
     },
-    MyFiles: {
-        "page title - my files": "Mis Archivos",
-        "what this page is used for - my files":
+    FileExplorer: {
+        "page title - file explorer": "Explorador de archivos",
+        "what this page is used for - file explorer":
             "Aquí puedes explorar tus Buckets de S3.",
         "help content": ({ accountTabLink, docHref }) => (
             <>
@@ -315,9 +322,25 @@ export const translations: Translations<"en"> = {
                     Configura los clientes de minio
                 </MuiLink>.
             </>
-        )
+        ),
+        "title personal": "Mis datos",
+        "description personal": "Tus propios archivos y conjuntos de datos.",
+        "title project": ({ projectName }) => `Proyecto ${projectName}`,
+        "description project": ({ projectName }) =>
+            `Espacio de almacenamiento compartido para el proyecto ${projectName}`,
+        tags: ({ type }) => {
+            switch (type) {
+                case "personal":
+                    return "Mis datos";
+                case "project":
+                    return "Datos del grupo";
+            }
+        }
     },
-    MyFilesDisabledDialog: {
+    S3EntryCard: {
+        "space path": "Ruta del espacio"
+    },
+    FileExplorerDisabledDialog: {
         "dialog title": "No hay servidor S3 configurado",
         "dialog body":
             "No hay ningún servidor S3 configurado para esta instancia. Pero puedes agregar uno manualmente para habilitar el explorador de archivos S3.",
@@ -385,6 +408,7 @@ export const translations: Translations<"en"> = {
     ExplorerButtonBar: {
         file: "archivo",
         delete: "eliminar",
+        "download directory": "Descargar",
         "upload file": "Subir archivo",
         "copy path": "Copiar nombre del objeto S3",
         "create directory": "Crear directorio",
@@ -393,6 +417,9 @@ export const translations: Translations<"en"> = {
         share: "Compartir",
         "alt list view": "Mostrar lista",
         "alt block view": "Mostrar bloque"
+    },
+    ExplorerDownloadSnackbar: {
+        "download preparation": "Preparing download ..."
     },
     ExplorerItems: {
         "empty directory": "Este directorio está vacío"
@@ -508,6 +535,7 @@ export const translations: Translations<"en"> = {
         "divider: onyxia instance specific features":
             "Funciones específicas de la instancia de Onyxia",
         dataExplorer: "Explorador de datos",
+        fileExplorer: "Explorador de archivos",
         sqlOlapShell: "SQL Olap Shell"
     },
     AutoLogoutCountdown: {
@@ -556,7 +584,8 @@ export const translations: Translations<"en"> = {
         "no result found": ({ forWhat }) =>
             `No se encontraron resultados para ${forWhat}`,
         "search results": "Resultado de la búsqueda",
-        search: "Buscar"
+        search: "Buscar",
+        "title all catalog": "Todos"
     },
     CatalogChartCard: {
         launch: "Iniciar",
@@ -812,7 +841,6 @@ export const translations: Translations<"en"> = {
         )
     },
     Footer: {
-        contribute: "Contribuir",
         "terms of service": "Términos de servicio",
         "change language": "Cambiar idioma",
         "dark mode switch": "Activar modo oscuro"
@@ -891,7 +919,11 @@ export const translations: Translations<"en"> = {
     MyServicesRestorableConfigOptions: {
         edit: "Editar",
         "copy link": "Copiar enlace URL",
-        "remove bookmark": "Eliminar"
+        "remove bookmark": "Eliminar",
+        "move down": "Mover hacia abajo",
+        "move up": "Mover hacia arriba",
+        "move to top": "Mover al principio",
+        "move to bottom": "Mover al final"
     },
     MyServicesRestorableConfig: {
         edit: "Editar",

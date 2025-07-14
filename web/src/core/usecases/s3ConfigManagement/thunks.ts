@@ -1,17 +1,19 @@
 import type { Thunks } from "core/bootstrap";
-import { selectors } from "./selectors";
+import { selectors, privateSelectors } from "./selectors";
 import type { S3Config } from "./decoupledLogic/getS3Configs";
 import * as projectManagement from "core/usecases/projectManagement";
 import type { ProjectConfigs } from "core/usecases/projectManagement";
 import { assert } from "tsafe/assert";
 import type { S3Client } from "core/ports/S3Client";
-import { createOidcOrFallback } from "core/adapters/oidc/utils/createOidcOrFallback";
 import { createUsecaseContextApi } from "clean-architecture";
 import { getProjectS3ConfigId } from "./decoupledLogic/projectS3ConfigId";
 import * as s3ConfigConnectionTest from "core/usecases/s3ConfigConnectionTest";
 import { updateDefaultS3ConfigsAfterPotentialDeletion } from "./decoupledLogic/updateDefaultS3ConfigsAfterPotentialDeletion";
 import structuredClone from "@ungap/structured-clone";
 import * as deploymentRegionManagement from "core/usecases/deploymentRegionManagement";
+import { fnv1aHashToHex } from "core/tools/fnv1aHashToHex";
+import { resolveS3AdminBookmarks } from "./decoupledLogic/resolveS3AdminBookmarks";
+import { actions } from "./state";
 
 export const thunks = {
     testS3Connection:
@@ -145,7 +147,7 @@ export const protectedThunks = {
             const { s3ConfigId } = params;
             const [, getState, rootContext] = args;
 
-            const { s3ClientByConfigId } = getContext(rootContext);
+            const { prS3ClientByConfigId } = getContext(rootContext);
 
             const s3Config = (() => {
                 const s3Configs = selectors.s3Configs(getState());
@@ -157,31 +159,96 @@ export const protectedThunks = {
             })();
 
             use_cached_s3Client: {
-                const s3Client = s3ClientByConfigId.get(s3Config.id);
+                const prS3Client = prS3ClientByConfigId.get(s3Config.id);
 
-                if (s3Client === undefined) {
+                if (prS3Client === undefined) {
                     break use_cached_s3Client;
                 }
 
-                return s3Client;
+                return prS3Client;
             }
 
-            const { createS3Client } = await import("core/adapters/s3Client");
+            const prS3Client = (async () => {
+                const { createS3Client } = await import("core/adapters/s3Client");
+                const { createOidc, mergeOidcParams } = await import(
+                    "core/adapters/oidc"
+                );
+                const { paramsOfBootstrapCore, onyxiaApi } = rootContext;
 
-            const { oidc } = rootContext;
+                return createS3Client(
+                    s3Config.paramsOfCreateS3Client,
+                    async oidcParams_partial => {
+                        const { oidcParams } =
+                            await onyxiaApi.getAvailableRegionsAndOidcParams();
 
-            assert(oidc.isUserLoggedIn);
+                        assert(oidcParams !== undefined);
 
-            const s3Client = createS3Client(s3Config.paramsOfCreateS3Client, oidcParams =>
-                createOidcOrFallback({
-                    oidcParams,
-                    fallbackOidc: oidc
-                })
-            );
+                        const oidc_s3 = await createOidc({
+                            ...mergeOidcParams({
+                                oidcParams,
+                                oidcParams_partial
+                            }),
+                            autoLogin: true,
+                            transformBeforeRedirectForKeycloakTheme:
+                                paramsOfBootstrapCore.transformBeforeRedirectForKeycloakTheme,
+                            getCurrentLang: paramsOfBootstrapCore.getCurrentLang,
+                            enableDebugLogs: paramsOfBootstrapCore.enableOidcDebugLogs
+                        });
 
-            s3ClientByConfigId.set(s3Config.id, s3Client);
+                        const doClearCachedS3Token_groupClaimValue: boolean =
+                            await (async () => {
+                                const { projects } = await onyxiaApi.getUserAndProjects();
 
-            return s3Client;
+                                const KEY = "onyxia:s3:projects-hash";
+
+                                const hash = fnv1aHashToHex(JSON.stringify(projects));
+
+                                if (
+                                    !oidc_s3.isNewBrowserSession &&
+                                    sessionStorage.getItem(KEY) === hash
+                                ) {
+                                    return false;
+                                }
+
+                                sessionStorage.setItem(KEY, hash);
+                                return true;
+                            })();
+
+                        const doClearCachedS3Token_s3BookmarkClaimValue: boolean =
+                            (() => {
+                                const resolvedAdminBookmarks =
+                                    privateSelectors.resolvedAdminBookmarks(getState());
+
+                                const KEY = "onyxia:s3:resolvedAdminBookmarks-hash";
+
+                                const hash = fnv1aHashToHex(
+                                    JSON.stringify(resolvedAdminBookmarks)
+                                );
+
+                                if (
+                                    !oidc_s3.isNewBrowserSession &&
+                                    sessionStorage.getItem(KEY) === hash
+                                ) {
+                                    return false;
+                                }
+
+                                sessionStorage.setItem(KEY, hash);
+                                return true;
+                            })();
+
+                        return {
+                            oidc: oidc_s3,
+                            doClearCachedS3Token:
+                                doClearCachedS3Token_groupClaimValue ||
+                                doClearCachedS3Token_s3BookmarkClaimValue
+                        };
+                    }
+                );
+            })();
+
+            prS3ClientByConfigId.set(s3Config.id, prS3Client);
+
+            return prS3Client;
         },
     getS3ConfigAndClientForExplorer:
         () =>
@@ -239,9 +306,51 @@ export const protectedThunks = {
                     value: projectConfigsS3
                 })
             );
+        },
+
+    initialize:
+        () =>
+        async (...args) => {
+            const [dispatch, getState, { onyxiaApi, paramsOfBootstrapCore }] = args;
+
+            const { oidcParams } = await onyxiaApi.getAvailableRegionsAndOidcParams();
+
+            if (oidcParams === undefined) {
+                dispatch(actions.initialized({ resolvedAdminBookmarks: [] }));
+                return;
+            }
+            const deploymentRegion =
+                deploymentRegionManagement.selectors.currentDeploymentRegion(getState());
+
+            const { resolvedAdminBookmarks } = await resolveS3AdminBookmarks({
+                deploymentRegion_s3Configs: deploymentRegion.s3Configs,
+                getDecodedIdToken: async ({ oidcParams_partial }) => {
+                    const { createOidc, mergeOidcParams } = await import(
+                        "core/adapters/oidc"
+                    );
+
+                    const oidc = await createOidc({
+                        ...mergeOidcParams({
+                            oidcParams,
+                            oidcParams_partial
+                        }),
+                        autoLogin: true,
+                        transformBeforeRedirectForKeycloakTheme:
+                            paramsOfBootstrapCore.transformBeforeRedirectForKeycloakTheme,
+                        getCurrentLang: paramsOfBootstrapCore.getCurrentLang,
+                        enableDebugLogs: paramsOfBootstrapCore.enableOidcDebugLogs
+                    });
+
+                    const { decodedIdToken } = await oidc.getTokens();
+
+                    return decodedIdToken;
+                }
+            });
+
+            dispatch(actions.initialized({ resolvedAdminBookmarks }));
         }
 } satisfies Thunks;
 
 const { getContext } = createUsecaseContextApi(() => ({
-    s3ClientByConfigId: new Map<string, S3Client>()
+    prS3ClientByConfigId: new Map<string, Promise<S3Client>>()
 }));

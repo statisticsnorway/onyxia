@@ -1,11 +1,3 @@
-/* eslint-disable react-refresh/only-export-components */
-import { lazy, Suspense } from "react";
-import { createRoot } from "react-dom/client";
-import { assert } from "tsafe/assert";
-const App = lazy(() => import("ui/App"));
-const AppWithoutScreenScaler = lazy(() => import("ui/App/App"));
-const KcLoginThemePage = lazy(() => import("keycloak-theme/login/KcPage"));
-
 /*
 import { getKcContextMock } from "keycloak-theme/login/getKcContextMock";
 
@@ -15,36 +7,27 @@ if (import.meta.env.DEV) {
         //pageId: "login-update-password.ftl",
         //pageId: "login-reset-password.ftl",
         pageId: "login.ftl",
-        overrides: {
-
-        }
+        overrides: {}
     });
 }
 */
 
-{
-    const version = import.meta.env.WEB_VERSION;
+(async () => {
+    if (window.kcContext !== undefined) {
+        import("keycloak-theme/main");
+        return;
+    }
 
-    console.log(
-        [
-            `Docker image inseefrlab/onyxia-web version: ${version}`,
-            `https://github.com/InseeFrLab/onyxia/tree/web-v${version}/web`
-        ].join("\n")
-    );
-}
+    const { oidcEarlyInit } = await import("oidc-spa/entrypoint");
 
-const rootElement = document.getElementById("root");
+    const { shouldLoadApp } = oidcEarlyInit({
+        freezeFetch: true,
+        freezeXMLHttpRequest: true
+    });
 
-assert(rootElement !== null);
+    if (!shouldLoadApp) {
+        return;
+    }
 
-createRoot(rootElement).render(
-    <Suspense>
-        {window.kcContext !== undefined ? (
-            <KcLoginThemePage kcContext={window.kcContext} />
-        ) : import.meta.env.SCREEN_SCALER === "true" ? (
-            <App />
-        ) : (
-            <AppWithoutScreenScaler />
-        )}
-    </Suspense>
-);
+    import("main.lazy");
+})();

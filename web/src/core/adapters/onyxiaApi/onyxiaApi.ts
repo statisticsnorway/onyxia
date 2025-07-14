@@ -7,6 +7,9 @@ import {
     type User,
     type HelmRelease,
     type Project,
+    type OidcParams,
+    type OidcParams_Partial,
+    type JSONSchema,
     zJSONSchema
 } from "core/ports/OnyxiaApi";
 import axios, { AxiosHeaders } from "axios";
@@ -22,17 +25,17 @@ import { id } from "tsafe/id";
 export function createOnyxiaApi(params: {
     url: string;
     /** undefined if user not logged in */
-    getOidcAccessToken: () => string | undefined;
+    getOidcAccessToken: () => Promise<string | undefined>;
     getCurrentRegionId: () => string | undefined;
     getCurrentProjectId: () => string | undefined;
 }): OnyxiaApi {
     const { url, getOidcAccessToken, getCurrentRegionId, getCurrentProjectId } = params;
 
-    const getHeaders = () => {
+    const getHeaders = async () => {
         const headers: Record<string, string> = {};
 
         add_bearer_token: {
-            const accessToken = getOidcAccessToken();
+            const accessToken = await getOidcAccessToken();
 
             if (accessToken === undefined) {
                 break add_bearer_token;
@@ -67,9 +70,9 @@ export function createOnyxiaApi(params: {
     const { axiosInstance } = (() => {
         const axiosInstance = axios.create({ baseURL: url, timeout: 120_000 });
 
-        axiosInstance.interceptors.request.use(config => {
+        axiosInstance.interceptors.request.use(async config => {
             const headers = AxiosHeaders.from(config.headers);
-            headers.set(getHeaders());
+            headers.set(await getHeaders());
 
             return {
                 ...config,
@@ -84,7 +87,9 @@ export function createOnyxiaApi(params: {
         async () => {
             const { data } = await axiosInstance.get<
                 ApiTypes["/<public|my-lab>/catalogs"]
-            >(`/${getOidcAccessToken() === undefined ? "public" : "my-lab"}/catalogs`);
+            >(
+                `/${(await getOidcAccessToken()) === undefined ? "public" : "my-lab"}/catalogs`
+            );
 
             return data;
         },
@@ -98,6 +103,42 @@ export function createOnyxiaApi(params: {
 
             return data.ip;
         },
+        getUserProfileJsonSchema: memoize(
+            async () => {
+                const { data: schemaOrEmptyString } =
+                    await axiosInstance.get<ApiTypes["/profile/schema"]>(
+                        "/profile/schema"
+                    );
+
+                const schema: JSONSchema | undefined = (() => {
+                    if (schemaOrEmptyString === "") {
+                        return undefined;
+                    }
+
+                    try {
+                        zJSONSchema.parse(schemaOrEmptyString);
+                    } catch (error) {
+                        assert(is<Error>(error));
+
+                        console.warn(
+                            "Declarative user schema isn't a valid JSON Schema",
+                            error.message
+                        );
+
+                        return undefined;
+                    }
+
+                    return schemaOrEmptyString;
+                })();
+
+                if (schema === undefined) {
+                    return undefined;
+                }
+
+                return schema;
+            },
+            { promise: true }
+        ),
         getAvailableRegionsAndOidcParams: memoize(
             async () => {
                 const { data } = await axiosInstance.get<
@@ -123,12 +164,29 @@ export function createOnyxiaApi(params: {
                 const oidcParams =
                     data.oidcConfiguration === undefined
                         ? undefined
-                        : {
+                        : id<OidcParams>({
                               issuerUri: data.oidcConfiguration.issuerURI,
                               clientId: data.oidcConfiguration.clientID,
-                              serializedExtraQueryParams:
-                                  data.oidcConfiguration.extraQueryParams
-                          };
+                              extraQueryParams_raw:
+                                  data.oidcConfiguration.extraQueryParams || undefined,
+                              scope_spaceSeparated:
+                                  data.oidcConfiguration.scope || undefined,
+                              audience: data.oidcConfiguration.audience || undefined,
+                              idleSessionLifetimeInSeconds: (() => {
+                                  const value =
+                                      data.oidcConfiguration.idleSessionLifetimeInSeconds;
+
+                                  if (value === "" || value === undefined) {
+                                      return undefined;
+                                  }
+
+                                  if (typeof value === "number") {
+                                      return value;
+                                  }
+
+                                  return parseInt(value);
+                              })()
+                          });
 
                 const regions = data.regions.map(
                     (apiRegion): DeploymentRegion =>
@@ -141,6 +199,19 @@ export function createOnyxiaApi(params: {
                             defaultNetworkPolicy:
                                 apiRegion.services.defaultConfiguration?.networkPolicy,
                             kubernetesClusterDomain: apiRegion.services.expose.domain,
+                            kubernetesClusterIngressPort: (() => {
+                                const v = apiRegion.services.expose.ingressPort;
+                                if (v === undefined) {
+                                    return undefined;
+                                }
+                                if (typeof v === "string") {
+                                    const n = parseInt(v);
+                                    assert(!isNaN(n));
+                                    return n;
+                                }
+
+                                return v;
+                            })(),
                             ingressClassName: apiRegion.services.expose.ingressClassName,
                             ingress: apiRegion.services.expose.ingress,
                             route: apiRegion.services.expose.route,
@@ -230,22 +301,14 @@ export function createOnyxiaApi(params: {
                                                     s3Config_api.sts.durationSeconds,
                                                 role: s3Config_api.sts.role,
                                                 oidcParams:
-                                                    s3Config_api.sts.oidcConfiguration ===
-                                                    undefined
-                                                        ? undefined
-                                                        : {
-                                                              issuerUri:
-                                                                  s3Config_api.sts
-                                                                      .oidcConfiguration
-                                                                      .issuerURI,
-                                                              clientId:
-                                                                  s3Config_api.sts
-                                                                      .oidcConfiguration
-                                                                      .clientID
-                                                          }
+                                                    apiTypesOidcConfigurationToOidcParams_Partial(
+                                                        s3Config_api.sts.oidcConfiguration
+                                                    )
                                             },
                                             workingDirectory:
-                                                s3Config_api.workingDirectory
+                                                s3Config_api.workingDirectory,
+                                            bookmarkedDirectories:
+                                                s3Config_api.bookmarkedDirectories ?? []
                                         }));
 
                                 return {
@@ -282,19 +345,9 @@ export function createOnyxiaApi(params: {
                                           role: apiRegion.vault.role,
                                           authPath: apiRegion.vault.authPath,
                                           oidcParams:
-                                              apiRegion.vault.oidcConfiguration ===
-                                              undefined
-                                                  ? undefined
-                                                  : {
-                                                        issuerUri:
-                                                            apiRegion.vault
-                                                                .oidcConfiguration
-                                                                .issuerURI,
-                                                        clientId:
-                                                            apiRegion.vault
-                                                                .oidcConfiguration
-                                                                .clientID
-                                                    }
+                                              apiTypesOidcConfigurationToOidcParams_Partial(
+                                                  apiRegion.vault.oidcConfiguration
+                                              )
                                       },
                             proxyInjection:
                                 apiRegion.proxyInjection === undefined
@@ -321,16 +374,9 @@ export function createOnyxiaApi(params: {
                                 return {
                                     url: k8sPublicEndpoint.URL,
                                     oidcParams:
-                                        k8sPublicEndpoint.oidcConfiguration === undefined
-                                            ? undefined
-                                            : {
-                                                  issuerUri:
-                                                      k8sPublicEndpoint.oidcConfiguration
-                                                          .issuerURI,
-                                                  clientId:
-                                                      k8sPublicEndpoint.oidcConfiguration
-                                                          .clientID
-                                              }
+                                        apiTypesOidcConfigurationToOidcParams_Partial(
+                                            k8sPublicEndpoint.oidcConfiguration
+                                        )
                                 };
                             })(),
                             sliders:
@@ -491,16 +537,25 @@ export function createOnyxiaApi(params: {
         getHelmChartDetails: (() => {
             const memoizedImplementation = memoize(
                 async (catalogId: string, chartName: string, chartVersion: string) => {
-                    const [{ data: helmValuesSchema }, apiCatalogs] = await Promise.all([
-                        axiosInstance.get<
-                            ApiTypes["/my-lab/schemas/${catalogId}/charts/${chartName}/versions/${chartVersion}"]
-                        >(
-                            `/my-lab/schemas/${catalogId}/charts/${chartName}/versions/${chartVersion}`
-                        ),
-                        getApiCatalogsMemo()
-                    ] as const);
+                    const [{ data: helmValuesSchemaOrEmptyString }, apiCatalogs] =
+                        await Promise.all([
+                            axiosInstance.get<
+                                ApiTypes["/my-lab/schemas/${catalogId}/charts/${chartName}/versions/${chartVersion}"]
+                            >(
+                                `/my-lab/schemas/${catalogId}/charts/${chartName}/versions/${chartVersion}`
+                            ),
+                            getApiCatalogsMemo()
+                        ] as const);
 
-                    zJSONSchema.parse(helmValuesSchema);
+                    const helmValuesSchema: JSONSchema | undefined = (() => {
+                        if (helmValuesSchemaOrEmptyString === "") {
+                            return undefined;
+                        }
+
+                        zJSONSchema.parse(helmValuesSchemaOrEmptyString);
+
+                        return helmValuesSchemaOrEmptyString;
+                    })();
 
                     const apiChart = (() => {
                         const entry = apiCatalogs.catalogs.find(c => c.id === catalogId);
@@ -726,7 +781,21 @@ export function createOnyxiaApi(params: {
                     username: data.idep,
                     email: data.email,
                     ...(() => {
+                        if (data.nomComplet === undefined) {
+                            return {
+                                firstName: undefined,
+                                familyName: undefined
+                            };
+                        }
+
                         const [firstName, familyName] = data.nomComplet.split(" ");
+
+                        if (familyName === undefined) {
+                            return {
+                                firstName: data.nomComplet,
+                                familyName: undefined
+                            };
+                        }
 
                         return {
                             firstName,
@@ -749,7 +818,7 @@ export function createOnyxiaApi(params: {
                 assert(is<any>(error));
 
                 if (error.response?.status === 403) {
-                    return {};
+                    return undefined;
                 }
 
                 throw error;
@@ -789,7 +858,7 @@ export function createOnyxiaApi(params: {
             const evtUnsubscribe = params.evtUnsubscribe.pipe(ctxUnsubscribe);
 
             const response = await fetch(`${url}/my-lab/events`, {
-                headers: getHeaders()
+                headers: await getHeaders()
             })
                 // NOTE: This happens when there's no data to read.
                 .catch(() => undefined);
@@ -839,9 +908,13 @@ export function createOnyxiaApi(params: {
                         return;
                     }
 
-                    const event: ApiTypes["/my-lab/events"] = JSON.parse(
-                        part.slice("data:".length)
-                    );
+                    let event: ApiTypes["/my-lab/events"];
+                    try {
+                        event = JSON.parse(part.slice("data:".length));
+                    } catch (error) {
+                        console.error("Failed to parse cluster event:", error, part);
+                        return;
+                    }
 
                     onNewEvent({
                         eventId: event.metadata.uid,
@@ -987,3 +1060,28 @@ export function createOnyxiaApi(params: {
 
 const originalOnunhandledrejection = window.onunhandledrejection;
 const originalOnerror = window.onerror;
+
+function apiTypesOidcConfigurationToOidcParams_Partial(
+    oidcConfiguration: Partial<ApiTypes.OidcConfiguration> | undefined
+): OidcParams_Partial {
+    return {
+        issuerUri: oidcConfiguration?.issuerURI || undefined,
+        clientId: oidcConfiguration?.clientID || undefined,
+        extraQueryParams_raw: oidcConfiguration?.extraQueryParams || undefined,
+        scope_spaceSeparated: oidcConfiguration?.scope || undefined,
+        audience: oidcConfiguration?.audience || undefined,
+        idleSessionLifetimeInSeconds: (() => {
+            const value = oidcConfiguration?.idleSessionLifetimeInSeconds;
+
+            if (value === "" || value === undefined) {
+                return undefined;
+            }
+
+            if (typeof value === "number") {
+                return value;
+            }
+
+            return parseInt(value);
+        })()
+    };
+}

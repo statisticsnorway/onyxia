@@ -1,10 +1,11 @@
 import type { Thunks } from "core/bootstrap";
-import { assert, type Equals } from "tsafe/assert";
+import { assert, type Equals, is } from "tsafe/assert";
 import * as userAuthentication from "../userAuthentication";
 import * as deploymentRegionManagement from "core/usecases/deploymentRegionManagement";
 import * as projectManagement from "core/usecases/projectManagement";
 import * as s3ConfigManagement from "core/usecases/s3ConfigManagement";
 import * as userConfigsUsecase from "core/usecases/userConfigs";
+import * as userProfileForm from "core/usecases/userProfileForm";
 import { bucketNameAndObjectNameFromS3Path } from "core/adapters/s3Client/utils/bucketNameAndObjectNameFromS3Path";
 import { parseUrl } from "core/tools/parseUrl";
 import * as secretExplorer from "../secretExplorer";
@@ -13,10 +14,12 @@ import { generateRandomPassword } from "core/tools/generateRandomPassword";
 import { privateSelectors } from "./selectors";
 import { Evt } from "evt";
 import type { StringifyableAtomic, Stringifyable } from "core/tools/Stringifyable";
-import { type XOnyxiaContext } from "core/ports/OnyxiaApi";
+import type { XOnyxiaContext, JSONSchema } from "core/ports/OnyxiaApi";
 import { createUsecaseContextApi } from "clean-architecture";
 import { computeHelmValues, type FormFieldValue } from "./decoupledLogic";
-import type { RestorableServiceConfig } from "core/usecases/restorableConfigManagement";
+import { computeRootForm } from "./decoupledLogic";
+
+type RestorableServiceConfig = projectManagement.ProjectConfigs.RestorableServiceConfig;
 
 type RestorableServiceConfigLike = {
     catalogId: string;
@@ -72,7 +75,12 @@ export const thunks = {
                     evtCleanupInitialize.post();
                 } else {
                     evtCleanupInitialize = Evt.create();
-                    setContext(rootContext, { evtCleanupInitialize });
+                    setContext(rootContext, {
+                        evtCleanupInitialize,
+                        reComputeHelmValues: () => {
+                            assert(false, "premature call");
+                        }
+                    });
                 }
 
                 const ctx = Evt.newCtx();
@@ -140,7 +148,7 @@ export const thunks = {
 
                 const {
                     helmDependencies,
-                    helmValuesSchema,
+                    helmValuesSchema: helmValuesSchema_orUndefined,
                     helmChartSourceUrls,
                     helmValuesYaml
                 } = await onyxiaApi.getHelmChartDetails({
@@ -148,6 +156,13 @@ export const thunks = {
                     chartName,
                     chartVersion
                 });
+
+                const hasHelmValuesSchema = helmValuesSchema_orUndefined !== undefined;
+
+                const helmValuesSchema: JSONSchema = helmValuesSchema_orUndefined ?? {
+                    type: "object",
+                    properties: {}
+                };
 
                 if (getIsCanceled()) {
                     return;
@@ -195,7 +210,7 @@ export const thunks = {
                 })();
 
                 const xOnyxiaContext = await dispatch(
-                    privateThunks.getXOnyxiaContext({
+                    protectedThunks.getXOnyxiaContext({
                         s3ConfigId,
                         doInjectPersonalInfos
                     })
@@ -205,6 +220,10 @@ export const thunks = {
                     return;
                 }
 
+                const infoAmountInHelmValues = hasHelmValuesSchema
+                    ? "user provided"
+                    : "include values.yaml defaults";
+
                 const {
                     helmValues: helmValues_default,
                     helmValuesSchema_forDataTextEditor,
@@ -212,8 +231,24 @@ export const thunks = {
                 } = computeHelmValues({
                     helmValuesSchema,
                     xOnyxiaContext,
-                    helmValuesYaml
+                    helmValuesYaml,
+                    infoAmountInHelmValues
                 });
+
+                {
+                    const context = getContext(rootContext);
+
+                    context.reComputeHelmValues = ({ infoAmountInHelmValues }) => {
+                        const { helmValues: helmValues_default } = computeHelmValues({
+                            helmValuesSchema,
+                            xOnyxiaContext,
+                            helmValuesYaml,
+                            infoAmountInHelmValues
+                        });
+
+                        return { helmValues_default };
+                    };
+                }
 
                 const friendlyName_default = chartName;
 
@@ -255,14 +290,17 @@ export const thunks = {
                             helmValues_default,
                             helmValuesYaml,
 
-                            helmValuesSchema_forDataTextEditor,
+                            helmValuesSchema_forDataTextEditor: hasHelmValuesSchema
+                                ? helmValuesSchema_forDataTextEditor
+                                : undefined,
 
                             chartIconUrl,
                             catalogRepositoryUrl,
                             catalogName,
                             k8sRandomSubdomain: xOnyxiaContext.k8s.randomSubdomain,
                             helmChartSourceUrls,
-                            availableChartVersions
+                            availableChartVersions,
+                            infoAmountInHelmValues
                         },
                         helmValuesPatch: helmValuesPatch ?? []
                     })
@@ -274,6 +312,33 @@ export const thunks = {
             })();
 
             return { cleanup };
+        },
+    changeInfoAmountInHelmValues:
+        (params: {
+            infoAmountInHelmValues: "user provided" | "include values.yaml defaults";
+        }) =>
+        (...args) => {
+            const { infoAmountInHelmValues } = params;
+
+            const [dispatch, getState, rootContext] = args;
+
+            const { reComputeHelmValues } = getContext(rootContext);
+
+            const { helmValues_default } = reComputeHelmValues({
+                infoAmountInHelmValues
+            });
+
+            const restorableConfig = privateSelectors.restorableConfig(getState());
+
+            assert(restorableConfig !== null);
+
+            dispatch(
+                actions.infoAmountInHelmValuesChanged({
+                    helmValues_default,
+                    helmValuesPatch: restorableConfig.helmValuesPatch,
+                    infoAmountInHelmValues
+                })
+            );
         },
     restoreAllDefault:
         () =>
@@ -432,14 +497,42 @@ export const thunks = {
             });
 
             dispatch(actions.launchCompleted());
+        },
+    additionalValidation:
+        (params: { helmValues_candidate: Record<string, Stringifyable> }) =>
+        (...args) => {
+            const { helmValues_candidate } = params;
+
+            const [, getState] = args;
+
+            const wrap =
+                privateSelectors.paramsOfComputeRootForm_butHelmValues(getState());
+
+            assert(wrap !== null);
+
+            try {
+                computeRootForm({
+                    ...wrap,
+                    helmValues: helmValues_candidate
+                });
+            } catch (error) {
+                assert(is<Error>(error));
+
+                return { isValid: false as const, errorMsg: error.message };
+            }
+
+            return { isValid: true as const };
         }
 } satisfies Thunks;
 
 const { getContext, setContext, getIsContextSet } = createUsecaseContextApi<{
     evtCleanupInitialize: Evt<void>;
+    reComputeHelmValues: (params: {
+        infoAmountInHelmValues: "user provided" | "include values.yaml defaults";
+    }) => { helmValues_default: Record<string, Stringifyable> };
 }>();
 
-const privateThunks = {
+export const protectedThunks = {
     getXOnyxiaContext:
         (params: { s3ConfigId: string | undefined; doInjectPersonalInfos: boolean }) =>
         async (...args): Promise<XOnyxiaContext> => {
@@ -451,7 +544,7 @@ const privateThunks = {
                 { paramsOfBootstrapCore, secretsManager, onyxiaApi }
             ] = args;
 
-            const user = userAuthentication.selectors.user(getState());
+            const { user } = await onyxiaApi.getUserAndProjects();
 
             const userConfigs = userConfigsUsecase.selectors.userConfigs(getState());
 
@@ -464,14 +557,27 @@ const privateThunks = {
             const project =
                 projectManagement.protectedSelectors.currentProject(getState());
 
-            const { decodedIdToken, accessToken, refreshToken } = dispatch(
+            const { decodedIdToken, accessToken, refreshToken } = await dispatch(
                 userAuthentication.protectedThunks.getTokens()
             );
+
+            const name = (() => {
+                if (user.familyName === undefined && user.firstName === undefined) {
+                    return user.username;
+                }
+
+                if (user.familyName === undefined) {
+                    assert(user.firstName !== undefined);
+                    return user.firstName;
+                }
+
+                return `${user.familyName} ${user.firstName}`;
+            })();
 
             const xOnyxiaContext: XOnyxiaContext = {
                 user: {
                     idep: user.username,
-                    name: `${user.familyName} ${user.firstName}`,
+                    name,
                     email: user.email,
                     password: servicePassword,
                     ip: !doInjectPersonalInfos ? "0.0.0.0" : await onyxiaApi.getIp(),
@@ -479,7 +585,10 @@ const privateThunks = {
                     lang: paramsOfBootstrapCore.getCurrentLang(),
                     decodedIdToken,
                     accessToken,
-                    refreshToken
+                    refreshToken: refreshToken ?? "",
+                    profile: !dispatch(userProfileForm.thunks.getIsEnabled())
+                        ? undefined
+                        : userProfileForm.protectedSelectors.values(getState())
                 },
                 service: {
                     oneTimePassword: generateRandomPassword()
@@ -628,7 +737,10 @@ const privateThunks = {
             };
 
             return xOnyxiaContext;
-        },
+        }
+} satisfies Thunks;
+
+export const privateThunks = {
     getChartInfos:
         (params: {
             catalogId: string;

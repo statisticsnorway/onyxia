@@ -26,7 +26,8 @@ describe(symToStr({ computeHelmValues }), () => {
             helmValuesYaml: YAML.stringify({
                 r: "values.yaml"
             }),
-            xOnyxiaContext
+            xOnyxiaContext,
+            infoAmountInHelmValues: "user provided"
         });
 
         const expected = {
@@ -62,7 +63,8 @@ describe(symToStr({ computeHelmValues }), () => {
             helmValuesYaml: YAML.stringify({
                 r: "values.yaml"
             }),
-            xOnyxiaContext
+            xOnyxiaContext,
+            infoAmountInHelmValues: "user provided"
         });
 
         const expected = {
@@ -95,7 +97,8 @@ describe(symToStr({ computeHelmValues }), () => {
             helmValuesYaml: YAML.stringify({
                 r: "values.yaml"
             }),
-            xOnyxiaContext
+            xOnyxiaContext,
+            infoAmountInHelmValues: "user provided"
         });
 
         const expected = {
@@ -128,7 +131,8 @@ describe(symToStr({ computeHelmValues }), () => {
                 }
             },
             helmValuesYaml: YAML.stringify({}),
-            xOnyxiaContext
+            xOnyxiaContext,
+            infoAmountInHelmValues: "user provided"
         });
 
         const expected = {
@@ -144,7 +148,8 @@ describe(symToStr({ computeHelmValues }), () => {
                         sliderUnit: ""
                     }
                 },
-                required: ["gpu"]
+                required: ["gpu"],
+                additionalProperties: false
             },
             isChartUsingS3: false
         };
@@ -169,7 +174,8 @@ describe(symToStr({ computeHelmValues }), () => {
             helmValuesYaml: YAML.stringify({
                 r: "values.yaml"
             }),
-            xOnyxiaContext
+            xOnyxiaContext,
+            infoAmountInHelmValues: "user provided"
         });
 
         const expected = {
@@ -199,7 +205,8 @@ describe(symToStr({ computeHelmValues }), () => {
                 }
             },
             helmValuesYaml: YAML.stringify({}),
-            xOnyxiaContext
+            xOnyxiaContext,
+            infoAmountInHelmValues: "user provided"
         });
 
         const expected = {
@@ -230,7 +237,8 @@ describe(symToStr({ computeHelmValues }), () => {
                     }
                 },
                 helmValuesYaml: YAML.stringify({}),
-                xOnyxiaContext
+                xOnyxiaContext,
+                infoAmountInHelmValues: "user provided"
             });
         }).toThrow();
     });
@@ -252,7 +260,8 @@ describe(symToStr({ computeHelmValues }), () => {
                     }
                 },
                 helmValuesYaml: YAML.stringify({}),
-                xOnyxiaContext
+                xOnyxiaContext,
+                infoAmountInHelmValues: "user provided"
             });
         }).toThrow();
     });
@@ -278,7 +287,8 @@ describe(symToStr({ computeHelmValues }), () => {
                 }
             },
             helmValuesYaml: YAML.stringify({}),
-            xOnyxiaContext
+            xOnyxiaContext,
+            infoAmountInHelmValues: "user provided"
         });
 
         const expected = {
@@ -291,7 +301,8 @@ describe(symToStr({ computeHelmValues }), () => {
                         default: 42
                     }
                 },
-                required: ["r"]
+                required: ["r"],
+                additionalProperties: false
             },
             isChartUsingS3: false
         };
@@ -321,7 +332,8 @@ describe(symToStr({ computeHelmValues }), () => {
                 }
             },
             helmValuesYaml: YAML.stringify({}),
-            xOnyxiaContext
+            xOnyxiaContext,
+            infoAmountInHelmValues: "user provided"
         });
 
         const expected = {
@@ -334,7 +346,8 @@ describe(symToStr({ computeHelmValues }), () => {
                         default: 42
                     }
                 },
-                required: ["r"]
+                required: ["r"],
+                additionalProperties: false
             },
             isChartUsingS3: false
         };
@@ -363,7 +376,8 @@ describe(symToStr({ computeHelmValues }), () => {
                 }
             },
             helmValuesYaml: YAML.stringify({}),
-            xOnyxiaContext
+            xOnyxiaContext,
+            infoAmountInHelmValues: "user provided"
         });
 
         const expected = {
@@ -376,7 +390,8 @@ describe(symToStr({ computeHelmValues }), () => {
                         default: true
                     }
                 },
-                required: ["r"]
+                required: ["r"],
+                additionalProperties: false
             },
             isChartUsingS3: false
         };
@@ -404,7 +419,8 @@ describe(symToStr({ computeHelmValues }), () => {
                 }
             },
             helmValuesYaml: YAML.stringify({}),
-            xOnyxiaContext
+            xOnyxiaContext,
+            infoAmountInHelmValues: "user provided"
         });
 
         const expected = {
@@ -417,7 +433,8 @@ describe(symToStr({ computeHelmValues }), () => {
                         default: "xxx"
                     }
                 },
-                required: ["r"]
+                required: ["r"],
+                additionalProperties: false
             },
             isChartUsingS3: true
         };
@@ -440,7 +457,8 @@ describe(symToStr({ computeHelmValues }), () => {
                 }
             },
             helmValuesYaml: YAML.stringify({}),
-            xOnyxiaContext
+            xOnyxiaContext,
+            infoAmountInHelmValues: "user provided"
         });
 
         const expected = {
@@ -452,7 +470,8 @@ describe(symToStr({ computeHelmValues }), () => {
                         type: "array"
                     }
                 },
-                required: ["r"]
+                required: ["r"],
+                additionalProperties: false
             },
             isChartUsingS3: false
         };
@@ -477,7 +496,8 @@ describe(symToStr({ computeHelmValues }), () => {
                     }
                 },
                 helmValuesYaml: YAML.stringify({}),
-                xOnyxiaContext
+                xOnyxiaContext,
+                infoAmountInHelmValues: "user provided"
             });
         }).toThrow();
     });
@@ -500,7 +520,8 @@ describe(symToStr({ computeHelmValues }), () => {
                     }
                 },
                 helmValuesYaml: YAML.stringify({}),
-                xOnyxiaContext
+                xOnyxiaContext,
+                infoAmountInHelmValues: "user provided"
             });
         }).toThrow();
     });
@@ -524,7 +545,8 @@ describe(symToStr({ computeHelmValues }), () => {
                     }
                 },
                 helmValuesYaml: YAML.stringify({}),
-                xOnyxiaContext
+                xOnyxiaContext,
+                infoAmountInHelmValues: "user provided"
             });
         }).toThrow();
     });
@@ -550,7 +572,8 @@ describe(symToStr({ computeHelmValues }), () => {
                     }
                 },
                 helmValuesYaml: YAML.stringify({}),
-                xOnyxiaContext
+                xOnyxiaContext,
+                infoAmountInHelmValues: "user provided"
             });
         }).toThrow();
     });
@@ -575,7 +598,8 @@ describe(symToStr({ computeHelmValues }), () => {
                 }
             },
             helmValuesYaml: YAML.stringify({}),
-            xOnyxiaContext
+            xOnyxiaContext,
+            infoAmountInHelmValues: "user provided"
         });
 
         const expected = {
@@ -592,7 +616,8 @@ describe(symToStr({ computeHelmValues }), () => {
                         }
                     }
                 },
-                required: ["r"]
+                required: ["r"],
+                additionalProperties: false
             },
             isChartUsingS3: false
         };
@@ -620,7 +645,8 @@ describe(symToStr({ computeHelmValues }), () => {
                 }
             },
             helmValuesYaml: YAML.stringify({}),
-            xOnyxiaContext
+            xOnyxiaContext,
+            infoAmountInHelmValues: "user provided"
         });
 
         const expected = {
@@ -637,7 +663,348 @@ describe(symToStr({ computeHelmValues }), () => {
                         }
                     }
                 },
-                required: ["r"]
+                required: ["r"],
+                additionalProperties: false
+            },
+            isChartUsingS3: false
+        };
+
+        expect(got).toStrictEqual(expected);
+    });
+
+    it("Default for object array", () => {
+        const xOnyxiaContext = {
+            s3: {},
+            g: {
+                xx: "v xx",
+                yy: "v yy"
+            }
+        };
+
+        const got = computeHelmValues({
+            helmValuesSchema: {
+                type: "object",
+                properties: {
+                    r: {
+                        type: "array",
+                        "x-onyxia": {
+                            overwriteDefaultWith: [{ p: "{{g.xx}}" }, { p: "{{g.yy}}" }]
+                        },
+                        items: {
+                            type: "object"
+                        }
+                    }
+                }
+            },
+            helmValuesYaml: YAML.stringify({}),
+            xOnyxiaContext,
+            infoAmountInHelmValues: "user provided"
+        });
+
+        const expected = {
+            helmValues: { r: [{ p: "v xx" }, { p: "v yy" }] },
+            helmValuesSchema_forDataTextEditor: {
+                type: "object",
+                properties: {
+                    r: {
+                        type: "array",
+                        default: [{ p: "v xx" }, { p: "v yy" }],
+                        items: {
+                            type: "object"
+                        }
+                    }
+                },
+                required: ["r"],
+                additionalProperties: false
+            },
+            isChartUsingS3: false
+        };
+
+        expect(got).toStrictEqual(expected);
+    });
+
+    it("Fallback to default when nested don't match pattern", () => {
+        const xOnyxiaContext = {
+            s3: {},
+            g: {
+                xx: "v xx"
+            }
+        };
+
+        const got = computeHelmValues({
+            helmValuesSchema: {
+                type: "object",
+                properties: {
+                    r: {
+                        type: "array",
+                        "x-onyxia": {
+                            overwriteDefaultWith: [{ p: "{{g.xx}}" }, { p: "{{g.yy}}" }]
+                        },
+                        items: {
+                            type: "object",
+                            properties: {
+                                p: {
+                                    type: "string",
+                                    pattern: "^.+$"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            helmValuesYaml: YAML.stringify({
+                r: [{ p: "v default xx" }, { p: "v default yy" }]
+            }),
+            xOnyxiaContext,
+            infoAmountInHelmValues: "user provided"
+        });
+
+        const expected = {
+            helmValues: { r: [{ p: "v default xx" }, { p: "v default yy" }] },
+            helmValuesSchema_forDataTextEditor: {
+                type: "object",
+                properties: {
+                    r: {
+                        type: "array",
+                        default: [{ p: "v default xx" }, { p: "v default yy" }],
+                        items: {
+                            type: "object",
+                            properties: {
+                                p: {
+                                    type: "string",
+                                    pattern: "^.+$"
+                                }
+                            },
+                            required: ["p"],
+                            additionalProperties: false
+                        }
+                    }
+                },
+                required: ["r"],
+                additionalProperties: false
+            },
+            isChartUsingS3: false
+        };
+
+        expect(got).toStrictEqual(expected);
+    });
+
+    it("basic using array as default", () => {
+        const xOnyxiaContext = {
+            s3: {},
+            a: {
+                b: [{ p: "foo" }, { p: "bar" }, { p: "baz" }]
+            }
+        };
+
+        const got = computeHelmValues({
+            helmValuesSchema: {
+                type: "object",
+                properties: {
+                    r: {
+                        type: "array",
+                        "x-onyxia": {
+                            overwriteDefaultWith: "{{a.b}}"
+                        },
+                        items: {
+                            type: "object",
+                            properties: {
+                                p: {
+                                    type: "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            helmValuesYaml: YAML.stringify({}),
+            xOnyxiaContext,
+            infoAmountInHelmValues: "user provided"
+        });
+
+        const expected = {
+            helmValues: { r: [{ p: "foo" }, { p: "bar" }, { p: "baz" }] },
+            helmValuesSchema_forDataTextEditor: {
+                type: "object",
+                properties: {
+                    r: {
+                        type: "array",
+                        default: [{ p: "foo" }, { p: "bar" }, { p: "baz" }],
+                        items: {
+                            type: "object",
+                            properties: {
+                                p: {
+                                    type: "string"
+                                }
+                            },
+                            required: ["p"],
+                            additionalProperties: false
+                        }
+                    }
+                },
+                required: ["r"],
+                additionalProperties: false
+            },
+            isChartUsingS3: false
+        };
+
+        expect(got).toStrictEqual(expected);
+    });
+
+    it("default array work even when extra properties in objects", () => {
+        const xOnyxiaContext = {
+            s3: {},
+            a: {
+                b: [
+                    { p: "foo", q: "xxx" },
+                    { p: "bar", q: "xxx" },
+                    { p: "baz", q: "xxx" }
+                ]
+            }
+        };
+
+        const got = computeHelmValues({
+            helmValuesSchema: {
+                type: "object",
+                properties: {
+                    r: {
+                        type: "array",
+                        "x-onyxia": {
+                            overwriteDefaultWith: "{{a.b}}"
+                        },
+                        items: {
+                            type: "object",
+                            properties: {
+                                p: {
+                                    type: "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            helmValuesYaml: YAML.stringify({}),
+            xOnyxiaContext,
+            infoAmountInHelmValues: "user provided"
+        });
+
+        const expected = {
+            helmValues: { r: [{ p: "foo" }, { p: "bar" }, { p: "baz" }] },
+            helmValuesSchema_forDataTextEditor: {
+                type: "object",
+                properties: {
+                    r: {
+                        type: "array",
+                        default: [{ p: "foo" }, { p: "bar" }, { p: "baz" }],
+                        items: {
+                            type: "object",
+                            properties: {
+                                p: {
+                                    type: "string"
+                                }
+                            },
+                            required: ["p"],
+                            additionalProperties: false
+                        }
+                    }
+                },
+                required: ["r"],
+                additionalProperties: false
+            },
+            isChartUsingS3: false
+        };
+
+        expect(got).toStrictEqual(expected);
+    });
+
+    it("array mapping", () => {
+        const xOnyxiaContext = {
+            s3: {},
+            a: {
+                b: [
+                    { p: "foo", q_x: "xxx_1" },
+                    { p: "bar", q_x: "xxx_2" },
+                    { p: "baz", q_x: "xxx_3" }
+                ]
+            },
+            k: "hello"
+        };
+
+        const got = computeHelmValues({
+            helmValuesSchema: {
+                type: "object",
+                properties: {
+                    r: {
+                        type: "array",
+                        "x-onyxia": {
+                            overwriteDefaultWith: "{{a.b}}"
+                        },
+                        items: {
+                            type: "object",
+                            properties: {
+                                p: {
+                                    type: "string"
+                                },
+                                q: {
+                                    type: "string",
+                                    "x-onyxia": {
+                                        overwriteDefaultWith: "{{q_x}}"
+                                    }
+                                },
+                                c: {
+                                    type: "string",
+                                    "x-onyxia": {
+                                        overwriteDefaultWith: "{{k}}"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            helmValuesYaml: YAML.stringify({}),
+            xOnyxiaContext,
+            infoAmountInHelmValues: "user provided"
+        });
+
+        const expected = {
+            helmValues: {
+                r: [
+                    { p: "foo", q: "xxx_1", c: "hello" },
+                    { p: "bar", q: "xxx_2", c: "hello" },
+                    { p: "baz", q: "xxx_3", c: "hello" }
+                ]
+            },
+            helmValuesSchema_forDataTextEditor: {
+                type: "object",
+                properties: {
+                    r: {
+                        type: "array",
+                        default: [
+                            { p: "foo", q: "xxx_1", c: "hello" },
+                            { p: "bar", q: "xxx_2", c: "hello" },
+                            { p: "baz", q: "xxx_3", c: "hello" }
+                        ],
+                        items: {
+                            type: "object",
+                            properties: {
+                                p: {
+                                    type: "string"
+                                },
+                                q: {
+                                    type: "string"
+                                },
+                                c: {
+                                    type: "string"
+                                }
+                            },
+                            required: ["p", "q", "c"],
+                            additionalProperties: false
+                        }
+                    }
+                },
+                required: ["r"],
+                additionalProperties: false
             },
             isChartUsingS3: false
         };

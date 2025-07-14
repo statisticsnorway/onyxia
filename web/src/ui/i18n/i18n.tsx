@@ -1,10 +1,10 @@
 import {
     createI18nApi,
     declareComponentKeys,
-    LocalizedString as GenericLocalizedString
+    type LocalizedString as GenericLocalizedString
 } from "i18nifty";
 import { fallbackLanguage, type Language } from "./types";
-import { ComponentKey } from "./types";
+import type { ComponentKey } from "./types";
 import { statefulObservableToStatefulEvt } from "powerhooks/tools/StatefulObservable/statefulObservableToStatefulEvt";
 import { env } from "env";
 import { objectEntries } from "tsafe/objectEntries";
@@ -59,10 +59,10 @@ export const languagesPrettyPrint: Record<Language, string> = objectFromEntries(
         /* spell-checker: disable */
         en: "English",
         fr: "Français",
-        de: "Deutsch",
+        de: "German (Deutsch)",
         it: "Italiano",
         es: "Español",
-        nl: "Nederlands",
+        nl: "Dutch (Nederlands)",
         no: "Norsk",
         fi: "Suomi",
         "zh-CN": "简体中文"

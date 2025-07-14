@@ -1,9 +1,13 @@
+import type { OidcParams_Partial } from "./OidcParams";
+import type { LocalizedString } from "./Language";
+
 export type DeploymentRegion = {
     id: string;
     servicesMonitoringUrlPattern: string | undefined;
     defaultIpProtection: boolean | undefined;
     defaultNetworkPolicy: boolean | undefined;
     kubernetesClusterDomain: string;
+    kubernetesClusterIngressPort: number | undefined;
     ingressClassName: string | undefined;
     ingress: boolean | undefined;
     route: boolean | undefined;
@@ -38,12 +42,7 @@ export type DeploymentRegion = {
               kvEngine: string;
               role: string;
               authPath: string | undefined;
-              oidcParams:
-                  | {
-                        issuerUri?: string;
-                        clientId: string;
-                    }
-                  | undefined;
+              oidcParams: OidcParams_Partial;
           }
         | undefined;
     proxyInjection:
@@ -72,12 +71,7 @@ export type DeploymentRegion = {
         | {
               url: string;
               usernamePrefix?: string;
-              oidcParams:
-                  | {
-                        issuerUri?: string;
-                        clientId: string;
-                    }
-                  | undefined;
+              oidcParams: OidcParams_Partial;
           }
         | undefined;
     sliders: Record<
@@ -125,12 +119,7 @@ export namespace DeploymentRegion {
                       roleSessionName: string;
                   }
                 | undefined;
-            oidcParams:
-                | {
-                      issuerUri?: string;
-                      clientId: string;
-                  }
-                | undefined;
+            oidcParams: OidcParams_Partial;
         };
         workingDirectory:
             | {
@@ -144,5 +133,31 @@ export namespace DeploymentRegion {
                   bucketNamePrefix: string;
                   bucketNamePrefixGroup: string;
               };
+        bookmarkedDirectories: S3Config.BookmarkedDirectory[];
     };
+
+    export namespace S3Config {
+        export type BookmarkedDirectory =
+            | BookmarkedDirectory.Static
+            | BookmarkedDirectory.Dynamic;
+
+        export namespace BookmarkedDirectory {
+            export type Common = {
+                fullPath: string;
+                title: LocalizedString;
+                description: LocalizedString | undefined;
+                tags: LocalizedString[] | undefined;
+            };
+
+            export type Static = Common & {
+                claimName: undefined;
+            };
+
+            export type Dynamic = Common & {
+                claimName: string;
+                includedClaimPattern: string | undefined;
+                excludedClaimPattern: string | undefined;
+            };
+        }
+    }
 }

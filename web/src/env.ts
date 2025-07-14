@@ -1,10 +1,7 @@
 /* In keycloak-theme, this should be evaluated early */
 
-import {
-    retrieveParamFromUrl,
-    addParamToUrl,
-    updateSearchBarUrl
-} from "powerhooks/tools/urlSearchParams";
+import { getSearchParam, addOrUpdateSearchParam } from "powerhooks/tools/urlSearchParams";
+import { updateSearchBarUrl } from "powerhooks/tools/updateSearchBar";
 import { assert, type Equals, is } from "tsafe/assert";
 import { isAmong } from "tsafe/isAmong";
 import { kcEnvNames } from "keycloak-theme/kc.gen";
@@ -29,7 +26,18 @@ import { getIsJSON5ObjectOrArray } from "ui/tools/getIsJSON5ObjectOrArray";
 import JSON5 from "json5";
 import { ensureUrlIsSafe } from "ui/shared/ensureUrlIsSafe";
 
-export const { env, injectTransferableEnvsInQueryParams } = createParsedEnvs([
+//NOTE: Initially we where in CRA so we used PUBLIC_URL,
+// in Vite BASE_URL is the equivalent but it's not exactly formatted the same way.
+// CRA: "" <=> Vite: "/"
+// CRA: "/foo" <=> Vite: "/foo/"
+// So we convert the Vite format to the CRA format for retro compatibility.
+export const PUBLIC_URL = (() => {
+    const BASE_URL = import.meta.env.BASE_URL;
+
+    return BASE_URL === "/" ? "" : BASE_URL.replace(/\/$/, "");
+})();
+
+export const { env, injectEnvsTransferableToKeycloakTheme } = createParsedEnvs([
     {
         envName: "ONYXIA_API_URL",
         isUsedInKeycloakTheme: false,
@@ -58,6 +66,70 @@ export const { env, injectTransferableEnvsInQueryParams } = createParsedEnvs([
     },
     {
         envName: "PALETTE_OVERRIDE",
+        isUsedInKeycloakTheme: true,
+        validateAndParseOrGetDefault: ({
+            envValue,
+            envName
+        }): DeepPartial<PaletteBase> => {
+            if (envValue === "") {
+                return {};
+            }
+
+            let paletteOverride: any;
+
+            try {
+                paletteOverride = JSON5.parse(envValue);
+            } catch (err) {
+                throw new Error(`${envName} is not parsable JSON5: ${envValue}`);
+            }
+
+            assert(
+                typeGuard<DeepPartial<PaletteBase>>(
+                    paletteOverride,
+                    typeof paletteOverride === "object" &&
+                        paletteOverride !== null &&
+                        !(paletteOverride instanceof Array)
+                ),
+                `${envName} should be a JSON object`
+            );
+
+            return paletteOverride;
+        }
+    },
+    {
+        envName: "PALETTE_OVERRIDE_LIGHT",
+        isUsedInKeycloakTheme: true,
+        validateAndParseOrGetDefault: ({
+            envValue,
+            envName
+        }): DeepPartial<PaletteBase> => {
+            if (envValue === "") {
+                return {};
+            }
+
+            let paletteOverride: any;
+
+            try {
+                paletteOverride = JSON5.parse(envValue);
+            } catch (err) {
+                throw new Error(`${envName} is not parsable JSON5: ${envValue}`);
+            }
+
+            assert(
+                typeGuard<DeepPartial<PaletteBase>>(
+                    paletteOverride,
+                    typeof paletteOverride === "object" &&
+                        paletteOverride !== null &&
+                        !(paletteOverride instanceof Array)
+                ),
+                `${envName} should be a JSON object`
+            );
+
+            return paletteOverride;
+        }
+    },
+    {
+        envName: "PALETTE_OVERRIDE_DARK",
         isUsedInKeycloakTheme: true,
         validateAndParseOrGetDefault: ({
             envValue,
@@ -437,6 +509,57 @@ export const { env, injectTransferableEnvsInQueryParams } = createParsedEnvs([
         }
     },
     {
+        envName: "FOOTER_LINKS",
+        isUsedInKeycloakTheme: false,
+        validateAndParseOrGetDefault: ({ envValue, envName }) => {
+            if (envValue === "") {
+                return [];
+            }
+
+            let parsedValue: unknown;
+
+            try {
+                parsedValue = JSON5.parse(envValue);
+            } catch {
+                throw new Error(`${envName} is not a valid JSON`);
+            }
+
+            type ParsedValue = LinkFromConfig[];
+
+            const zParsedValue = z.array(
+                zLinkFromConfig.superRefine((data, ctx) => {
+                    if (data.endIcon !== undefined) {
+                        ctx.addIssue({
+                            code: z.ZodIssueCode.custom,
+                            message: `You can specify endIcons in ${envName}, see: ${JSON.stringify(
+                                data
+                            )}`
+                        });
+                    }
+                })
+            );
+
+            {
+                type Got = ReturnType<(typeof zParsedValue)["parse"]>;
+                type Expected = ParsedValue;
+
+                assert<Got extends Expected ? true : false>();
+                assert<Expected extends Got ? true : false>();
+            }
+
+            try {
+                zParsedValue.parse(parsedValue);
+            } catch (error) {
+                throw new Error(
+                    `The format of ${envName} is not valid: ${String(error)}`
+                );
+            }
+            assert(is<ParsedValue>(parsedValue));
+
+            return parsedValue;
+        }
+    },
+    {
         envName: "DISABLE_HOMEPAGE",
         isUsedInKeycloakTheme: false,
         validateAndParseOrGetDefault: ({ envValue, envName }) => {
@@ -691,9 +814,9 @@ export const { env, injectTransferableEnvsInQueryParams } = createParsedEnvs([
             if (envValue === "") {
                 assert(is<typeof env>(env_));
 
-                return env_.HOMEPAGE_HERO_TEXT === undefined
+                return env_.HOMEPAGE_BELOW_HERO_TEXT === undefined
                     ? undefined
-                    : toFn(env_.HOMEPAGE_HERO_TEXT);
+                    : toFn(env_.HOMEPAGE_BELOW_HERO_TEXT);
             }
 
             if (!getIsJSON5ObjectOrArray(envValue)) {
@@ -1146,6 +1269,20 @@ export const { env, injectTransferableEnvsInQueryParams } = createParsedEnvs([
         }
     },
     {
+        envName: "DISABLE_DISPLAY_ALL_CATALOG",
+        isUsedInKeycloakTheme: false,
+        validateAndParseOrGetDefault: ({ envValue, envName }) => {
+            const possibleValues = ["true", "false"];
+
+            assert(
+                possibleValues.indexOf(envValue) >= 0,
+                `${envName} should either be ${possibleValues.join(" or ")}`
+            );
+
+            return envValue === "true";
+        }
+    },
+    {
         envName: "S3_DOCUMENTATION_LINK",
         isUsedInKeycloakTheme: false,
         validateAndParseOrGetDefault: ({ envValue }) => {
@@ -1230,6 +1367,20 @@ export const { env, injectTransferableEnvsInQueryParams } = createParsedEnvs([
 
             return parsedValue;
         }
+    },
+    {
+        envName: "OIDC_DEBUG_LOGS",
+        isUsedInKeycloakTheme: false,
+        validateAndParseOrGetDefault: ({ envValue, envName }) => {
+            const possibleValues = ["true", "false"];
+
+            assert(
+                possibleValues.indexOf(envValue) >= 0,
+                `${envName} should either be ${possibleValues.join(" or ")}`
+            );
+
+            return envValue === "true";
+        }
     }
 ]);
 
@@ -1256,7 +1407,7 @@ function createParsedEnvs<Parser extends Entry<EnvName>>(
             Extract<Parser, { envName: K }>["validateAndParseOrGetDefault"]
         >;
     } & { PUBLIC_URL: string };
-    injectTransferableEnvsInQueryParams: (url: string) => string;
+    injectEnvsTransferableToKeycloakTheme: (authorizationUrl: string) => string;
 } {
     const parsedValueOrGetterByEnvName: Record<string, any> = {};
 
@@ -1264,17 +1415,6 @@ function createParsedEnvs<Parser extends Entry<EnvName>>(
 
     const kcContext =
         window.kcContext?.themeType === "login" ? window.kcContext : undefined;
-
-    //NOTE: Initially we where in CRA so we used PUBLIC_URL,
-    // in Vite BASE_URL is the equivalent but it's not exactly formatted the same way.
-    // CRA: "" <=> Vite: "/"
-    // CRA: "/foo" <=> Vite: "/foo/"
-    // So we convert the Vite format to the CRA format for retro compatibility.
-    const PUBLIC_URL = (() => {
-        const BASE_URL = import.meta.env.BASE_URL;
-
-        return BASE_URL === "/" ? "" : BASE_URL.replace(/\/$/, "");
-    })();
 
     const env: any = new Proxy(
         {},
@@ -1350,26 +1490,22 @@ function createParsedEnvs<Parser extends Entry<EnvName>>(
             const localStorageKey = `${localStoragePrefix}${envName}`;
 
             look_in_url: {
-                if (
-                    kcContext === undefined &&
-                    (import.meta.env.ALLOW_THEME_TESTING_VIA_URL !== "true" ||
-                        !id<EnvName[]>(["FONT", "PALETTE_OVERRIDE"]).includes(envName))
-                ) {
+                if (kcContext === undefined) {
                     break look_in_url;
                 }
 
-                const result = retrieveParamFromUrl({
+                const { wasPresent, value, url_withoutTheParam } = getSearchParam({
                     url: window.location.href,
                     name: envName
                 });
 
-                if (!result.wasPresent) {
+                if (!wasPresent) {
                     break look_in_url;
                 }
 
-                let { newUrl, value: envValue } = result;
+                updateSearchBarUrl(url_withoutTheParam);
 
-                updateSearchBarUrl(newUrl);
+                let envValue = value;
 
                 if (isProductionKeycloak) {
                     const kcEnvName = `ONYXIA_${envName}` as const;
@@ -1424,16 +1560,16 @@ function createParsedEnvs<Parser extends Entry<EnvName>>(
             const envValue = getEnvValue();
 
             if (kcContext === undefined) {
-                injectFunctions.push(
-                    url =>
-                        addParamToUrl({
-                            url,
-                            name: envName,
-                            value: envValue.replace(
-                                /%PUBLIC_URL%\/custom-resources/g,
-                                `${window.location.origin}${PUBLIC_URL}/custom-resources`
-                            )
-                        }).newUrl
+                injectFunctions.push(url =>
+                    addOrUpdateSearchParam({
+                        url,
+                        name: envName,
+                        value: envValue.replace(
+                            /%PUBLIC_URL%\/custom-resources/g,
+                            `${window.location.origin}${PUBLIC_URL}/custom-resources`
+                        ),
+                        encodeMethod: "encodeURIComponent"
+                    })
                 );
             }
 
@@ -1453,47 +1589,13 @@ function createParsedEnvs<Parser extends Entry<EnvName>>(
         }
     }
 
-    function injectTransferableEnvsInQueryParams(url: string): string {
-        let newUrl = url;
-
+    function injectEnvsTransferableToKeycloakTheme(authorizationUrl: string): string {
         for (const inject of injectFunctions) {
-            newUrl = inject(newUrl);
+            authorizationUrl = inject(authorizationUrl);
         }
 
-        return newUrl;
+        return authorizationUrl;
     }
 
-    //Do not remove, helper to generate an url to preview the theme.
-    /*
-    {
-
-        let url = "https://datalab.sspcloud.fr";
-
-        for (const envName of id<EnvName[]>([
-            "FONT",
-            "PALETTE_OVERRIDE",
-            "HOMEPAGE_MAIN_ASSET",
-            "HOMEPAGE_MAIN_ASSET_X_OFFSET",
-            "HOMEPAGE_MAIN_ASSET_Y_OFFSET",
-            "HOMEPAGE_MAIN_ASSET_SCALE_FACTOR",
-            "HEADER_TEXT_FOCUS"
-        ])) {
-
-            const envValue = import.meta.env[envName];
-
-            url = addParamToUrl({ url, "name": envName, "value": envValue }).newUrl;
-
-            if (envValue === "") {
-                continue;
-            }
-
-
-        }
-
-        console.log(url);
-
-    }
-    */
-
-    return { env, injectTransferableEnvsInQueryParams };
+    return { env, injectEnvsTransferableToKeycloakTheme };
 }

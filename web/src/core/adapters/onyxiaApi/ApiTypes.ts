@@ -5,6 +5,7 @@ export type ApiTypes = {
     "/public/ip": {
         ip: string;
     };
+    "/profile/schema": JSONSchema | "";
     "/public/configuration": {
         build: {
             version: string;
@@ -16,6 +17,7 @@ export type ApiTypes = {
                 customValues?: Record<string, unknown>;
                 expose: {
                     domain: string;
+                    ingressPort?: number | string;
                     ingressClassName: string;
                     ingress?: boolean;
                     route?: boolean;
@@ -71,10 +73,7 @@ export type ApiTypes = {
                 };
                 initScript: string;
                 k8sPublicEndpoint: {
-                    oidcConfiguration?: {
-                        issuerURI?: string;
-                        clientID: string;
-                    };
+                    oidcConfiguration?: Partial<ApiTypes.OidcConfiguration>;
                     URL?: string;
                 };
                 openshiftSCC?: {
@@ -97,10 +96,7 @@ export type ApiTypes = {
                                   roleSessionName: string;
                               }
                             | undefined;
-                        oidcConfiguration?: {
-                            issuerURI?: string;
-                            clientID: string;
-                        };
+                        oidcConfiguration?: Partial<ApiTypes.OidcConfiguration>;
                     };
 
                     /** Ok to be undefined only if sts is undefined */
@@ -116,6 +112,19 @@ export type ApiTypes = {
                               bucketNamePrefix: string;
                               bucketNamePrefixGroup: string;
                           };
+                    bookmarkedDirectories?: ({
+                        fullPath: string;
+                        title: LocalizedString;
+                        description: LocalizedString | undefined;
+                        tags: LocalizedString[] | undefined;
+                    } & (
+                        | { claimName: undefined }
+                        | {
+                              claimName: string;
+                              includedClaimPattern: string;
+                              excludedClaimPattern: string;
+                          }
+                    ))[];
                 }>;
             };
             vault?: {
@@ -123,10 +132,7 @@ export type ApiTypes = {
                 kvEngine: string;
                 role: string;
                 authPath?: string;
-                oidcConfiguration?: {
-                    issuerURI?: string;
-                    clientID: string;
-                };
+                oidcConfiguration?: Partial<ApiTypes.OidcConfiguration>;
             };
             proxyInjection?: {
                 enabled?: boolean;
@@ -146,11 +152,7 @@ export type ApiTypes = {
                 pathToCaBundle: string;
             };
         }[];
-        oidcConfiguration?: {
-            issuerURI: string;
-            clientID: string;
-            extraQueryParams?: string;
-        };
+        oidcConfiguration?: ApiTypes.OidcConfiguration;
     };
     "/<public|my-lab>/catalogs": {
         catalogs: {
@@ -188,7 +190,9 @@ export type ApiTypes = {
         }[];
     };
     "/my-lab/catalogs/${catalogId}/charts/${chartName}": { version: string }[];
-    "/my-lab/schemas/${catalogId}/charts/${chartName}/versions/${chartVersion}": JSONSchema;
+    "/my-lab/schemas/${catalogId}/charts/${chartName}/versions/${chartVersion}":
+        | JSONSchema
+        | "";
     "/my-lab/services": {
         apps: {
             id: string;
@@ -215,7 +219,7 @@ export type ApiTypes = {
     "/user/info": {
         email: string;
         idep: string;
-        nomComplet: string;
+        nomComplet?: string;
         projects: {
             id: string;
             name: string;
@@ -270,3 +274,14 @@ export type ApiTypes = {
         type: "Normal" | "Warning" | string; // Allows specific types but also remains open for extension.
     };
 };
+
+export namespace ApiTypes {
+    export type OidcConfiguration = {
+        issuerURI: string;
+        clientID: string;
+        extraQueryParams?: string;
+        scope?: string;
+        audience?: string;
+        idleSessionLifetimeInSeconds?: number | string;
+    };
+}

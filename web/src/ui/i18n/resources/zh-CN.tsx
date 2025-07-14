@@ -9,7 +9,7 @@ import { MaybeLink } from "ui/shared/MaybeLink";
 export const translations: Translations<"zh-CN"> = {
     /* spell-checker: disable */
     Account: {
-        infos: "账号信息",
+        profile: "个人资料",
         git: undefined,
         storage: "链接到储存器",
         "user-interface": "变换显示模式",
@@ -20,13 +20,18 @@ export const translations: Translations<"zh-CN"> = {
         "personal tokens tooltip": "服务的访问令牌",
         vault: "Vault"
     },
-    AccountInfoTab: {
-        "general information": "一般信息",
-        "user id": "身分名 (IDEP)",
-        "full name": "全名",
-        email: "邮件地址",
-        "instructions about how to change password":
-            "要更改密码，只需登出，然后点击“忘记密码”链接。"
+    AccountProfileTab: {
+        "account id": "账户标识符",
+        "account id helper": "与您用于登录平台的身份相关联的无形标识符",
+        "user id": "用户ID",
+        email: "电子邮件",
+        "account management": "账户管理"
+    },
+    UserProfileForm: {
+        "customizable profile": "可定制的个人资料",
+        "customizable profile helper": "用于自动配置服务的有用信息",
+        save: "保存",
+        restore: "恢复"
     },
     AccountGitTab: {
         gitName: "Git 用户名",
@@ -267,9 +272,9 @@ export const translations: Translations<"zh-CN"> = {
         reset: "重置",
         "reset helper dialogs helper text": "重置您要求不再显示的消息窗口"
     },
-    MyFiles: {
-        "page title - my files": "我的文件",
-        "what this page is used for - my files": "在此处存储您的数据.",
+    FileExplorer: {
+        "page title - file explorer": "文件资源管理器",
+        "what this page is used for - file explorer": "在此处存储您的数据.",
         "help content": ({ accountTabLink, docHref }) => (
             <>
                 阅读{" "}
@@ -279,9 +284,24 @@ export const translations: Translations<"zh-CN"> = {
                 。&nbsp;
                 <MuiLink {...accountTabLink}>配置 Minio 客户端</MuiLink>。
             </>
-        )
+        ),
+        "title personal": "我的数据",
+        "description personal": "您自己的文件和数据集。",
+        "title project": ({ projectName }) => `项目 ${projectName}`,
+        "description project": ({ projectName }) => `项目 ${projectName} 的共享存储空间`,
+        tags: ({ type }) => {
+            switch (type) {
+                case "personal":
+                    return "我的数据";
+                case "project":
+                    return "群组数据";
+            }
+        }
     },
-    MyFilesDisabledDialog: {
+    S3EntryCard: {
+        "space path": "空间路径"
+    },
+    FileExplorerDisabledDialog: {
         "dialog title": "未配置S3服务器",
         "dialog body": "此实例未配置S3服务器。但您可以手动添加一个，以启用S3文件浏览器。",
         cancel: "取消",
@@ -335,6 +355,7 @@ export const translations: Translations<"zh-CN"> = {
     ExplorerButtonBar: {
         file: "文件",
         delete: "删除",
+        "download directory": "下载",
         "upload file": "上传文件",
         "copy path": "复制 S3 对象名称",
         "create directory": "创建目录",
@@ -343,6 +364,9 @@ export const translations: Translations<"zh-CN"> = {
         share: "分享",
         "alt list view": "显示列表",
         "alt block view": "显示块"
+    },
+    ExplorerDownloadSnackbar: {
+        "download preparation": "下载准备中 ..."
     },
     SecretsExplorerButtonBar: {
         secret: "密码",
@@ -464,6 +488,7 @@ export const translations: Translations<"zh-CN"> = {
         "divider: external services features": "外部服务功能",
         "divider: onyxia instance specific features": "Onyxia实例特定功能",
         dataExplorer: "数据浏览器",
+        fileExplorer: "文件浏览器",
         sqlOlapShell: "SQL OLAP 外壳"
     },
     AutoLogoutCountdown: {
@@ -506,7 +531,8 @@ export const translations: Translations<"zh-CN"> = {
         header: "服务目录",
         "no result found": ({ forWhat }) => `没有找到关于 ${forWhat} 的结果`,
         "search results": "搜索结果",
-        search: "收索服务"
+        search: "收索服务",
+        "title all catalog": "全部"
     },
     CatalogChartCard: {
         launch: "启动",
@@ -752,7 +778,6 @@ ${
         )
     },
     Footer: {
-        contribute: "为项目做贡献",
         "terms of service": "使用条款",
         "change language": "切换语言",
         "dark mode switch": "黑暗模式切换" // or maybe 黑暗模式开关
@@ -828,7 +853,11 @@ ${
     MyServicesRestorableConfigOptions: {
         edit: "编辑服务",
         "copy link": "复制链接",
-        "remove bookmark": "删除书签"
+        "remove bookmark": "删除书签",
+        "move down": "下移",
+        "move up": "上移",
+        "move to top": "移至顶部",
+        "move to bottom": "移至底部"
     },
     MyServicesRestorableConfig: {
         edit: "编辑服务",

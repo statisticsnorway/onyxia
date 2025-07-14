@@ -13,16 +13,22 @@ import type { Language } from "core/ports/OnyxiaApi/Language";
 import { createDuckDbSqlOlap } from "core/adapters/sqlOlap";
 import { pluginSystemInitCore } from "pluginSystem";
 import { createOnyxiaApi } from "core/adapters/onyxiaApi";
+import { assert } from "tsafe/assert";
+import { fnv1aHashToHex } from "core/tools/fnv1aHashToHex";
 
-type ParamsOfBootstrapCore = {
+export type ParamsOfBootstrapCore = {
     apiUrl: string;
-    transformUrlBeforeRedirectToLogin: (url: string) => string;
+    transformBeforeRedirectForKeycloakTheme: (params: {
+        authorizationUrl: string;
+    }) => string;
     getCurrentLang: () => Language;
     disablePersonalInfosInjectionInGroup: boolean;
     isCommandBarEnabledByDefault: boolean;
     quotaWarningThresholdPercent: number;
     quotaCriticalThresholdPercent: number;
     isAuthGloballyRequired: boolean;
+    enableOidcDebugLogs: boolean;
+    disableDisplayAllCatalog: boolean;
 };
 
 export type Context = {
@@ -38,7 +44,13 @@ export type Core = GenericCore<typeof usecases, Context>;
 export async function bootstrapCore(
     params: ParamsOfBootstrapCore
 ): Promise<{ core: Core }> {
-    const { apiUrl, transformUrlBeforeRedirectToLogin, isAuthGloballyRequired } = params;
+    const {
+        apiUrl,
+        transformBeforeRedirectForKeycloakTheme,
+        getCurrentLang,
+        isAuthGloballyRequired,
+        enableOidcDebugLogs
+    } = params;
 
     let isCoreCreated = false;
 
@@ -46,7 +58,7 @@ export async function bootstrapCore(
 
     const onyxiaApi = createOnyxiaApi({
         url: apiUrl,
-        getOidcAccessToken: () => {
+        getOidcAccessToken: async () => {
             if (oidc === undefined) {
                 return undefined;
             }
@@ -54,7 +66,7 @@ export async function bootstrapCore(
             if (!oidc.isUserLoggedIn) {
                 return undefined;
             }
-            return oidc.getTokens().accessToken;
+            return (await oidc.getTokens()).accessToken;
         },
         getCurrentRegionId: () => {
             if (!isCoreCreated) {
@@ -114,19 +126,11 @@ export async function bootstrapCore(
         const { createOidc } = await import("core/adapters/oidc");
 
         return createOidc({
-            issuerUri: oidcParams.issuerUri,
-            clientId: oidcParams.clientId,
-            transformUrlBeforeRedirect: url => {
-                let transformedUrl = url;
-
-                if (oidcParams.serializedExtraQueryParams !== undefined) {
-                    transformedUrl += `&${oidcParams.serializedExtraQueryParams}`;
-                }
-
-                transformedUrl = transformUrlBeforeRedirectToLogin(transformedUrl);
-
-                return transformedUrl;
-            }
+            ...oidcParams,
+            transformBeforeRedirectForKeycloakTheme,
+            getCurrentLang,
+            autoLogin: false,
+            enableDebugLogs: enableOidcDebugLogs
         });
     })();
 
@@ -209,20 +213,48 @@ export async function bootstrapCore(
             break init_secrets_manager;
         }
 
-        const [{ createSecretManager }, { createOidcOrFallback }] = await Promise.all([
-            import("core/adapters/secretManager"),
-            import("core/adapters/oidc/utils/createOidcOrFallback")
-        ]);
+        const [{ createSecretManager }, { createOidc, mergeOidcParams }, { oidcParams }] =
+            await Promise.all([
+                import("core/adapters/secretManager"),
+                import("core/adapters/oidc"),
+                onyxiaApi.getAvailableRegionsAndOidcParams()
+            ]);
+
+        assert(oidcParams !== undefined);
+
+        const oidc_vault = await createOidc({
+            ...mergeOidcParams({
+                oidcParams,
+                oidcParams_partial: deploymentRegion.vault.oidcParams
+            }),
+            transformBeforeRedirectForKeycloakTheme,
+            getCurrentLang,
+            autoLogin: true,
+            enableDebugLogs: enableOidcDebugLogs
+        });
+
+        const doClearCachedVaultToken: boolean = await (async () => {
+            const { projects } = await onyxiaApi.getUserAndProjects();
+
+            const KEY = "onyxia:vault:projects-hash";
+
+            const hash = fnv1aHashToHex(JSON.stringify(projects));
+
+            if (!oidc_vault.isNewBrowserSession && sessionStorage.getItem(KEY) === hash) {
+                return false;
+            }
+
+            sessionStorage.setItem(KEY, hash);
+            return true;
+        })();
 
         context.secretsManager = await createSecretManager({
             kvEngine: deploymentRegion.vault.kvEngine,
             role: deploymentRegion.vault.role,
             url: deploymentRegion.vault.url,
             authPath: deploymentRegion.vault.authPath,
-            oidc: await createOidcOrFallback({
-                oidcParams: deploymentRegion.vault.oidcParams,
-                fallbackOidc: oidc
-            })
+            getAccessToken: async () => (await oidc_vault.getTokens()).accessToken,
+            doClearCachedVaultToken
         });
     }
 
@@ -236,6 +268,14 @@ export async function bootstrapCore(
 
     if (oidc.isUserLoggedIn) {
         dispatch(usecases.restorableConfigManagement.protectedThunks.initialize());
+    }
+
+    if (oidc.isUserLoggedIn) {
+        await dispatch(usecases.userProfileForm.protectedThunks.initialize());
+    }
+
+    if (oidc.isUserLoggedIn) {
+        await dispatch(usecases.s3ConfigManagement.protectedThunks.initialize());
     }
 
     pluginSystemInitCore({ core, context });

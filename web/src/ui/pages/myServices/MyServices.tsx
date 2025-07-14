@@ -9,7 +9,7 @@ import {
     MyServicesRestorableConfigs,
     type Props as MyServicesRestorableConfigsProps
 } from "./MyServicesRestorableConfigs";
-import { ButtonId } from "./MyServicesButtonBar";
+import { type ButtonId } from "./MyServicesButtonBar";
 import { useConstCallback } from "powerhooks/useConstCallback";
 import { useCoreState, useCore } from "core";
 import { routes } from "ui/routes";
@@ -34,13 +34,14 @@ import {
 } from "./ClusterEventsSnackbar";
 import { useEvt } from "evt/hooks";
 import { getIconUrlByName, customIcons } from "lazy-icons";
+import { withLoginEnforced } from "ui/shared/withLoginEnforced";
 
 export type Props = {
     route: PageRoute;
     className?: string;
 };
 
-export default function MyServices(props: Props) {
+const MyServices = withLoginEnforced((props: Props) => {
     const { className, route } = props;
 
     const { t } = useTranslation({ MyServices });
@@ -49,7 +50,8 @@ export default function MyServices(props: Props) {
     /* prettier-ignore */
     const { serviceManagement, restorableConfigManagement, k8sCodeSnippets, clusterEventsMonitor } = useCore().functions;
     /* prettier-ignore */
-    const { restorableConfigs, chartIconUrlByRestorableConfigIndex } = useCoreState("restorableConfigManagement", "main");
+
+    const restorableConfigs = useCoreState("restorableConfigManagement", "restorableConfigs");
     const {
         isUpdating,
         services,
@@ -143,17 +145,9 @@ export default function MyServices(props: Props) {
             .push()
     );
 
-    const onRequestDeleteRestorableConfig = useConstCallback<
-        MyServicesRestorableConfigsProps["onRequestDelete"]
-    >(({ restorableConfigIndex }) => {
-        restorableConfigManagement.deleteRestorableConfig({
-            restorableConfig: restorableConfigs[restorableConfigIndex]
-        });
-    });
-
-    const restorableConfigEntires = useMemo(
+    const restorableConfigEntries = useMemo(
         (): MyServicesRestorableConfigsProps["entries"] =>
-            restorableConfigs.map((restorableConfig, restorableConfigIndex) => {
+            restorableConfigs.map(restorableConfig => {
                 const buildLink = (autoLaunch: boolean) => {
                     const {
                         catalogId,
@@ -166,8 +160,9 @@ export default function MyServices(props: Props) {
                         ...rest
                     } = restorableConfig;
 
-                    // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-                    assert<Equals<typeof rest, {}>>(true);
+                    assert<Equals<typeof rest, { chartIconUrl: string | undefined }>>(
+                        true
+                    );
 
                     return routes.launcher({
                         catalogId,
@@ -182,15 +177,17 @@ export default function MyServices(props: Props) {
                 };
 
                 return {
-                    restorableConfigIndex,
-                    chartIconUrl:
-                        chartIconUrlByRestorableConfigIndex[restorableConfigIndex],
-                    friendlyName: restorableConfig.friendlyName,
+                    restorableConfigRef: {
+                        friendlyName: restorableConfig.friendlyName,
+                        catalogId: restorableConfig.catalogId,
+                        chartName: restorableConfig.chartName
+                    },
+                    chartIconUrl: restorableConfig.chartIconUrl,
                     launchLink: buildLink(true),
                     editLink: buildLink(false)
                 };
             }),
-        [restorableConfigs, chartIconUrlByRestorableConfigIndex]
+        [restorableConfigs]
     );
 
     const getMyServiceLink = useConstCallback<MyServicesCardsProps["getMyServiceLink"]>(
@@ -347,45 +344,47 @@ export default function MyServices(props: Props) {
                         />
                     )}
                     <div className={classes.cardsAndSavedConfigs}>
-                        <>
+                        {!isSavedConfigsExtended && (
+                            <MyServicesCards
+                                className={classes.cards}
+                                isUpdating={isUpdating}
+                                services={services}
+                                getMyServiceLink={getMyServiceLink}
+                                catalogExplorerLink={catalogExplorerLink}
+                                onRequestDelete={onRequestDelete}
+                                onRequestPauseOrResume={onRequestPauseOrResume}
+                                onRequestLogHelmGetNotes={
+                                    serviceManagement.logHelmGetNotes
+                                }
+                                onRequestChangeFriendlyName={onRequestChangeFriendlyName}
+                                evtAction={evtMyServiceCardsAction}
+                                lastClusterEvent={lastClusterEvent}
+                                onOpenClusterEventsDialog={onOpenClusterEventsDialog}
+                                onRequestChangeSharedStatus={onRequestChangeSharedStatus}
+                                groupProjectName={groupProjectName}
+                            />
+                        )}
+                        <div className={classes.rightPanel}>
                             {!isSavedConfigsExtended && (
-                                <MyServicesCards
-                                    className={classes.cards}
-                                    isUpdating={isUpdating}
-                                    services={services}
-                                    getMyServiceLink={getMyServiceLink}
-                                    catalogExplorerLink={catalogExplorerLink}
-                                    onRequestDelete={onRequestDelete}
-                                    onRequestPauseOrResume={onRequestPauseOrResume}
-                                    onRequestLogHelmGetNotes={
-                                        serviceManagement.logHelmGetNotes
-                                    }
-                                    onRequestChangeFriendlyName={
-                                        onRequestChangeFriendlyName
-                                    }
-                                    evtAction={evtMyServiceCardsAction}
-                                    lastClusterEvent={lastClusterEvent}
-                                    onOpenClusterEventsDialog={onOpenClusterEventsDialog}
-                                    onRequestChangeSharedStatus={
-                                        onRequestChangeSharedStatus
-                                    }
-                                    groupProjectName={groupProjectName}
-                                />
+                                <Quotas evtActionUpdate={evtQuotasActionUpdate} />
                             )}
-                            <div className={classes.rightPanel}>
-                                {!isSavedConfigsExtended && (
-                                    <Quotas evtActionUpdate={evtQuotasActionUpdate} />
-                                )}
-                                <MyServicesRestorableConfigs
-                                    isShortVariant={!isSavedConfigsExtended}
-                                    entries={restorableConfigEntires}
-                                    onRequestDelete={onRequestDeleteRestorableConfig}
-                                    onRequestToggleIsShortVariant={
-                                        onRequestToggleIsShortVariant
-                                    }
-                                />
-                            </div>
-                        </>
+                            <MyServicesRestorableConfigs
+                                isShortVariant={!isSavedConfigsExtended}
+                                entries={restorableConfigEntries}
+                                onRequestDelete={
+                                    restorableConfigManagement.deleteRestorableConfig
+                                }
+                                onRequestToggleIsShortVariant={
+                                    onRequestToggleIsShortVariant
+                                }
+                                onRequestToMove={
+                                    restorableConfigManagement.reorderRestorableConfigs
+                                }
+                                onRequestRename={
+                                    restorableConfigManagement.renameRestorableConfig
+                                }
+                            />
+                        </div>
                     </div>
                     <MyServicesConfirmDeleteDialog evtOpen={evtConfirmDeleteDialogOpen} />
                 </div>
@@ -397,7 +396,9 @@ export default function MyServices(props: Props) {
             />
         </>
     );
-}
+});
+
+export default MyServices;
 
 function useCommandBarPositioning() {
     const {

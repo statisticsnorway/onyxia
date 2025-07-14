@@ -1,6 +1,7 @@
 import { assert } from "tsafe/assert";
 import type { Thunks } from "core/bootstrap";
 import { actions } from "./state";
+import { parseKeycloakIssuerUri } from "oidc-spa/tools/parseKeycloakIssuerUri";
 
 export const thunks = {
     login:
@@ -24,6 +25,25 @@ export const thunks = {
             assert(oidc.isUserLoggedIn);
 
             return oidc.logout({ redirectTo });
+        },
+    kcRedirectToAccountConsole:
+        () =>
+        (...args): Promise<never> => {
+            const [, , { oidc, paramsOfBootstrapCore }] = args;
+
+            assert(oidc.isUserLoggedIn);
+
+            const keycloak = parseKeycloakIssuerUri(oidc.params.issuerUri);
+
+            assert(keycloak !== undefined);
+
+            window.location.href = keycloak.getAccountUrl({
+                backToAppFromAccountUrl: window.location.href,
+                clientId: oidc.params.clientId,
+                locale: paramsOfBootstrapCore.getCurrentLang()
+            });
+
+            return new Promise<never>(() => {});
         }
 } satisfies Thunks;
 
@@ -41,19 +61,21 @@ export const protectedThunks = {
                         : {
                               isUserLoggedIn: true,
                               user: (await onyxiaApi.getUserAndProjects()).user,
-                              decodedIdToken: oidc.getTokens().decodedIdToken
+                              isKeycloak:
+                                  parseKeycloakIssuerUri(oidc.params.issuerUri) !==
+                                  undefined
                           }
                 )
             );
         },
     getTokens:
         () =>
-        (...args) => {
+        async (...args) => {
             const [, , { oidc }] = args;
 
             assert(oidc.isUserLoggedIn);
 
-            const { decodedIdToken, accessToken, refreshToken } = oidc.getTokens();
+            const { decodedIdToken, accessToken, refreshToken } = await oidc.getTokens();
 
             return { decodedIdToken, accessToken, refreshToken };
         }

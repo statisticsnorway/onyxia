@@ -11,7 +11,7 @@ import { MyServicesRunningTime } from "./MyServicesRunningTime";
 import { Tooltip } from "onyxia-ui/Tooltip";
 import { declareComponentKeys } from "i18nifty";
 import { ReadmeDialog } from "./ReadmeDialog";
-import { Evt, NonPostableEvt } from "evt";
+import { Evt, type NonPostableEvt } from "evt";
 import { useConst } from "powerhooks/useConst";
 import { useEvt } from "evt/hooks";
 import { getIconUrlByName } from "lazy-icons";
@@ -19,7 +19,7 @@ import { CircularProgress } from "onyxia-ui/CircularProgress";
 import type { Link } from "type-route";
 import type { Service } from "core/usecases/serviceManagement";
 import { assert, type Equals } from "tsafe/assert";
-import { TextField, TextFieldProps } from "onyxia-ui/TextField";
+import { TextField, type TextFieldProps } from "onyxia-ui/TextField";
 import MuiLink from "@mui/material/Link";
 import { env } from "env";
 
@@ -141,11 +141,19 @@ export const MyServicesCard = memo((props: Props) => {
                         }}
                     />
                 ) : (
-                    <MuiLink {...myServiceLink}>
-                        <Text className={classes.title} typo="object heading">
-                            {capitalize(service.friendlyName)}
-                        </Text>
-                    </MuiLink>
+                    (() => {
+                        const node = (
+                            <Text className={classes.title} typo="object heading">
+                                {capitalize(service.friendlyName)}
+                            </Text>
+                        );
+
+                        return service.state === "suspended" ? (
+                            node
+                        ) : (
+                            <MuiLink {...myServiceLink}>{node}</MuiLink>
+                        );
+                    })()
                 )}
                 {isEditingFriendlyName ? (
                     <IconButton
