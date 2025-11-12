@@ -1,10 +1,10 @@
-import { useEffect, Suspense, memo } from "react";
+import { Suspense, memo } from "react";
 import { tss } from "tss";
 import { useRoute } from "ui/routes";
-import { useSplashScreen } from "onyxia-ui";
 import { keyframes } from "tss-react";
 import { objectKeys } from "tsafe/objectKeys";
 import { pages } from "ui/pages";
+import CircularProgress from "@mui/material/CircularProgress";
 
 type Props = {
     className?: string;
@@ -15,23 +15,23 @@ export const Main = memo((props: Props) => {
 
     const route = useRoute();
 
-    const { classes } = useStyles();
+    const { classes, cx } = useStyles();
 
     return (
-        <main className={className}>
-            <Suspense fallback={<SuspenseFallback />}>
+        <main key={route.name || ""} className={cx(classes.root, className)}>
+            <Suspense
+                fallback={
+                    <div className={classes.suspenseFallback}>
+                        <CircularProgress />
+                    </div>
+                }
+            >
                 {(() => {
                     for (const pageName of objectKeys(pages)) {
-                        //We must be able to replace "home" by any other page and get no type error.
-                        const page = pages[pageName as "home"];
+                        const page = pages[pageName];
 
                         if (page.routeGroup.has(route)) {
-                            return (
-                                <page.LazyComponent
-                                    className={classes.page}
-                                    route={route}
-                                />
-                            );
+                            return <page.LazyComponent />;
                         }
                     }
 
@@ -42,20 +42,8 @@ export const Main = memo((props: Props) => {
     );
 });
 
-function SuspenseFallback() {
-    const { hideRootSplashScreen } = useSplashScreen();
-
-    useEffect(() => {
-        return () => {
-            hideRootSplashScreen();
-        };
-    }, []);
-
-    return null;
-}
-
 const useStyles = tss.withName({ Main }).create({
-    page: {
+    root: {
         animation: `${keyframes`
             0% {
                 opacity: 0;
@@ -64,5 +52,11 @@ const useStyles = tss.withName({ Main }).create({
                 opacity: 1;
             }
             `} 400ms`
+    },
+    suspenseFallback: {
+        display: "flex",
+        height: "100%",
+        justifyContent: "center",
+        alignItems: "center"
     }
 });

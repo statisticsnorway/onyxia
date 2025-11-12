@@ -33,6 +33,11 @@ export const translations: Translations<"zh-CN"> = {
         save: "保存",
         restore: "恢复"
     },
+    ConfirmNavigationDialog: {
+        "you have unsaved changes": "您有未保存的更改！",
+        cancel: "取消",
+        "continue without saving": "继续且不保存"
+    },
     AccountGitTab: {
         gitName: "Git 用户名",
         "gitName helper text": ({ gitName, focusClassName }) => (
@@ -272,7 +277,7 @@ export const translations: Translations<"zh-CN"> = {
         reset: "重置",
         "reset helper dialogs helper text": "重置您要求不再显示的消息窗口"
     },
-    FileExplorer: {
+    FileExplorerEntry: {
         "page title - file explorer": "文件资源管理器",
         "what this page is used for - file explorer": "在此处存储您的数据.",
         "help content": ({ accountTabLink, docHref }) => (
@@ -358,7 +363,7 @@ export const translations: Translations<"zh-CN"> = {
         "download directory": "下载",
         "upload file": "上传文件",
         "copy path": "复制 S3 对象名称",
-        "create directory": "创建目录",
+        "create new empty directory": "创建目录",
         refresh: "刷新",
         new: "新建",
         share: "分享",
@@ -374,7 +379,7 @@ export const translations: Translations<"zh-CN"> = {
         delete: "删除",
         "create secret": "新的密钥",
         "copy path": "在服务中使用",
-        "create directory": "新建文件夹",
+        "create new empty directory": "新建文件夹",
         refresh: "刷新",
         "create what": ({ what }) => `新 ${what}`,
         new: "新建"
@@ -489,6 +494,7 @@ export const translations: Translations<"zh-CN"> = {
         "divider: onyxia instance specific features": "Onyxia实例特定功能",
         dataExplorer: "数据浏览器",
         fileExplorer: "文件浏览器",
+        dataCollection: "集合浏览器",
         sqlOlapShell: "SQL OLAP 外壳"
     },
     AutoLogoutCountdown: {
@@ -697,6 +703,17 @@ ${
     },
     FormFieldGroupComponent: {
         add: "添加"
+    },
+    AutoInjectSwitch: {
+        tooltip: ({ isAutoInjected }) => (
+            <>
+                如果启用，该配置将自动注入到你的服务中。
+                即使该选项处于禁用状态，你仍然可以在启动 服务时手动添加它。
+                <br />
+                <br />
+                当前状态： <strong>{isAutoInjected ? "已启用" : "已禁用"}</strong>
+            </>
+        )
     },
     NumberFormField: {
         "below minimum": ({ minimum }) => `必须大于或等于 ${minimum}`,
@@ -936,7 +953,10 @@ ${
         "resize table": "调整大小",
         "unsupported file type": ({ supportedFileTypes }) =>
             `不支持的数据格式。支持的类型有：${supportedFileTypes.join(", ")}。`,
-        "can't fetch file": "无法获取数据文件"
+        "no s3 client": "未配置 S3 客户端。请前往设置中为资源管理器启用一个。",
+        "unsupported protocol": "不支持的 URL。支持的协议为 https:// 和 s3://。",
+        "https fetch error": "无法获取 HTTPS 文件。",
+        "query error": "DuckDB 查询错误。"
     },
     UrlInput: {
         load: "加载",
@@ -1082,6 +1102,33 @@ ${
     },
     CustomDataGridToolbarColumnsButton: {
         toolbarColumnsLabel: "列"
+    },
+    DatasetCard: {
+        publishedOn: "发布于",
+        datasetPage: "数据集页面",
+        license: "许可证：",
+        format: "格式",
+        size: "大小",
+        distributions: "分发",
+        visualize: "可视化",
+        unknown: "未知"
+    },
+    DataCollection: {
+        "page header help title": "只需输入您的 DCAT JSON-LD 模式的 https:// URL",
+        "page header title": "数据目录",
+        "page header help content": ({ demoCatalogLink }) => (
+            <>
+                只需输入数据目录的 <code>https://</code> URL 即可进行预览。
+                <br />
+                不知道从哪里开始？试试这个{" "}
+                <MuiLink {...demoCatalogLink}>演示目录</MuiLink>！
+            </>
+        ),
+        "https fetch error": "无法获取 HTTPS 资源。",
+        "invalid json response": "响应不是有效的 JSON。",
+        "json-ld compact error": "无法压缩 JSON-LD 响应。",
+        "json-ld frame error": "无法对 JSON-LD 响应进行框架处理。",
+        "datasets parsing error": "无法解析目录中的数据集。"
     }
     /* spell-checker: enable */
 };

@@ -35,6 +35,11 @@ export const translations: Translations<"fr"> = {
         save: "Enregistrer",
         restore: "Restaurer"
     },
+    ConfirmNavigationDialog: {
+        "you have unsaved changes": "Vous avez des modifications non enregistrées !",
+        cancel: "Annuler",
+        "continue without saving": "Continuer sans enregistrer"
+    },
     AccountGitTab: {
         gitName: "Nom d'utilisateur pour Git",
         "gitName helper text": ({ gitName, focusClassName }) => (
@@ -310,7 +315,7 @@ export const translations: Translations<"fr"> = {
         "reset helper dialogs helper text":
             "Réinitialiser les fenêtres de messages que vous avez demandé de ne plus afficher"
     },
-    FileExplorer: {
+    FileExplorerEntry: {
         "page title - file explorer": "Explorateur de fichiers",
         "what this page is used for - file explorer":
             "Stocker ici vos fichiers de données.",
@@ -402,7 +407,7 @@ export const translations: Translations<"fr"> = {
         delete: "supprimer",
         "upload file": "Téléverser un fichier",
         "copy path": "Copier le nom de l'objet S3",
-        "create directory": "Nouveau dossier",
+        "create new empty directory": "Nouveau dossier",
         refresh: "rafraîchir",
         new: "Nouveau",
         share: "Partager",
@@ -419,7 +424,7 @@ export const translations: Translations<"fr"> = {
         delete: "supprimer",
         "create secret": "Nouveau secret",
         "copy path": "Utiliser dans le service",
-        "create directory": "Nouveau dossier",
+        "create new empty directory": "Nouveau dossier",
         refresh: "rafraîchir",
         "create what": ({ what }) => `Nouveau ${what}`,
         new: "Nouveau"
@@ -538,6 +543,7 @@ export const translations: Translations<"fr"> = {
             "Fonctionnalités spécifiques à cette instance d'Onyxia",
         dataExplorer: "Explorateur de Données",
         fileExplorer: "Explorateur de Fichiers",
+        dataCollection: "Explorateur de Collections",
         sqlOlapShell: "Coquille SQL OLAP"
     },
     AutoLogoutCountdown: {
@@ -759,6 +765,18 @@ N'hésitez pas à explorer et à prendre en main vos déploiements Kubernetes !
     },
     FormFieldGroupComponent: {
         add: "Ajouter"
+    },
+    AutoInjectSwitch: {
+        tooltip: ({ isAutoInjected }) => (
+            <>
+                Si activé, cette configuration sera automatiquement injectée dans vos
+                services. Vous pouvez tout de même l’ajouter manuellement lors du
+                lancement d’un service, même si cette option reste désactivée.
+                <br />
+                <br />
+                État actuel : <strong>{isAutoInjected ? "activé" : "désactivé"}</strong>
+            </>
+        )
     },
     NumberFormField: {
         "below minimum": ({ minimum }) => `Doit être supérieur ou égal à ${minimum}`,
@@ -1015,7 +1033,12 @@ N'hésitez pas à explorer et à prendre en main vos déploiements Kubernetes !
         "resize table": "Redimensionner",
         "unsupported file type": ({ supportedFileTypes }) =>
             `Format de données non pris en charge. Les types pris en charge sont : ${supportedFileTypes.join(", ")}.`,
-        "can't fetch file": "Impossible de récupérer le fichier de données"
+        "no s3 client":
+            "Aucun client S3 configuré. Allez dans les paramètres pour en activer un pour l’explorateur.",
+        "unsupported protocol":
+            "URL non prise en charge. Les protocoles supportés sont https:// et s3://.",
+        "https fetch error": "Impossible de récupérer le fichier HTTPS.",
+        "query error": "Erreur de requête DuckDB."
     },
     UrlInput: {
         load: "Charger",
@@ -1162,6 +1185,36 @@ N'hésitez pas à explorer et à prendre en main vos déploiements Kubernetes !
             return `${count} élément${plural} sélectionnée${plural}`;
         },
         "label rows per page": "Éléments par page"
+    },
+    DatasetCard: {
+        publishedOn: "Publié le",
+        datasetPage: "Page du jeu de données",
+        license: "Licence :",
+        format: "Format",
+        size: "Taille",
+        distributions: "Distributions",
+        visualize: "Visualiser",
+        unknown: "Inconnu"
+    },
+    DataCollection: {
+        "page header help title":
+            "Entrez simplement l'URL https:// de votre schema jsonld dcat",
+        "page header title": "Catalogue de données",
+        "page header help content": ({ demoCatalogLink }) => (
+            <>
+                Entrez simplement l'URL <code>https://</code> d'un catalogue de données
+                pour le prévisualiser.
+                <br />
+                Vous ne savez pas par où commencer ? Essayez ce{" "}
+                <MuiLink {...demoCatalogLink}>catalogue de démonstration</MuiLink> !
+            </>
+        ),
+        "https fetch error": "Impossible de récupérer la ressource HTTPS.",
+        "invalid json response": "La réponse n'est pas un JSON valide.",
+        "json-ld compact error": "Impossible de compacter la réponse JSON-LD.",
+        "json-ld frame error": "Impossible de structurer la réponse JSON-LD.",
+        "datasets parsing error":
+            "Impossible d'analyser les jeux de données du catalogue."
     }
     /* spell-checker: enable */
 };

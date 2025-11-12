@@ -1,4 +1,4 @@
-import { createRouter, defineRoute, param, createGroup, type Route } from "type-route";
+import { defineRoute, param, createGroup } from "type-route";
 
 export const routeDefs = {
     myService: defineRoute(
@@ -9,6 +9,4 @@ export const routeDefs = {
     )
 };
 
-export const routeGroup = createGroup(Object.values(createRouter(routeDefs).routes));
-
-export type PageRoute = Route<typeof routeGroup>;
+export const routeGroup = createGroup(routeDefs);

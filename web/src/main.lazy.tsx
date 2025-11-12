@@ -1,8 +1,6 @@
-/* eslint-disable react-refresh/only-export-components */
-import { lazy, Suspense } from "react";
+import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-const App = lazy(() => import("ui/App"));
-const AppWithoutScreenScaler = lazy(() => import("ui/App/App"));
+import { Root } from "./Root";
 
 {
     const version = import.meta.env.WEB_VERSION;
@@ -16,13 +14,7 @@ const AppWithoutScreenScaler = lazy(() => import("ui/App/App"));
 }
 
 createRoot(document.getElementById("root")!).render(
-    <Suspense>
-        {import.meta.env.SCREEN_SCALER !== "false" ? (
-            /** Default case */
-            <App />
-        ) : (
-            /** For debugging cases that might be related to the screen scaler */
-            <AppWithoutScreenScaler />
-        )}
-    </Suspense>
+    <StrictMode>
+        <Root />
+    </StrictMode>
 );

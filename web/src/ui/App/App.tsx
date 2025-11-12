@@ -1,19 +1,10 @@
-import { useEffect } from "react";
 import { tss } from "tss";
 import { Footer } from "./Footer";
 import { Header } from "./Header";
-import { useEffectOnValueChange } from "powerhooks/useEffectOnValueChange";
-import { useSplashScreen, useDarkMode } from "onyxia-ui";
 import { env, injectEnvsTransferableToKeycloakTheme } from "env";
-import { RouteProvider } from "ui/routes";
-import { createCoreProvider, useCoreState, useCore } from "core";
+import { triggerCoreBootstrap } from "core";
 import { injectGlobalStatesInSearchParams } from "powerhooks/useGlobalState";
-import { evtLang, I18nFetchingSuspense } from "ui/i18n";
-import {
-    OnyxiaUi,
-    loadThemedFavicon,
-    injectCustomFontFaceIfNotAlreadyDone
-} from "ui/theme";
+import { evtLang, useLang } from "ui/i18n";
 import { PortraitModeUnsupported } from "ui/shared/PortraitModeUnsupported";
 import { LeftBar } from "./LeftBar";
 import { GlobalAlert } from "./GlobalAlert";
@@ -21,12 +12,11 @@ import { Main } from "./Main";
 import { AutoLogoutCountdown } from "./AutoLogoutCountdown";
 import { injectOnyxiaInstancePublicUrl } from "keycloak-theme/login/onyxiaInstancePublicUrl";
 import { useDomRect } from "powerhooks/useDomRect";
+import { evtIsScreenScalerOutOfBound } from "screen-scaler";
+import { useRerenderOnStateChange } from "evt/hooks/useRerenderOnStateChange";
+import { evtTheme } from "ui/theme";
 
-loadThemedFavicon();
-// NOTE: We do that only to showcase the app with an other font with the URL.
-injectCustomFontFaceIfNotAlreadyDone();
-
-const { CoreProvider } = createCoreProvider({
+triggerCoreBootstrap({
     apiUrl: env.ONYXIA_API_URL,
     getCurrentLang: () => evtLang.state,
     transformBeforeRedirectForKeycloakTheme: ({ authorizationUrl }) => {
@@ -44,64 +34,31 @@ const { CoreProvider } = createCoreProvider({
     quotaCriticalThresholdPercent: env.QUOTA_CRITICAL_THRESHOLD * 100,
     isAuthGloballyRequired: env.AUTHENTICATION_GLOBALLY_REQUIRED,
     enableOidcDebugLogs: env.OIDC_DEBUG_LOGS,
-    disableDisplayAllCatalog: env.DISABLE_DISPLAY_ALL_CATALOG
+    disableDisplayAllCatalog: env.DISABLE_DISPLAY_ALL_CATALOG,
+    getIsDarkModeEnabled: () => evtTheme.state.isDarkModeEnabled
 });
 
-type Props = {
-    className?: string;
-    ScreenScalerOutOfRangeFallbackProvider?: (props: {
-        fallback: JSX.Element;
-        children: JSX.Element;
-    }) => JSX.Element;
-};
-
-export default function App(props: Props) {
-    const {
-        className,
-        ScreenScalerOutOfRangeFallbackProvider = ({ children }) => <>{children}</>
-    } = props;
-    return (
-        <RouteProvider>
-            <I18nFetchingSuspense>
-                <OnyxiaUi>
-                    <ScreenScalerOutOfRangeFallbackProvider
-                        fallback={<ScreenScalerOutOfRangeFallback />}
-                    >
-                        <CoreProvider>
-                            <ContextualizedApp className={className} />
-                        </CoreProvider>
-                    </ScreenScalerOutOfRangeFallbackProvider>
-                </OnyxiaUi>
-            </I18nFetchingSuspense>
-        </RouteProvider>
-    );
-}
-
-function ScreenScalerOutOfRangeFallback() {
-    const { hideRootSplashScreen } = useSplashScreen();
-
-    useEffect(() => {
-        hideRootSplashScreen();
-    }, []);
-
-    return <PortraitModeUnsupported />;
-}
-
-function ContextualizedApp(props: { className?: string }) {
-    const { className } = props;
-
-    useSyncDarkModeWithValueInProfile();
+export function App() {
+    useRerenderOnStateChange(evtIsScreenScalerOutOfBound);
 
     const {
         ref: globalAlertRef,
         domRect: { height: globalAlertHeight }
     } = useDomRect();
-    const { cx, classes } = useStyles({ globalAlertHeight });
-    const { isUserLoggedIn } = useCoreState("userAuthentication", "main");
+    const { classes } = useStyles({
+        globalAlertHeight,
+        isScreenScalerEnabled: evtIsScreenScalerOutOfBound.state !== undefined
+    });
+
+    const { lang } = useLang();
+
+    if (evtIsScreenScalerOutOfBound.state === true) {
+        return <PortraitModeUnsupported />;
+    }
 
     return (
         <>
-            <div className={cx(classes.root, className)}>
+            <div key={lang} className={classes.root}>
                 {env.GLOBAL_ALERT !== undefined && (
                     <GlobalAlert
                         ref={globalAlertRef}
@@ -117,22 +74,22 @@ function ContextualizedApp(props: { className?: string }) {
                 </section>
                 <Footer className={classes.footer} />
             </div>
-            {isUserLoggedIn && <AutoLogoutCountdown />}
+            <AutoLogoutCountdown />
         </>
     );
 }
 
 const useStyles = tss
     .withName({ App })
-    .withParams<{ globalAlertHeight: number }>()
-    .create(({ theme, globalAlertHeight }) => {
+    .withParams<{ globalAlertHeight: number; isScreenScalerEnabled: boolean }>()
+    .create(({ theme, globalAlertHeight, isScreenScalerEnabled }) => {
         const footerHeight = 32;
 
         const rootRightLeftMargin = theme.spacing(4);
 
         return {
             root: {
-                height: "100vh",
+                height: isScreenScalerEnabled ? "100%" : "100vh",
                 display: "flex",
                 flexDirection: "column",
                 margin: `0 ${rootRightLeftMargin}px`,
@@ -140,7 +97,7 @@ const useStyles = tss
             },
             globalAlert: {
                 position: "absolute",
-                width: theme.windowInnerWidth,
+                width: `calc(100% + 2*${rootRightLeftMargin}px)`,
                 left: -rootRightLeftMargin
             },
             header: {
@@ -174,37 +131,3 @@ const useStyles = tss
             }
         };
     });
-
-/**
- * This hook to two things:
- * - It sets whether or not the dark mode is enabled based on
- * the value stored in user configs.
- * - Each time the dark mode it changed it changes the value in
- * user configs.
- */
-function useSyncDarkModeWithValueInProfile() {
-    const { userConfigs } = useCore().functions;
-
-    const { isUserLoggedIn } = useCoreState("userAuthentication", "main");
-
-    const { isDarkModeEnabled, setIsDarkModeEnabled } = useDarkMode();
-
-    const userConfigsIsDarkModeEnabled = useCoreState("userConfigs", "isDarkModeEnabled");
-
-    useEffect(() => {
-        if (userConfigsIsDarkModeEnabled !== undefined && env.DARK_MODE === undefined) {
-            setIsDarkModeEnabled(userConfigsIsDarkModeEnabled);
-        }
-    }, []);
-
-    useEffectOnValueChange(() => {
-        if (!isUserLoggedIn) {
-            return;
-        }
-
-        userConfigs.changeValue({
-            key: "isDarkModeEnabled",
-            value: isDarkModeEnabled
-        });
-    }, [isDarkModeEnabled]);
-}

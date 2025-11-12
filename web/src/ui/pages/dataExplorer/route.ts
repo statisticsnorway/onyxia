@@ -1,4 +1,4 @@
-import { createRouter, defineRoute, param, createGroup, type Route } from "type-route";
+import { defineRoute, param, createGroup } from "type-route";
 import { id } from "tsafe/id";
 import type { ValueSerializer } from "type-route";
 
@@ -8,7 +8,7 @@ export const routeDefs = {
             source: param.query.optional.string,
             rowsPerPage: param.query.optional.number,
             page: param.query.optional.number,
-            selectedRow: param.query.optional.number,
+            selectedRow: param.query.optional.string,
             columnVisibility: param.query.optional.ofType(
                 id<ValueSerializer<Record<string, boolean>>>({
                     parse: raw => JSON.parse(raw),
@@ -20,6 +20,4 @@ export const routeDefs = {
     )
 };
 
-export const routeGroup = createGroup(Object.values(createRouter(routeDefs).routes));
-
-export type PageRoute = Route<typeof routeGroup>;
+export const routeGroup = createGroup(routeDefs);

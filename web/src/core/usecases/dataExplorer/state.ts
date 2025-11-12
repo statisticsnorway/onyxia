@@ -1,101 +1,116 @@
 import { createUsecaseActions } from "clean-architecture";
-import type { Column } from "core/ports/SqlOlap";
-import { assert } from "tsafe/assert";
-import { id } from "tsafe/id";
-import type { SupportedFileType } from "./decoupledLogic/SupportedFileType";
+import { id, assert } from "tsafe";
+import {
+    createObjectThatThrowsIfAccessed,
+    isObjectThatThrowIfAccessed
+} from "clean-architecture";
+import { same } from "evt/tools/inDepth/same";
+import type { QueryRequest, QueryResponse } from "./decoupledLogic/performQuery";
 
 export const name = "dataExplorer";
 
+export type RouteParams = {
+    source?: string;
+    rowsPerPage?: number;
+    page?: number;
+    selectedRow?: string;
+    columnVisibility?: Record<string, boolean>;
+};
+
+export const ROUTE_PARAMS_DEFAULTS = {
+    source: "",
+    rowsPerPage: 25,
+    page: 1,
+    selectedRow: undefined,
+    columnVisibility: undefined
+} as const satisfies RouteParams & Record<keyof RouteParams, unknown>;
+
 export type State = {
-    isQuerying: boolean;
-    queryParams:
+    routeParams: RouteParams;
+    ongoingQueryRequest: QueryRequest | undefined;
+    completedQuery:
         | {
-              sourceUrl: string;
-              rowsPerPage: number;
-              page: number;
-          }
-        | undefined;
-    extraRestorableStates:
-        | {
-              selectedRowIndex: number | undefined;
-              columnVisibility: Record<string, boolean>;
-          }
-        | undefined;
-    error: State.Error | undefined;
-    data:
-        | {
-              rows: any[];
-              columns: Column[];
-              rowCount: number | undefined;
-              sourceUrl: string;
-              fileType: SupportedFileType;
-              sourceType: "s3" | "http";
+              request: QueryRequest;
+              response: QueryResponse;
           }
         | undefined;
 };
 
-namespace State {
-    export type Error =
-        | {
-              isWellKnown: false;
-              message: string;
-          }
-        | {
-              isWellKnown: true;
-              reason: "unsupported file type" | "can't fetch file";
-          };
-}
-
 export const { actions, reducer } = createUsecaseActions({
     name,
-    initialState: id<State>({
-        isQuerying: false,
-        queryParams: undefined,
-        extraRestorableStates: undefined,
-        error: undefined,
-        data: undefined
-    }),
+    initialState: createObjectThatThrowsIfAccessed<State>(),
     reducers: {
-        extraRestorableStateSet: (
-            state,
-            {
-                payload
-            }: { payload: { extraRestorableStates: State["extraRestorableStates"] } }
-        ) => {
-            const { extraRestorableStates } = payload;
-            state.extraRestorableStates = extraRestorableStates;
-        },
-        selectedRowIndexSet: (
+        routeParamsSet: (
             state,
             {
                 payload
             }: {
                 payload: {
-                    selectedRowIndex: NonNullable<
-                        State["extraRestorableStates"]
-                    >["selectedRowIndex"];
+                    routeParams: RouteParams | undefined;
                 };
             }
         ) => {
-            const { selectedRowIndex } = payload;
-            assert(state.extraRestorableStates !== undefined);
-            state.extraRestorableStates.selectedRowIndex = selectedRowIndex;
+            const { routeParams } = payload;
+
+            if (isObjectThatThrowIfAccessed(state)) {
+                state = id<State>({
+                    routeParams: {},
+                    ongoingQueryRequest: undefined,
+                    completedQuery: undefined
+                });
+            }
+
+            if (routeParams !== undefined) {
+                state.routeParams = routeParams;
+            }
+
+            return state;
         },
-        columnVisibilitySet: (
+        urlBarTextUpdated: (state, { payload }: { payload: { urlBarText: string } }) => {
+            const { urlBarText } = payload;
+
+            if (state.routeParams.source === urlBarText) {
+                return;
+            }
+
+            state.routeParams = {
+                source: urlBarText,
+                columnVisibility: undefined,
+                page: undefined,
+                rowsPerPage: undefined,
+                selectedRow: undefined
+            };
+        },
+        paginationModelUpdated: (
             state,
             {
                 payload
             }: {
                 payload: {
-                    columnVisibility: NonNullable<
-                        State["extraRestorableStates"]
-                    >["columnVisibility"];
+                    page: number;
+                    rowsPerPage: number;
                 };
             }
+        ) => {
+            const { page, rowsPerPage } = payload;
+
+            state.routeParams.page = page;
+            state.routeParams.rowsPerPage = rowsPerPage;
+            state.routeParams.selectedRow = undefined;
+        },
+        columnVisibilityUpdated: (
+            state,
+            { payload }: { payload: { columnVisibility: Record<string, boolean> } }
         ) => {
             const { columnVisibility } = payload;
-            assert(state.extraRestorableStates !== undefined);
-            state.extraRestorableStates.columnVisibility = columnVisibility;
+            state.routeParams.columnVisibility = columnVisibility;
+        },
+        selectedRowIdUpdated: (
+            state,
+            { payload }: { payload: { selectedRowId: string | undefined } }
+        ) => {
+            const { selectedRowId } = payload;
+            state.routeParams.selectedRow = selectedRowId;
         },
         queryStarted: (
             state,
@@ -103,70 +118,33 @@ export const { actions, reducer } = createUsecaseActions({
                 payload
             }: {
                 payload: {
-                    queryParams: NonNullable<State["queryParams"]>;
+                    queryRequest: QueryRequest;
                 };
             }
         ) => {
-            const { queryParams } = payload;
-            state.error = undefined;
-            state.isQuerying = true;
-            state.queryParams = queryParams;
+            const { queryRequest } = payload;
+            state.ongoingQueryRequest = queryRequest;
         },
-        querySucceeded: (
+        queryCompleted: (
             state,
             {
                 payload
             }: {
                 payload: {
-                    rows: any[];
-                    columns: Column[];
-                    rowCount: number | undefined;
-                    fileType: SupportedFileType;
-                    sourceUrl: string;
-                    sourceType: "s3" | "http";
-                    extraRestorableStates:
-                        | {
-                              selectedRowIndex: number | undefined;
-                              columnVisibility: Record<string, boolean>;
-                          }
-                        | undefined;
+                    queryRequest: QueryRequest;
+                    queryResponse: QueryResponse;
                 };
             }
         ) => {
-            const {
-                rowCount,
-                rows,
-                sourceUrl,
-                columns,
-                fileType,
-                sourceType,
-                extraRestorableStates
-            } = payload;
-            state.isQuerying = false;
-            state.data = {
-                rowCount,
-                rows,
-                columns,
-                sourceUrl,
-                fileType,
-                sourceType
+            const { queryRequest, queryResponse } = payload;
+
+            assert(same(state.ongoingQueryRequest, queryRequest));
+
+            state.completedQuery = {
+                request: queryRequest,
+                response: queryResponse
             };
-            state.extraRestorableStates = extraRestorableStates;
-        },
-        queryCanceled: state => {
-            state.isQuerying = false;
-            state.queryParams = undefined;
-        },
-        queryFailed: (state, { payload }: { payload: { error: State.Error } }) => {
-            const { error } = payload;
-            state.isQuerying = false;
-            state.error = error;
-        },
-        restoreState: state => {
-            state.queryParams = undefined;
-            state.extraRestorableStates = undefined;
-            state.data = undefined;
-            state.error = undefined;
+            state.ongoingQueryRequest = undefined;
         }
     }
 });

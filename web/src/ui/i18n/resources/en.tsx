@@ -35,6 +35,11 @@ export const translations: Translations<"en"> = {
         save: "Save",
         restore: "Restore"
     },
+    ConfirmNavigationDialog: {
+        "you have unsaved changes": "You have unsaved changes!",
+        cancel: "Cancel",
+        "continue without saving": "Continue without saving"
+    },
     AccountGitTab: {
         gitName: "Username for Git",
         "gitName helper text": ({ gitName, focusClassName }) => (
@@ -296,7 +301,7 @@ export const translations: Translations<"en"> = {
         "reset helper dialogs helper text":
             "Reset message windows that have been requested not to be shown again"
     },
-    FileExplorer: {
+    FileExplorerEntry: {
         "page title - file explorer": "File Explorer",
         "what this page is used for - file explorer":
             "Here you can browse your S3 Buckets.",
@@ -389,7 +394,7 @@ export const translations: Translations<"en"> = {
         delete: "delete",
         "create secret": "Create secret",
         "copy path": "Use in a service",
-        "create directory": "Create directory",
+        "create new empty directory": "create new empty directory",
         refresh: "refresh",
         "create what": ({ what }) => `Create ${what}`,
         new: "New"
@@ -400,7 +405,7 @@ export const translations: Translations<"en"> = {
         "download directory": "Download",
         "upload file": "Upload file",
         "copy path": "Copy S3 object name",
-        "create directory": "Create directory",
+        "create new empty directory": "create new empty directory",
         refresh: "refresh",
         new: "New",
         share: "Share",
@@ -524,6 +529,7 @@ export const translations: Translations<"en"> = {
         "divider: external services features": "External services features",
         "divider: onyxia instance specific features": "Onyxia instance specific features",
         dataExplorer: "Data Explorer",
+        dataCollection: "Data Collection",
         fileExplorer: "File Explorer",
         sqlOlapShell: "SQL Olap Shell"
     },
@@ -746,6 +752,18 @@ Feel free to explore and take charge of your Kubernetes deployments!
     },
     FormFieldGroupComponent: {
         add: "Add"
+    },
+    AutoInjectSwitch: {
+        tooltip: ({ isAutoInjected }) => (
+            <>
+                If enabled, this configuration will be automatically injected into your
+                services. You can still manually add it later when launching a service,
+                even if this is left disabled.
+                <br />
+                <br />
+                Current state: <strong>{isAutoInjected ? "enabled" : "disabled"}</strong>
+            </>
+        )
     },
     NumberFormField: {
         "below minimum": ({ minimum }) => `Must be greater than or equal to ${minimum}`,
@@ -989,7 +1007,12 @@ Feel free to explore and take charge of your Kubernetes deployments!
         "resize table": "Resize",
         "unsupported file type": ({ supportedFileTypes }) =>
             `Unsupported data format. Supported types are: ${supportedFileTypes.join(", ")}.`,
-        "can't fetch file": "Can't fetch data file"
+        "no s3 client":
+            "No S3 client configured. Go to settings to enable one for the explorer.",
+        "unsupported protocol":
+            "Unsupported URL. Supported protocols are https:// and s3://.",
+        "https fetch error": "Unable to fetch the HTTPS file.",
+        "query error": "DuckDB query error."
     },
     UrlInput: {
         load: "Load",
@@ -1136,5 +1159,33 @@ Feel free to explore and take charge of your Kubernetes deployments!
     },
     CustomDataGridToolbarColumnsButton: {
         toolbarColumnsLabel: "Columns"
+    },
+    DatasetCard: {
+        publishedOn: "Published on",
+        datasetPage: "Dataset page",
+        license: "License:",
+        format: "Format",
+        size: "Size",
+        distributions: "Distributions",
+        visualize: "Visualize",
+        unknown: "Unknown"
+    },
+    DataCollection: {
+        "page header help title":
+            "Simply enter the https:// URL of your DCAT JSON-LD schema",
+        "page header title": "Data catalog",
+        "page header help content": ({ demoCatalogLink }) => (
+            <>
+                Just enter the <code>https://</code> URL of a data catalog to preview it.
+                <br />
+                Not sure where to start? Try this{" "}
+                <MuiLink {...demoCatalogLink}>demo catalog</MuiLink>!
+            </>
+        ),
+        "https fetch error": "Unable to fetch the HTTPS resource.",
+        "invalid json response": "The response is not valid JSON.",
+        "json-ld compact error": "Failed to compact the JSON-LD response.",
+        "json-ld frame error": "Failed to frame the JSON-LD response.",
+        "datasets parsing error": "Unable to parse datasets from the catalog."
     }
 };

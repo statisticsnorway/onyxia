@@ -35,6 +35,11 @@ export const translations: Translations<"de"> = {
         save: "Speichern",
         restore: "Wiederherstellen"
     },
+    ConfirmNavigationDialog: {
+        "you have unsaved changes": "Sie haben ungespeicherte Änderungen!",
+        cancel: "Abbrechen",
+        "continue without saving": "Ohne Speichern fortfahren"
+    },
     AccountGitTab: {
         gitName: "Benutzername für Git",
         "gitName helper text": ({ gitName, focusClassName }) => (
@@ -307,7 +312,7 @@ export const translations: Translations<"de"> = {
         "reset helper dialogs helper text":
             "Die Hilfsdialoge zurücksetzen, die Sie aufgefordert haben, nicht mehr anzuzeigen"
     },
-    FileExplorer: {
+    FileExplorerEntry: {
         "page title - file explorer": "Datei-Explorer",
         "what this page is used for - file explorer": "Speichern Sie hier Ihre Dateien.",
         "help content": ({ accountTabLink, docHref }) => (
@@ -398,7 +403,7 @@ export const translations: Translations<"de"> = {
         "download directory": "Herunterladen",
         "upload file": "Datei hochladen",
         "copy path": "Den S3-Objektnamen kopieren",
-        "create directory": "Neues Verzeichnis",
+        "create new empty directory": "Neues Verzeichnis",
         refresh: "aktualisieren",
         new: "Neu",
         share: "Teilen",
@@ -414,7 +419,7 @@ export const translations: Translations<"de"> = {
         delete: "löschen",
         "create secret": "Neues Geheimnis",
         "copy path": "Im Dienst verwenden",
-        "create directory": "Neues Verzeichnis",
+        "create new empty directory": "Neues Verzeichnis",
         refresh: "aktualisieren",
         "create what": ({ what }) => `Neu ${what}`,
         new: "Neu"
@@ -532,6 +537,7 @@ export const translations: Translations<"de"> = {
             "Funktionen spezifisch für diese Onyxia-Instanz",
         dataExplorer: "Daten-Explorer",
         fileExplorer: "Datei-Explorer",
+        dataCollection: "Sammlungs-Explorer",
         sqlOlapShell: "SQL OLAP-Shell"
     },
     AutoLogoutCountdown: {
@@ -752,6 +758,19 @@ Fühlen Sie sich frei, Ihre Kubernetes-Bereitstellungen zu erkunden und die Kont
     },
     FormFieldGroupComponent: {
         add: "Hinzufügen"
+    },
+    AutoInjectSwitch: {
+        tooltip: ({ isAutoInjected }) => (
+            <>
+                Wenn aktiviert, wird diese Konfiguration automatisch in Ihre Dienste
+                injiziert. Sie können sie trotzdem manuell hinzufügen, wenn Sie einen
+                Dienst starten – auch wenn diese Option deaktiviert ist.
+                <br />
+                <br />
+                Aktueller Status:{" "}
+                <strong>{isAutoInjected ? "aktiviert" : "deaktiviert"}</strong>
+            </>
+        )
     },
     NumberFormField: {
         "below minimum": ({ minimum }) => `Muss größer oder gleich ${minimum} sein`,
@@ -1003,7 +1022,12 @@ Fühlen Sie sich frei, Ihre Kubernetes-Bereitstellungen zu erkunden und die Kont
         "resize table": undefined,
         "unsupported file type": ({ supportedFileTypes }) =>
             `Nicht unterstütztes Datenformat. Unterstützte Typen sind: ${supportedFileTypes.join(", ")}.`,
-        "can't fetch file": "Daten-Datei kann nicht abgerufen werden"
+        "no s3 client":
+            "Kein S3-Client konfiguriert. Gehe zu den Einstellungen, um einen für den Explorer zu aktivieren.",
+        "unsupported protocol":
+            "Nicht unterstützte URL. Unterstützte Protokolle sind https:// und s3://.",
+        "https fetch error": "HTTPS-Datei konnte nicht abgerufen werden.",
+        "query error": "DuckDB-Abfragefehler."
     },
     UrlInput: {
         load: "Laden",
@@ -1150,6 +1174,37 @@ Fühlen Sie sich frei, Ihre Kubernetes-Bereitstellungen zu erkunden und die Kont
     },
     CustomDataGridToolbarColumnsButton: {
         toolbarColumnsLabel: "Spalten"
+    },
+    DatasetCard: {
+        publishedOn: "Veröffentlicht am",
+        datasetPage: "Datensatzseite",
+        license: "Lizenz:",
+        format: "Format",
+        size: "Größe",
+        distributions: "Distributionen",
+        visualize: "Visualisieren",
+        unknown: "Unbekannt"
+    },
+    DataCollection: {
+        "page header help title":
+            "Geben Sie einfach die https://-URL Ihres DCAT JSON-LD-Schemas ein",
+        "page header title": "Datenkatalog",
+        "page header help content": ({ demoCatalogLink }) => (
+            <>
+                Geben Sie einfach die <code>https://</code>-URL eines Datenkatalogs ein,
+                um ihn in der Vorschau anzuzeigen.
+                <br />
+                Sie wissen nicht, wo Sie anfangen sollen? Probieren Sie diesen{" "}
+                <MuiLink {...demoCatalogLink}>Demokatalog</MuiLink>!
+            </>
+        ),
+        "https fetch error": "Die HTTPS-Ressource konnte nicht abgerufen werden.",
+        "invalid json response": "Die Antwort ist kein gültiges JSON.",
+        "json-ld compact error":
+            "Die JSON-LD-Antwort konnte nicht kompakt verarbeitet werden.",
+        "json-ld frame error": "Die JSON-LD-Antwort konnte nicht gerahmt werden.",
+        "datasets parsing error":
+            "Die Datensätze des Katalogs konnten nicht analysiert werden."
     }
     /* spell-checker: enable */
 };

@@ -36,6 +36,11 @@ export const translations: Translations<"fi"> = {
         save: "Tallenna",
         restore: "Palauta"
     },
+    ConfirmNavigationDialog: {
+        "you have unsaved changes": "Sinulla on tallentamattomia muutoksia!",
+        cancel: "Peruuta",
+        "continue without saving": "Jatka tallentamatta"
+    },
     AccountGitTab: {
         gitName: "Käyttäjänimi Gitille",
         "gitName helper text": ({ gitName, focusClassName }) => (
@@ -303,7 +308,7 @@ export const translations: Translations<"fi"> = {
         "reset helper dialogs helper text":
             "Nollaa ohjeviestit, joista on pyydetty, ettei niitä näytetä uudelleen"
     },
-    FileExplorer: {
+    FileExplorerEntry: {
         "page title - file explorer": "Tiedostoselain",
         "what this page is used for - file explorer":
             "Täällä voit selata S3 Bucket -tiedostojasi.",
@@ -394,7 +399,7 @@ export const translations: Translations<"fi"> = {
         delete: "poista",
         "create secret": "Luo salaisuus",
         "copy path": "Käytä palvelussa",
-        "create directory": "Luo hakemisto",
+        "create new empty directory": "Luo hakemisto",
         refresh: "päivitä",
         "create what": ({ what }) => `Luo ${what}`,
         new: "Uusi"
@@ -405,7 +410,7 @@ export const translations: Translations<"fi"> = {
         "download directory": "Lataa",
         "upload file": "Lataa tiedosto",
         "copy path": "Kopioi S3-objektin nimi",
-        "create directory": "Luo hakemisto",
+        "create new empty directory": "Luo hakemisto",
         refresh: "päivitä",
         new: "Uusi",
         share: "Jaa",
@@ -528,6 +533,7 @@ export const translations: Translations<"fi"> = {
             "Onyxia-instanssin erityisominaisuudet",
         dataExplorer: "Data Explorer",
         fileExplorer: "Tiedostonhallinta",
+        dataCollection: "Kokoelmien selains",
         sqlOlapShell: "SQL OLAP-kuori"
     },
     AutoLogoutCountdown: {
@@ -743,6 +749,19 @@ Tutustu vapaasti ja ota hallintaan Kubernetes-julkaisusi!
     },
     FormFieldGroupComponent: {
         add: "Lisää"
+    },
+    AutoInjectSwitch: {
+        tooltip: ({ isAutoInjected }) => (
+            <>
+                Jos tämä asetus on käytössä, se lisätään automaattisesti palveluihisi.
+                Voit silti lisätä sen manuaalisesti palvelua käynnistäessäsi, vaikka tämä
+                asetus olisi pois käytöstä.
+                <br />
+                <br />
+                Nykyinen tila:{" "}
+                <strong>{isAutoInjected ? "käytössä" : "ei käytössä"}</strong>
+            </>
+        )
     },
     NumberFormField: {
         "below minimum": ({ minimum }) =>
@@ -992,7 +1011,12 @@ Tutustu vapaasti ja ota hallintaan Kubernetes-julkaisusi!
         "resize table": "Muuta taulukon kokoa",
         "unsupported file type": ({ supportedFileTypes }) =>
             `Tuettua tiedostomuotoa ei tunnistettu. Tuetut tyypit ovat: ${supportedFileTypes.join(", ")}.`,
-        "can't fetch file": "Tietotiedostoa ei voida hakea"
+        "no s3 client":
+            "S3-asiakasta ei ole määritetty. Siirry asetuksiin ja ota sellainen käyttöön Explorerissa.",
+        "unsupported protocol":
+            "URL ei ole tuettu. Tuetut protokollat ovat https:// ja s3://.",
+        "https fetch error": "HTTPS-tiedostoa ei voitu noutaa.",
+        "query error": "DuckDB-kyselyvirhe."
     },
     UrlInput: {
         load: "Lataa",
@@ -1139,6 +1163,34 @@ Tutustu vapaasti ja ota hallintaan Kubernetes-julkaisusi!
     },
     CustomDataGridToolbarColumnsButton: {
         toolbarColumnsLabel: "Sarakkeet"
+    },
+    DatasetCard: {
+        publishedOn: "Julkaistu",
+        datasetPage: "Aineistosivu",
+        license: "Lisenssi:",
+        format: "Muoto",
+        size: "Koko",
+        distributions: "Jakelut",
+        visualize: "Visualisoi",
+        unknown: "Tuntematon"
+    },
+    DataCollection: {
+        "page header help title": "Syötä vain DCAT JSON-LD -skeemasi https://-osoite",
+        "page header title": "Tietoluettelo",
+        "page header help content": ({ demoCatalogLink }) => (
+            <>
+                Syötä vain tietoluettelon <code>https://</code>-URL-osoite nähdäksesi
+                esikatselun.
+                <br />
+                Etkö tiedä, mistä aloittaa? Kokeile tätä{" "}
+                <MuiLink {...demoCatalogLink}>demoluetteloa</MuiLink>!
+            </>
+        ),
+        "https fetch error": "HTTPS-resurssia ei voitu hakea.",
+        "invalid json response": "Vastaus ei ole kelvollista JSONia.",
+        "json-ld compact error": "JSON-LD-vastausta ei voitu tiivistää.",
+        "json-ld frame error": "JSON-LD-vastausta ei voitu kehystää.",
+        "datasets parsing error": "Katalogin datasettejä ei voitu jäsentää."
     }
     /* spell-checker: enable */
 };

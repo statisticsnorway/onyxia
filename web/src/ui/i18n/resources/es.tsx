@@ -36,6 +36,11 @@ export const translations: Translations<"en"> = {
         save: "Guardar",
         restore: "Restaurar"
     },
+    ConfirmNavigationDialog: {
+        "you have unsaved changes": "¡Tienes cambios sin guardar!",
+        cancel: "Cancelar",
+        "continue without saving": "Continuar sin guardar"
+    },
     AccountGitTab: {
         gitName: "Nombre de usuario para Git",
         "gitName helper text": ({ gitName, focusClassName }) => (
@@ -307,7 +312,7 @@ export const translations: Translations<"en"> = {
         "reset helper dialogs helper text":
             "Restablecer ventanas de mensajes que se han solicitado no mostrar nuevamente"
     },
-    FileExplorer: {
+    FileExplorerEntry: {
         "page title - file explorer": "Explorador de archivos",
         "what this page is used for - file explorer":
             "Aquí puedes explorar tus Buckets de S3.",
@@ -400,7 +405,7 @@ export const translations: Translations<"en"> = {
         delete: "eliminar",
         "create secret": "Crear secreto",
         "copy path": "Usar en un servicio",
-        "create directory": "Crear directorio",
+        "create new empty directory": "Crear directorio",
         refresh: "refrescar",
         "create what": ({ what }) => `Crear ${what}`,
         new: "Nuevo"
@@ -411,7 +416,7 @@ export const translations: Translations<"en"> = {
         "download directory": "Descargar",
         "upload file": "Subir archivo",
         "copy path": "Copiar nombre del objeto S3",
-        "create directory": "Crear directorio",
+        "create new empty directory": "Crear directorio",
         refresh: "actualizar",
         new: "Nuevo",
         share: "Compartir",
@@ -535,6 +540,7 @@ export const translations: Translations<"en"> = {
         "divider: onyxia instance specific features":
             "Funciones específicas de la instancia de Onyxia",
         dataExplorer: "Explorador de datos",
+        dataCollection: "Explorador de colecciones",
         fileExplorer: "Explorador de archivos",
         sqlOlapShell: "SQL Olap Shell"
     },
@@ -753,6 +759,19 @@ export const translations: Translations<"en"> = {
     },
     FormFieldGroupComponent: {
         add: "Añadir"
+    },
+    AutoInjectSwitch: {
+        tooltip: ({ isAutoInjected }) => (
+            <>
+                Si está activado, esta configuración se inyectará automáticamente en tus
+                servicios. Aun así, puedes añadirla manualmente al iniciar un servicio,
+                incluso si esta opción permanece desactivada.
+                <br />
+                <br />
+                Estado actual:{" "}
+                <strong>{isAutoInjected ? "activado" : "desactivado"}</strong>
+            </>
+        )
     },
     NumberFormField: {
         "below minimum": ({ minimum }) => `Debe ser mayor o igual a ${minimum}`,
@@ -1004,7 +1023,12 @@ export const translations: Translations<"en"> = {
         "resize table": "Redimensionar",
         "unsupported file type": ({ supportedFileTypes }) =>
             `Formato de datos no compatible. Los tipos compatibles son: ${supportedFileTypes.join(", ")}.`,
-        "can't fetch file": "No se puede obtener el archivo de datos"
+        "no s3 client":
+            "No hay cliente S3 configurado. Ve a la configuración para habilitar uno en el explorador.",
+        "unsupported protocol":
+            "URL no compatible. Los protocolos admitidos son https:// y s3://.",
+        "https fetch error": "No se pudo obtener el archivo HTTPS.",
+        "query error": "Error de consulta en DuckDB."
     },
     UrlInput: {
         load: "Cargar",
@@ -1151,6 +1175,36 @@ export const translations: Translations<"en"> = {
     },
     CustomDataGridToolbarColumnsButton: {
         toolbarColumnsLabel: "Columnas"
+    },
+    DatasetCard: {
+        publishedOn: "Publicado el",
+        datasetPage: "Página del conjunto de datos",
+        license: "Licencia:",
+        format: "Formato",
+        size: "Tamaño",
+        distributions: "Distribuciones",
+        visualize: "Visualizar",
+        unknown: "Desconocido"
+    },
+    DataCollection: {
+        "page header help title":
+            "Introduce simplemente la URL https:// de tu esquema DCAT JSON-LD",
+        "page header title": "Catálogo de datos",
+        "page header help content": ({ demoCatalogLink }) => (
+            <>
+                Introduce simplemente la URL <code>https://</code> de un catálogo de datos
+                para previsualizarlo.
+                <br />
+                ¿No sabes por dónde empezar? ¡Prueba este{" "}
+                <MuiLink {...demoCatalogLink}>catálogo de demostración</MuiLink>!
+            </>
+        ),
+        "https fetch error": "No se pudo obtener el recurso HTTPS.",
+        "invalid json response": "La respuesta no es un JSON válido.",
+        "json-ld compact error": "No se pudo compactar la respuesta JSON-LD.",
+        "json-ld frame error": "No se pudo crear el frame de la respuesta JSON-LD.",
+        "datasets parsing error":
+            "No se pudieron analizar los conjuntos de datos del catálogo."
     }
     /* spell-checker: enable */
 };

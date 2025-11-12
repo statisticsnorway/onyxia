@@ -21,11 +21,16 @@ const rootForm: RootForm = {
                     doRenderAsTextArea: false,
                     isSensitive: false,
                     pattern: undefined,
-                    value: "foo"
+                    value: "foo",
+                    autocomplete: {
+                        options: [],
+                        isLoadingOptions: false
+                    }
                 }
             ],
             canAdd: false,
-            canRemove: false
+            canRemove: false,
+            isAutoInjected: undefined
         },
         {
             type: "group",
@@ -60,7 +65,8 @@ const rootForm: RootForm = {
                 }
             ],
             canAdd: false,
-            canRemove: false
+            canRemove: false,
+            isAutoInjected: undefined
         }
     ],
     disabledDependencies: [],
@@ -101,7 +107,11 @@ const rootForm: RootForm = {
                     doRenderAsTextArea: false,
                     isSensitive: false,
                     pattern: undefined,
-                    value: "admin"
+                    value: "admin",
+                    autocomplete: {
+                        options: [],
+                        isLoadingOptions: false
+                    }
                 },
                 {
                     type: "field",
@@ -113,7 +123,11 @@ const rootForm: RootForm = {
                     doRenderAsTextArea: false,
                     isSensitive: false,
                     pattern: undefined,
-                    value: "xxx"
+                    value: "xxx",
+                    autocomplete: {
+                        options: [],
+                        isLoadingOptions: false
+                    }
                 }
             ]
         }
@@ -137,7 +151,11 @@ describe(symToStr({ findInRootForm }), () => {
             doRenderAsTextArea: false,
             isSensitive: false,
             pattern: undefined,
-            value: "foo"
+            value: "foo",
+            autocomplete: {
+                options: [],
+                isLoadingOptions: false
+            }
         });
     });
 

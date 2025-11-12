@@ -35,6 +35,11 @@ export const translations: Translations<"it"> = {
         save: "Salva",
         restore: "Ripristina"
     },
+    ConfirmNavigationDialog: {
+        "you have unsaved changes": "You have unsaved changes!",
+        cancel: "Cancel",
+        "continue without saving": "Continue without saving"
+    },
     AccountGitTab: {
         gitName: "Nome utente per Git",
         "gitName helper text": ({ gitName, focusClassName }) => (
@@ -305,7 +310,7 @@ export const translations: Translations<"it"> = {
         "reset helper dialogs helper text":
             "Ripristinare le finestre di messaggi che hai richiesto di non mostrare più"
     },
-    FileExplorer: {
+    FileExplorerEntry: {
         "page title - file explorer": "Esplora file",
         "what this page is used for - file explorer": "Archivia qui i tuoi file di dati.",
         "help content": ({ accountTabLink, docHref }) => (
@@ -379,8 +384,9 @@ export const translations: Translations<"it"> = {
                     la nostra documentazione
                 </MuiLink>
                 . &nbsp;
-                <MuiLink {...accountTabLink}>Configurare il tuo Vault CLI locale</MuiLink>
-                .
+                <MuiLink {...accountTabLink}>
+                    Configurare il tuo Vault CLI locale
+                </MuiLink>.
             </>
         )
     },
@@ -396,7 +402,7 @@ export const translations: Translations<"it"> = {
         "download directory": "Scaricare",
         "upload file": "Caricare un file",
         "copy path": "Copia il nome dell'oggetto S3",
-        "create directory": "Nuova cartella",
+        "create new empty directory": "Nuova cartella",
         refresh: "aggiornare",
         new: "Nuovo",
         share: "Condividi",
@@ -412,7 +418,7 @@ export const translations: Translations<"it"> = {
         delete: "eliminare",
         "create secret": "Nuovo segreto",
         "copy path": "Utilizzare nel servizio",
-        "create directory": "Nuova cartella",
+        "create new empty directory": "Nuova cartella",
         refresh: "aggiornare",
         "create what": ({ what }) => `Nuovo ${what}`,
         new: "Nuovo"
@@ -531,6 +537,7 @@ export const translations: Translations<"it"> = {
             "Funzioni specifiche di questa istanza di Onyxia",
         dataExplorer: "Esploratore di Dati",
         fileExplorer: "Esploratore di File",
+        dataCollection: "Esploratore di Collezioni",
         sqlOlapShell: "Guscio SQL OLAP"
     },
     AutoLogoutCountdown: {
@@ -750,6 +757,19 @@ Sentiti libero di esplorare e prendere il controllo dei tuoi deployment Kubernet
     },
     FormFieldGroupComponent: {
         add: "Aggiungi"
+    },
+    AutoInjectSwitch: {
+        tooltip: ({ isAutoInjected }) => (
+            <>
+                Se abilitata, questa configurazione verrà automaticamente iniettata nei
+                tuoi servizi. Puoi comunque aggiungerla manualmente durante l'avvio di un
+                servizio, anche se questa opzione è disabilitata.
+                <br />
+                <br />
+                Stato attuale:{" "}
+                <strong>{isAutoInjected ? "abilitato" : "disabilitato"}</strong>
+            </>
+        )
     },
     NumberFormField: {
         "below minimum": ({ minimum }) => `Deve essere maggiore o uguale a ${minimum}`,
@@ -1001,7 +1021,12 @@ Sentiti libero di esplorare e prendere il controllo dei tuoi deployment Kubernet
         "resize table": "Ridimensiona",
         "unsupported file type": ({ supportedFileTypes }) =>
             `Formato dati non supportato. I tipi supportati sono: ${supportedFileTypes.join(", ")}.`,
-        "can't fetch file": "Impossibile recuperare il file dei dati"
+        "no s3 client":
+            "Nessun client S3 configurato. Vai nelle impostazioni per abilitarne uno per l’esploratore.",
+        "unsupported protocol":
+            "URL non supportato. I protocolli supportati sono https:// e s3://.",
+        "https fetch error": "Impossibile recuperare il file HTTPS.",
+        "query error": "Errore di query DuckDB."
     },
     UrlInput: {
         load: "Carica",
@@ -1148,6 +1173,35 @@ Sentiti libero di esplorare e prendere il controllo dei tuoi deployment Kubernet
     },
     CustomDataGridToolbarColumnsButton: {
         toolbarColumnsLabel: "Colonne"
+    },
+    DatasetCard: {
+        publishedOn: "Pubblicato il",
+        datasetPage: "Pagina del dataset",
+        license: "Licenza:",
+        format: "Formato",
+        size: "Dimensione",
+        distributions: "Distribuzioni",
+        visualize: "Visualizza",
+        unknown: "Sconosciuto"
+    },
+    DataCollection: {
+        "page header help title":
+            "Inserisci semplicemente l'URL https:// del tuo schema DCAT JSON-LD",
+        "page header title": "Catalogo dati",
+        "page header help content": ({ demoCatalogLink }) => (
+            <>
+                Inserisci semplicemente l'URL <code>https://</code> di un catalogo dati
+                per visualizzarne l'anteprima.
+                <br />
+                Non sai da dove iniziare? Prova questo{" "}
+                <MuiLink {...demoCatalogLink}>catalogo dimostrativo</MuiLink>!
+            </>
+        ),
+        "https fetch error": "Impossibile recuperare la risorsa HTTPS.",
+        "invalid json response": "La risposta non è un JSON valido.",
+        "json-ld compact error": "Impossibile compattare la risposta JSON-LD.",
+        "json-ld frame error": "Impossibile applicare il frame alla risposta JSON-LD.",
+        "datasets parsing error": "Impossibile analizzare i dataset del catalogo."
     }
     /* spell-checker: enable */
 };

@@ -35,6 +35,11 @@ export const translations: Translations<"nl"> = {
         save: "Opslaan",
         restore: "Herstellen"
     },
+    ConfirmNavigationDialog: {
+        "you have unsaved changes": "Je hebt niet-opgeslagen wijzigingen!",
+        cancel: "Annuleren",
+        "continue without saving": "Doorgaan zonder op te slaan"
+    },
     AccountGitTab: {
         gitName: "Gebruikersnaam voor Git",
         "gitName helper text": ({ gitName, focusClassName }) => (
@@ -307,7 +312,7 @@ export const translations: Translations<"nl"> = {
         "reset helper dialogs helper text":
             "De berichtvensters waarvan u heeft gevraagd ze niet meer weer te geven, opnieuw initialiseren"
     },
-    FileExplorer: {
+    FileExplorerEntry: {
         "page title - file explorer": "Bestandsverkenner",
         "what this page is used for - file explorer": "Sla hier uw gegevensbestanden op.",
         "help content": ({ accountTabLink, docHref }) => (
@@ -396,7 +401,7 @@ export const translations: Translations<"nl"> = {
         delete: "verwijderen",
         "upload file": "Een bestand uploaden",
         "copy path": "De naam van het S3-object kopiëren",
-        "create directory": "Nieuwe map",
+        "create new empty directory": "Nieuwe map",
         refresh: "vernieuwen",
         "download directory": "Downloaden",
         new: "Nieuw",
@@ -413,7 +418,7 @@ export const translations: Translations<"nl"> = {
         delete: "verwijderen",
         "create secret": "Nieuw geheim",
         "copy path": "Gebruiken binnen de dienst",
-        "create directory": "Nieuwe map",
+        "create new empty directory": "Nieuwe map",
         refresh: "vernieuwen",
         "create what": ({ what }) => `Nieuw ${what}`,
         new: "Nieuw"
@@ -533,6 +538,7 @@ export const translations: Translations<"nl"> = {
             "Functionaliteiten die specifiek zijn voor deze instantie van Onyxia",
         dataExplorer: "Data Verkenner",
         fileExplorer: "Bestanden Verkenner",
+        dataCollection: "Collecties Verkenner",
         sqlOlapShell: "SQL OLAP Shell"
     },
     AutoLogoutCountdown: {
@@ -754,6 +760,19 @@ Voel je vrij om te verkennen en de controle over je Kubernetes-implementaties te
     },
     FormFieldGroupComponent: {
         add: "Toevoegen"
+    },
+    AutoInjectSwitch: {
+        tooltip: ({ isAutoInjected }) => (
+            <>
+                Indien ingeschakeld, wordt deze configuratie automatisch geïnjecteerd in
+                je services. Je kunt deze alsnog handmatig toevoegen bij het starten van
+                een service, zelfs als deze optie is uitgeschakeld.
+                <br />
+                <br />
+                Huidige status:{" "}
+                <strong>{isAutoInjected ? "ingeschakeld" : "uitgeschakeld"}</strong>
+            </>
+        )
     },
     NumberFormField: {
         "below minimum": ({ minimum }) => `Moet groter dan of gelijk aan ${minimum} zijn`,
@@ -1003,7 +1022,12 @@ Voel je vrij om te verkennen en de controle over je Kubernetes-implementaties te
         "resize table": "Formaat wijzigen",
         "unsupported file type": ({ supportedFileTypes }) =>
             `Niet-ondersteund gegevensformaat. Ondersteunde typen zijn: ${supportedFileTypes.join(", ")}.`,
-        "can't fetch file": "Kan gegevensbestand niet ophalen"
+        "no s3 client":
+            "Geen S3-client geconfigureerd. Ga naar instellingen om er een voor de verkenner in te schakelen.",
+        "unsupported protocol":
+            "Niet-ondersteunde URL. Ondersteunde protocollen zijn https:// en s3://.",
+        "https fetch error": "Kan HTTPS-bestand niet ophalen.",
+        "query error": "DuckDB-queryfout."
     },
     UrlInput: {
         load: "Laden",
@@ -1150,6 +1174,36 @@ Voel je vrij om te verkennen en de controle over je Kubernetes-implementaties te
             return `${count} item${plural} geselecteerd`;
         },
         "label rows per page": "Items per pagina"
+    },
+    DatasetCard: {
+        publishedOn: "Gepubliceerd op",
+        datasetPage: "Datasetpagina",
+        license: "Licentie:",
+        format: "Formaat",
+        size: "Grootte",
+        distributions: "Distributies",
+        visualize: "Visualiseren",
+        unknown: "Onbekend"
+    },
+    DataCollection: {
+        "page header help title":
+            "Voer gewoon de https://-URL van je DCAT JSON-LD-schema in",
+        "page header title": "Datacatalogus",
+        "page header help content": ({ demoCatalogLink }) => (
+            <>
+                Voer eenvoudig de <code>https://</code>-URL van een datacatalogus in om
+                een voorbeeld te bekijken.
+                <br />
+                Weet je niet waar je moet beginnen? Probeer deze{" "}
+                <MuiLink {...demoCatalogLink}>democatalogus</MuiLink>!
+            </>
+        ),
+        "https fetch error": "De HTTPS-resource kon niet worden opgehaald.",
+        "invalid json response": "De response is geen geldige JSON.",
+        "json-ld compact error": "De JSON-LD-response kon niet worden gecompacteerd.",
+        "json-ld frame error": "De JSON-LD-response kon niet worden geframed.",
+        "datasets parsing error":
+            "De datasets uit de catalogus konden niet worden geparseerd."
     }
     /* spell-checker: enable */
 };

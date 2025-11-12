@@ -31,8 +31,10 @@ import type { Equals, Param0 } from "tsafe";
 import { TextField } from "onyxia-ui/TextField";
 import type { TextFieldProps } from "onyxia-ui/TextField";
 import { useRerenderOnStateChange } from "evt/hooks/useRerenderOnStateChange";
-import { ExplorerUploadModal } from "./ExplorerUploadModal";
-import type { ExplorerUploadModalProps } from "./ExplorerUploadModal";
+import {
+    ExplorerUploadModal,
+    type ExplorerUploadModalProps
+} from "./ExplorerUploadModal";
 import { declareComponentKeys } from "i18nifty";
 import { CircularProgress } from "onyxia-ui/CircularProgress";
 import {
@@ -69,10 +71,9 @@ export type ExplorerProps = {
         kind: Item["kind"];
     }) => void;
     onRefresh: () => void;
-    onDeleteItem: (params: { item: Item }) => void;
     onDownloadItems: (params: { items: Item[] }) => void;
     onDeleteItems: (params: { items: Item[] }) => void;
-    onCreateDirectory: (params: { basename: string }) => void;
+    onCreateNewEmptyDirectory: (params: { basename: string }) => void;
     onCopyPath: (params: { path: string }) => void;
     pathMinDepth: number;
     onOpenFile: (params: { basename: string }) => void;
@@ -84,7 +85,34 @@ export type ExplorerProps = {
         validityDurationSecond: number;
     }) => void;
     evtIsDownloadSnackbarOpen: StatefulReadonlyEvt<boolean>;
-} & Pick<ExplorerUploadModalProps, "onFileSelected" | "filesBeingUploaded">; //NOTE: TODO only defined when explorer type is s3
+
+    filesBeingUploaded: {
+        directoryPath: string;
+        basename: string;
+        size: number;
+        uploadPercent: number;
+    }[];
+    onRequestFilesUpload: (params: {
+        files: {
+            directoryRelativePath: string;
+            basename: string;
+            blob: Blob;
+        }[];
+    }) => void;
+};
+
+assert<
+    Equals<
+        ExplorerProps["onRequestFilesUpload"],
+        ExplorerUploadModalProps["onRequestFilesUpload"]
+    >
+>;
+assert<
+    Equals<
+        ExplorerProps["filesBeingUploaded"],
+        ExplorerUploadModalProps["filesBeingUploaded"]
+    >
+>;
 
 export const Explorer = memo((props: ExplorerProps) => {
     const {
@@ -96,13 +124,12 @@ export const Explorer = memo((props: ExplorerProps) => {
         evtAction,
         onNavigate,
         onRefresh,
-        onDeleteItem,
         onDeleteItems,
-        onCreateDirectory,
+        onCreateNewEmptyDirectory,
         onCopyPath,
         changePolicy,
         onOpenFile,
-        onFileSelected,
+        onRequestFilesUpload,
         filesBeingUploaded,
         pathMinDepth,
         onViewModeChange,
@@ -200,12 +227,13 @@ export const Explorer = memo((props: ExplorerProps) => {
                 case "copy path":
                     evtExplorerItemsAction.post("COPY SELECTED ITEM PATH");
                     return;
-                case "create directory":
+                case "create new empty directory":
                     setCreateS3DirectoryDialogState({
                         directories: items
                             .filter(isDirectory)
                             .map(({ basename }) => basename),
-                        resolveBasename: basename => onCreateDirectory({ basename })
+                        resolveBasename: basename =>
+                            onCreateNewEmptyDirectory({ basename })
                     });
                     return;
 
@@ -296,7 +324,7 @@ export const Explorer = memo((props: ExplorerProps) => {
                 }
             }
 
-            onDeleteItem({ item });
+            onDeleteItems({ items: [item] });
         }
     );
 
@@ -530,7 +558,7 @@ export const Explorer = memo((props: ExplorerProps) => {
             <ExplorerUploadModal
                 isOpen={isUploadModalOpen}
                 onClose={onUploadModalClose}
-                onFileSelected={onFileSelected}
+                onRequestFilesUpload={onRequestFilesUpload}
                 filesBeingUploaded={filesBeingUploaded}
             />
 

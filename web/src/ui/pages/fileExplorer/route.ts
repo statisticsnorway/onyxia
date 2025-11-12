@@ -1,10 +1,8 @@
 import { id } from "tsafe";
 import {
-    createRouter,
     defineRoute,
     createGroup,
     param,
-    type Route,
     type ValueSerializer,
     noMatch
 } from "type-route";
@@ -33,6 +31,4 @@ export const routeDefs = {
     )
 };
 
-export const routeGroup = createGroup(Object.values(createRouter(routeDefs).routes));
-
-export type PageRoute = Route<typeof routeGroup>;
+export const routeGroup = createGroup(routeDefs);

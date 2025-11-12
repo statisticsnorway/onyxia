@@ -1,4 +1,4 @@
-import { useCore, useCoreState } from "core";
+import { useCoreState, getCoreSync } from "core";
 import { Button } from "onyxia-ui/Button";
 import { FormFieldGroupComponent } from "ui/pages/launcher/RootFormComponent/FormFieldGroupComponent";
 import { SettingSectionHeader } from "ui/shared/SettingSectionHeader";
@@ -7,15 +7,54 @@ import { useTranslation } from "ui/i18n";
 import { tss } from "tss";
 import { getIconUrlByName } from "lazy-icons";
 import Divider from "@mui/material/Divider";
+import { assert } from "tsafe/assert";
+import { useNavigationInterceptor } from "ui/routes";
+import {
+    ConfirmNavigationDialog,
+    type TextFormDialogProps
+} from "./ConfirmNavigationDialog";
+import { Evt } from "evt";
+import { useConst } from "powerhooks/useConst";
+import { Deferred } from "evt/tools/Deferred";
 
 export default function UserProfileForm() {
-    const { userProfileForm } = useCore().functions;
+    const {
+        functions: { userProfileForm }
+    } = getCoreSync();
 
     const { rootForm, isThereThingsToSave } = useCoreState("userProfileForm", "main");
 
     const { t } = useTranslation({ UserProfileForm });
 
-    const { classes } = useStyles();
+    const { classes } = useStyles({ isThereThingsToSave });
+
+    const evtConfirmNavigationDialogOpen = useConst(() =>
+        Evt.create<TextFormDialogProps["evtOpen"]>()
+    );
+
+    useNavigationInterceptor({
+        getDoProceedWithNavigation: async () => {
+            if (!isThereThingsToSave) {
+                return { doProceedWithNavigation: true };
+            }
+
+            const dDoNavigateAnyway = new Deferred<boolean>();
+
+            evtConfirmNavigationDialogOpen.post({
+                onResponse: ({ doNavigateAnyway }) => {
+                    dDoNavigateAnyway.resolve(doNavigateAnyway);
+                }
+            });
+
+            const doNavigateAnyway = await dDoNavigateAnyway.pr;
+
+            if (doNavigateAnyway) {
+                userProfileForm.restore();
+            }
+
+            return { doProceedWithNavigation: doNavigateAnyway };
+        }
+    });
 
     return (
         <>
@@ -33,13 +72,22 @@ export default function UserProfileForm() {
                 callbacks={{
                     onAdd: ({ helmValuesPath }) =>
                         userProfileForm.addArrayItem({ valuesPath: helmValuesPath }),
-                    onChange: params => userProfileForm.changeFormFieldValue(params),
+                    onChange: ({ formFieldValue }) =>
+                        userProfileForm.changeFormFieldValue(formFieldValue),
                     onRemove: ({ helmValuesPath, index }) =>
                         userProfileForm.removeArrayItem({
                             valuesPath: helmValuesPath,
                             index
                         }),
-                    onFieldErrorChange: () => {}
+                    onFieldErrorChange: () => {},
+                    onAutocompletePanelOpen: () => {
+                        assert(false);
+                    },
+                    onIsAutoInjectedChange: ({ helmValuesPath, isAutoInjected }) =>
+                        userProfileForm.onIsAutoInjectedChange({
+                            valuesPath: helmValuesPath,
+                            isAutoInjected
+                        })
                 }}
             />
             <div className={classes.buttonWrapper}>
@@ -59,20 +107,33 @@ export default function UserProfileForm() {
                     {t("restore")}
                 </Button>
             </div>
+            <ConfirmNavigationDialog evtOpen={evtConfirmNavigationDialogOpen} />
         </>
     );
 }
 
-const useStyles = tss.withName({ UserProfileForm }).create(({ theme }) => ({
-    header: {
-        marginBottom: theme.spacing(6)
-    },
-    buttonWrapper: {
-        marginTop: theme.spacing(6),
-        display: "flex",
-        gap: theme.spacing(2)
-    }
-}));
+const useStyles = tss
+    .withName({ UserProfileForm })
+    .withParams<{
+        isThereThingsToSave: boolean;
+    }>()
+    .create(({ theme, isThereThingsToSave }) => ({
+        header: {
+            marginBottom: theme.spacing(6)
+        },
+        buttonWrapper: {
+            ...(!isThereThingsToSave
+                ? {}
+                : {
+                      position: "sticky",
+                      bottom: theme.spacing(4)
+                  }),
+            marginTop: theme.spacing(4),
+            display: "inline-flex",
+            gap: theme.spacing(2),
+            backgroundColor: theme.colors.useCases.surfaces.surface1
+        }
+    }));
 
 const { i18n } = declareComponentKeys<
     "customizable profile" | "customizable profile helper" | "save" | "restore"
