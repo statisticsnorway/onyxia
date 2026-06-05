@@ -1,4 +1,4 @@
-import { useCoreState, useCore } from "core";
+import { useCoreState, getCoreSync } from "core";
 import { useEffect } from "react";
 import { CircularProgress } from "onyxia-ui/CircularProgress";
 import { tss } from "tss";
@@ -20,7 +20,7 @@ export function Quotas(props: Props) {
     const { className, evtActionUpdate } = props;
 
     const {
-        isReady,
+        stateDescription,
         quotas,
         isOngoingPodDeletion,
         isOnlyNonNegligibleQuotas,
@@ -29,7 +29,9 @@ export function Quotas(props: Props) {
 
     const { cx, classes, theme } = useStyles();
 
-    const { viewQuotas } = useCore().functions;
+    const {
+        functions: { viewQuotas }
+    } = getCoreSync();
 
     useEffect(() => {
         const { setInactive } = viewQuotas.setActive();
@@ -48,14 +50,18 @@ export function Quotas(props: Props) {
 
     const { t } = useTranslation({ Quotas });
 
-    if (isReady && totalQuotasCount === 0) {
+    if (stateDescription === "disabled on instance") {
+        return null;
+    }
+
+    if (stateDescription === "ready" && totalQuotasCount === 0) {
         return null;
     }
 
     return (
         <div className={cx(className, classes.root)}>
             {(() => {
-                if (!isReady) {
+                if (stateDescription !== "ready") {
                     return (
                         <div className={classes.loadingWrapper}>
                             <CircularProgress className={classes.loading} />

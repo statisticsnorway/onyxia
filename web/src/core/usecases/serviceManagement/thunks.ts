@@ -1,5 +1,6 @@
 import { id } from "tsafe/id";
 import * as projectManagement from "core/usecases/projectManagement";
+import * as deploymentRegionManagement from "core/usecases/deploymentRegionManagement";
 import type { Thunks } from "core/bootstrap";
 import { createUsecaseContextApi } from "clean-architecture";
 import { assert } from "tsafe/assert";
@@ -30,7 +31,7 @@ export const thunks = {
                     const commandLogsEntry =
                         viewQuotas.protectedSelectors.commandLogsEntry(getState());
 
-                    assert(commandLogsEntry !== undefined);
+                    assert(commandLogsEntry !== null);
 
                     dispatch(actions.commandLogsEntryAdded({ commandLogsEntry }));
                 }
@@ -217,9 +218,7 @@ export const thunks = {
 
             assert(helmRelease !== undefined);
 
-            const { postInstallInstructions } = helmRelease;
-
-            assert(postInstallInstructions !== undefined);
+            const { postInstallInstructions = "" } = helmRelease;
 
             dispatch(
                 actions.commandLogsEntryAdded({
@@ -444,6 +443,9 @@ const privateThunks = {
                 user: { username }
             } = await onyxiaApi.getUserAndProjects();
 
+            const { kubernetesClusterIngressPort } =
+                deploymentRegionManagement.selectors.currentDeploymentRegion(getState());
+
             dispatch(
                 actions.updateCompleted({
                     kubernetesNamespace,
@@ -457,7 +459,8 @@ const privateThunks = {
                             })
                         ])
                     ),
-                    username
+                    username,
+                    kubernetesClusterIngressPort
                 })
             );
         }

@@ -9,7 +9,7 @@ import { MaybeLink } from "ui/shared/MaybeLink";
 export const translations: Translations<"en"> = {
     /* spell-checker: disable */
     Account: {
-        infos: "Información de la cuenta",
+        profile: "Perfil",
         git: "Git",
         storage: "Conectar al almacenamiento",
         k8sCodeSnippets: "Kubernetes",
@@ -21,13 +21,25 @@ export const translations: Translations<"en"> = {
             "Contraseñas que se generan para ti y que tienen un período de validez determinado",
         vault: "Vault"
     },
-    AccountInfoTab: {
-        "general information": "Información general",
-        "user id": "ID de usuario (IDEP)",
-        "full name": "Nombre completo",
-        email: "Dirección de correo electrónico",
-        "instructions about how to change password":
-            'Para cambiar tu contraseña, simplemente cierra sesión y haz clic en el enlace de "olvidé mi contraseña".'
+    AccountProfileTab: {
+        "account id": "Identificador de cuenta",
+        "account id helper":
+            "Tus identificadores intangibles vinculados a la identidad que utilizas para iniciar sesión en la plataforma",
+        "user id": "ID de usuario",
+        email: "Correo electrónico",
+        "account management": "Gestión de cuenta"
+    },
+    UserProfileForm: {
+        "customizable profile": "Perfil personalizable",
+        "customizable profile helper":
+            "Información útil para la configuración automática de sus servicios",
+        save: "Guardar",
+        restore: "Restaurar"
+    },
+    ConfirmNavigationDialog: {
+        "you have unsaved changes": "¡Tienes cambios sin guardar!",
+        cancel: "Cancelar",
+        "continue without saving": "Continuar sin guardar"
     },
     AccountGitTab: {
         gitName: "Nombre de usuario para Git",
@@ -73,7 +85,7 @@ export const translations: Translations<"en"> = {
             "Para acceder a tu almacenamiento fuera de los servicios de datalab",
         "init script section helper":
             "Descarga o copia el script de inicialización en el lenguaje de programación de tu elección.",
-        "expires in": ({ howMuchTime }) => `Expira en ${howMuchTime}`
+        "expires in": ({ howMuchTime }) => `Expira ${howMuchTime}`
     },
     AccountKubernetesTab: {
         "credentials section title": "Conéctate al clúster de Kubernetes",
@@ -117,7 +129,7 @@ export const translations: Translations<"en"> = {
                 </MuiLink>
             </>
         ),
-        "expires in": ({ howMuchTime }) => `El token expira en ${howMuchTime}`
+        "expires in": ({ howMuchTime }) => `El token expira ${howMuchTime}`
     },
     ProjectSettings: {
         "page header title": "Configuración del Proyecto",
@@ -300,9 +312,9 @@ export const translations: Translations<"en"> = {
         "reset helper dialogs helper text":
             "Restablecer ventanas de mensajes que se han solicitado no mostrar nuevamente"
     },
-    MyFiles: {
-        "page title - my files": "Mis Archivos",
-        "what this page is used for - my files":
+    FileExplorerEntry: {
+        "page title - file explorer": "Explorador de archivos",
+        "what this page is used for - file explorer":
             "Aquí puedes explorar tus Buckets de S3.",
         "help content": ({ accountTabLink, docHref }) => (
             <>
@@ -315,9 +327,25 @@ export const translations: Translations<"en"> = {
                     Configura los clientes de minio
                 </MuiLink>.
             </>
-        )
+        ),
+        "title personal": "Mis datos",
+        "description personal": "Tus propios archivos y conjuntos de datos.",
+        "title project": ({ projectName }) => `Proyecto ${projectName}`,
+        "description project": ({ projectName }) =>
+            `Espacio de almacenamiento compartido para el proyecto ${projectName}`,
+        tags: ({ type }) => {
+            switch (type) {
+                case "personal":
+                    return "Mis datos";
+                case "project":
+                    return "Datos del grupo";
+            }
+        }
     },
-    MyFilesDisabledDialog: {
+    S3EntryCard: {
+        "space path": "Ruta del espacio"
+    },
+    FileExplorerDisabledDialog: {
         "dialog title": "No hay servidor S3 configurado",
         "dialog body":
             "No hay ningún servidor S3 configurado para esta instancia. Pero puedes agregar uno manualmente para habilitar el explorador de archivos S3.",
@@ -377,7 +405,7 @@ export const translations: Translations<"en"> = {
         delete: "eliminar",
         "create secret": "Crear secreto",
         "copy path": "Usar en un servicio",
-        "create directory": "Crear directorio",
+        "create new empty directory": "Crear directorio",
         refresh: "refrescar",
         "create what": ({ what }) => `Crear ${what}`,
         new: "Nuevo"
@@ -385,14 +413,18 @@ export const translations: Translations<"en"> = {
     ExplorerButtonBar: {
         file: "archivo",
         delete: "eliminar",
+        "download directory": "Descargar",
         "upload file": "Subir archivo",
         "copy path": "Copiar nombre del objeto S3",
-        "create directory": "Crear directorio",
+        "create new empty directory": "Crear directorio",
         refresh: "actualizar",
         new: "Nuevo",
         share: "Compartir",
         "alt list view": "Mostrar lista",
         "alt block view": "Mostrar bloque"
+    },
+    ExplorerDownloadSnackbar: {
+        "download preparation": "Preparing download ..."
     },
     ExplorerItems: {
         "empty directory": "Este directorio está vacío"
@@ -508,6 +540,8 @@ export const translations: Translations<"en"> = {
         "divider: onyxia instance specific features":
             "Funciones específicas de la instancia de Onyxia",
         dataExplorer: "Explorador de datos",
+        dataCollection: "Explorador de colecciones",
+        fileExplorer: "Explorador de archivos",
         sqlOlapShell: "SQL Olap Shell"
     },
     AutoLogoutCountdown: {
@@ -556,7 +590,8 @@ export const translations: Translations<"en"> = {
         "no result found": ({ forWhat }) =>
             `No se encontraron resultados para ${forWhat}`,
         "search results": "Resultado de la búsqueda",
-        search: "Buscar"
+        search: "Buscar",
+        "title all catalog": "Todos"
     },
     CatalogChartCard: {
         launch: "Iniciar",
@@ -725,6 +760,19 @@ export const translations: Translations<"en"> = {
     FormFieldGroupComponent: {
         add: "Añadir"
     },
+    AutoInjectSwitch: {
+        tooltip: ({ isAutoInjected }) => (
+            <>
+                Si está activado, esta configuración se inyectará automáticamente en tus
+                servicios. Aun así, puedes añadirla manualmente al iniciar un servicio,
+                incluso si esta opción permanece desactivada.
+                <br />
+                <br />
+                Estado actual:{" "}
+                <strong>{isAutoInjected ? "activado" : "desactivado"}</strong>
+            </>
+        )
+    },
     NumberFormField: {
         "below minimum": ({ minimum }) => `Debe ser mayor o igual a ${minimum}`,
         "not a number": "No es un número",
@@ -812,7 +860,6 @@ export const translations: Translations<"en"> = {
         )
     },
     Footer: {
-        contribute: "Contribuir",
         "terms of service": "Términos de servicio",
         "change language": "Cambiar idioma",
         "dark mode switch": "Activar modo oscuro"
@@ -891,7 +938,11 @@ export const translations: Translations<"en"> = {
     MyServicesRestorableConfigOptions: {
         edit: "Editar",
         "copy link": "Copiar enlace URL",
-        "remove bookmark": "Eliminar"
+        "remove bookmark": "Eliminar",
+        "move down": "Mover hacia abajo",
+        "move up": "Mover hacia arriba",
+        "move to top": "Mover al principio",
+        "move to bottom": "Mover al final"
     },
     MyServicesRestorableConfig: {
         edit: "Editar",
@@ -972,7 +1023,12 @@ export const translations: Translations<"en"> = {
         "resize table": "Redimensionar",
         "unsupported file type": ({ supportedFileTypes }) =>
             `Formato de datos no compatible. Los tipos compatibles son: ${supportedFileTypes.join(", ")}.`,
-        "can't fetch file": "No se puede obtener el archivo de datos"
+        "no s3 client":
+            "No hay cliente S3 configurado. Ve a la configuración para habilitar uno en el explorador.",
+        "unsupported protocol":
+            "URL no compatible. Los protocolos admitidos son https:// y s3://.",
+        "https fetch error": "No se pudo obtener el archivo HTTPS.",
+        "query error": "Error de consulta en DuckDB."
     },
     UrlInput: {
         load: "Cargar",
@@ -1119,6 +1175,36 @@ export const translations: Translations<"en"> = {
     },
     CustomDataGridToolbarColumnsButton: {
         toolbarColumnsLabel: "Columnas"
+    },
+    DatasetCard: {
+        publishedOn: "Publicado el",
+        datasetPage: "Página del conjunto de datos",
+        license: "Licencia:",
+        format: "Formato",
+        size: "Tamaño",
+        distributions: "Distribuciones",
+        visualize: "Visualizar",
+        unknown: "Desconocido"
+    },
+    DataCollection: {
+        "page header help title":
+            "Introduce simplemente la URL https:// de tu esquema DCAT JSON-LD",
+        "page header title": "Catálogo de datos",
+        "page header help content": ({ demoCatalogLink }) => (
+            <>
+                Introduce simplemente la URL <code>https://</code> de un catálogo de datos
+                para previsualizarlo.
+                <br />
+                ¿No sabes por dónde empezar? ¡Prueba este{" "}
+                <MuiLink {...demoCatalogLink}>catálogo de demostración</MuiLink>!
+            </>
+        ),
+        "https fetch error": "No se pudo obtener el recurso HTTPS.",
+        "invalid json response": "La respuesta no es un JSON válido.",
+        "json-ld compact error": "No se pudo compactar la respuesta JSON-LD.",
+        "json-ld frame error": "No se pudo crear el frame de la respuesta JSON-LD.",
+        "datasets parsing error":
+            "No se pudieron analizar los conjuntos de datos del catálogo."
     }
     /* spell-checker: enable */
 };

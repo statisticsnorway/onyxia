@@ -13,25 +13,27 @@ import FormControl from "@mui/material/FormControl";
 import FormLabel from "@mui/material/FormLabel";
 import FormGroup from "@mui/material/FormGroup";
 import { tss } from "tss";
-import { useCore, useCoreState } from "core";
+import { useCoreState, getCoreSync } from "core";
 import { declareComponentKeys, useTranslation } from "ui/i18n";
 import { Text } from "onyxia-ui/Text";
 import { TestS3ConnectionButton } from "../TestS3ConnectionButton";
 import FormHelperText from "@mui/material/FormHelperText";
 import Switch from "@mui/material/Switch";
 
-export type Props = {
+export type AddCustomS3ConfigDialogProps = {
     evtOpen: NonPostableEvt<{
         s3ConfigIdToEdit: string | undefined;
     }>;
 };
 
-export const AddCustomS3ConfigDialog = memo((props: Props) => {
+export const AddCustomS3ConfigDialog = memo((props: AddCustomS3ConfigDialogProps) => {
     const { evtOpen } = props;
 
     const { t } = useTranslation({ AddCustomS3ConfigDialog });
 
-    const { s3ConfigCreation } = useCore().functions;
+    const {
+        functions: { s3ConfigCreation }
+    } = getCoreSync();
 
     const { isReady } = useCoreState("s3ConfigCreation", "main");
 
@@ -100,7 +102,9 @@ const Buttons = memo((props: ButtonsProps) => {
         isEditionOfAnExistingConfig
     } = useCoreState("s3ConfigCreation", "main");
 
-    const { s3ConfigCreation } = useCore().functions;
+    const {
+        functions: { s3ConfigCreation }
+    } = getCoreSync();
 
     const { css } = useButtonsStyles();
 
@@ -139,7 +143,9 @@ const Body = memo(() => {
         "main"
     );
 
-    const { s3ConfigCreation } = useCore().functions;
+    const {
+        functions: { s3ConfigCreation }
+    } = getCoreSync();
 
     const { classes, css, theme } = useBodyStyles();
 

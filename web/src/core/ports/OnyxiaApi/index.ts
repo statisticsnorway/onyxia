@@ -3,8 +3,15 @@ export type { Catalog } from "./Catalog";
 export type { Chart } from "./Chart";
 export type { DeploymentRegion } from "./DeploymentRegion";
 export { type JSONSchema, zJSONSchema } from "./JSONSchema";
-export type { Language, LocalizedString } from "./Language";
+export {
+    type Language,
+    type LocalizedString,
+    languages,
+    zLanguage,
+    zLocalizedString
+} from "./Language";
 export type { Project } from "./Project";
 export type { HelmRelease } from "./HelmRelease";
 export type { User } from "./User";
 export type { XOnyxiaContext } from "./XOnyxia";
+export type { OidcParams, OidcParams_Partial } from "./OidcParams";

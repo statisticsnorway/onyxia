@@ -8,10 +8,10 @@ import * as userConfigs from "core/usecases/userConfigs";
 import { exclude } from "tsafe/exclude";
 import { createSelector } from "clean-architecture";
 import * as s3ConfigManagement from "core/usecases/s3ConfigManagement";
-import type { RestorableServiceConfig } from "core/usecases/restorableConfigManagement";
 import { id } from "tsafe/id";
 import { computeRootForm } from "./decoupledLogic";
 import { computeDiff } from "core/tools/Stringifyable";
+import type { Param0 } from "tsafe";
 
 const readyState = (rootState: RootState) => {
     const state = rootState[name];
@@ -48,7 +48,7 @@ const helmValues = createSelector(readyState, state => {
     return state.helmValues;
 });
 
-const rootForm = createSelector(
+const paramsOfComputeRootForm_butHelmValues = createSelector(
     isReady,
     chartName,
     createSelector(readyState, state => {
@@ -58,7 +58,6 @@ const rootForm = createSelector(
 
         return state.helmValuesSchema;
     }),
-    helmValues,
     createSelector(readyState, state => {
         if (state === null) {
             return null;
@@ -73,30 +72,69 @@ const rootForm = createSelector(
 
         return state.xOnyxiaContext;
     }),
+    createSelector(
+        createSelector(readyState, state => {
+            if (state === null) {
+                return null;
+            }
+            return state.autocompleteOptions;
+        }),
+        autocompleteOptions => {
+            if (autocompleteOptions === null) {
+                return null;
+            }
+
+            return autocompleteOptions.map(entry => ({
+                helmValuesPath: entry.helmValuesPath,
+                options: entry.options.map(option => option.optionValue),
+                isLoadingOptions: false
+            }));
+        }
+    ),
     (
         isReady,
         chartName,
         helmValuesSchema,
-        helmValues,
         helmDependencies,
-        xOnyxiaContext
-    ) => {
+        xOnyxiaContext,
+        autocompleteOptions
+    ): Omit<Param0<typeof computeRootForm>, "helmValues"> | null => {
         if (!isReady) {
             return null;
         }
 
         assert(chartName !== null);
         assert(helmValuesSchema !== null);
-        assert(helmValues !== null);
         assert(helmDependencies !== null);
         assert(xOnyxiaContext !== null);
+        assert(autocompleteOptions !== null);
 
-        return computeRootForm({
+        return {
             chartName,
             helmValuesSchema,
-            helmValues,
+            helmDependencies,
             xOnyxiaContext,
-            helmDependencies
+            autocompleteOptions,
+            autoInjectionDisabledFields: undefined
+        };
+    }
+);
+
+const rootForm = createSelector(
+    isReady,
+    paramsOfComputeRootForm_butHelmValues,
+    helmValues,
+    (isReady, paramsOfComputeRootForm_butHelmValues, helmValues) => {
+        if (!isReady) {
+            return null;
+        }
+
+        assert(paramsOfComputeRootForm_butHelmValues !== null);
+        assert(helmValues !== null);
+
+        return computeRootForm({
+            ...paramsOfComputeRootForm_butHelmValues,
+            helmValues
         });
     }
 );
@@ -200,7 +238,7 @@ const restorableConfig = createSelector(
         s3ConfigId,
         helmValues,
         helmValues_default
-    ): RestorableServiceConfig | null => {
+    ): projectManagement.ProjectConfigs.RestorableServiceConfig | null => {
         if (!isReady) {
             return null;
         }
@@ -234,7 +272,7 @@ const restorableConfig = createSelector(
 const isRestorableConfigSaved = createSelector(
     isReady,
     restorableConfig,
-    restorableConfigManagement.protectedSelectors.restorableConfigs,
+    restorableConfigManagement.selectors.restorableConfigs,
     (isReady, restorableConfig, restorableConfigs) => {
         if (!isReady) {
             return null;
@@ -518,7 +556,7 @@ const willOverwriteExistingConfigOnSave = createSelector(
     chartName,
     catalogId,
     friendlyName,
-    restorableConfigManagement.protectedSelectors.restorableConfigs,
+    restorableConfigManagement.selectors.restorableConfigs,
     (isReady, chartName, catalogId, friendlyName, restorableConfigs) => {
         if (!isReady) {
             return null;
@@ -572,6 +610,12 @@ const main = createSelector(
 
         return state.helmValuesSchema_forDataTextEditor;
     }),
+    createSelector(readyState, state => {
+        if (state === null) {
+            return null;
+        }
+        return state.infoAmountInHelmValues;
+    }),
     (
         isReady,
         friendlyName,
@@ -592,7 +636,8 @@ const main = createSelector(
         s3ConfigSelect,
         labeledHelmChartSourceUrls,
         helmValues,
-        helmValuesSchema_forDataTextEditor
+        helmValuesSchema_forDataTextEditor,
+        infoAmountInHelmValues
     ) => {
         if (!isReady) {
             return {
@@ -619,6 +664,7 @@ const main = createSelector(
         assert(labeledHelmChartSourceUrls !== null);
         assert(helmValues !== null);
         assert(helmValuesSchema_forDataTextEditor !== null);
+        assert(infoAmountInHelmValues !== null);
 
         return {
             isReady: true as const,
@@ -640,7 +686,8 @@ const main = createSelector(
             s3ConfigSelect,
             labeledHelmChartSourceUrls,
             helmValues,
-            helmValuesSchema_forDataTextEditor
+            helmValuesSchema_forDataTextEditor,
+            infoAmountInHelmValues
         };
     }
 );
@@ -656,5 +703,6 @@ export const privateSelectors = {
         }
         return state.helmValues;
     }),
-    rootForm
+    rootForm,
+    paramsOfComputeRootForm_butHelmValues
 };

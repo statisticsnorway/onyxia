@@ -1,5 +1,5 @@
 import type { S3BucketPolicy } from "core/ports/S3Client";
-import { assert, Equals } from "tsafe";
+import { assert, type Equals } from "tsafe";
 import { z } from "zod";
 import { id } from "tsafe/id";
 
@@ -7,7 +7,7 @@ const zS3Action = z.custom<`s3:${string}`>(
     val => typeof val === "string" && val.startsWith("s3:")
 );
 
-type S3PolicyStatement = S3BucketPolicy["Statement"][number];
+type S3PolicyStatement = NonNullable<S3BucketPolicy["Statement"]>[number];
 
 const zS3PolicyStatement = (() => {
     type TargetType = S3PolicyStatement;
@@ -32,7 +32,7 @@ export const zS3BucketPolicy = (() => {
 
     const zTargetType = z.object({
         Version: z.literal("2012-10-17"),
-        Statement: z.array(zS3PolicyStatement)
+        Statement: z.array(zS3PolicyStatement).nullable()
     });
 
     type InferredType = z.infer<typeof zTargetType>;

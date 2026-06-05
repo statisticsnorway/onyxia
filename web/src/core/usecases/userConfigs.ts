@@ -10,7 +10,6 @@ import {
 } from "clean-architecture";
 import * as userAuthentication from "./userAuthentication";
 import { join as pathJoin } from "pathe";
-import { getIsDarkModeEnabledOsDefault } from "onyxia-ui/tools/getIsDarkModeEnabledOsDefault";
 import * as deploymentRegionManagement from "core/usecases/deploymentRegionManagement";
 
 /*
@@ -27,12 +26,12 @@ export type UserConfigs = Id<
         gitCredentialCacheDuration: number;
         isBetaModeEnabled: boolean;
         isDevModeEnabled: boolean;
-        isDarkModeEnabled: boolean;
         githubPersonalAccessToken: string | null;
         doDisplayMySecretsUseInServiceDialog: boolean;
         doDisplayAcknowledgeConfigVolatilityDialogIfNoVault: boolean;
         selectedProjectId: string | null;
         isCommandBarEnabled: boolean;
+        userProfileStr: string | null;
     }
 >;
 
@@ -133,11 +132,14 @@ export const protectedThunks = {
         () =>
         async (...args) => {
             /* prettier-ignore */
-            const [dispatch, getState, { secretsManager, oidc, paramsOfBootstrapCore }] = args;
+            const [dispatch, getState, { secretsManager, paramsOfBootstrapCore }] = args;
 
-            assert(oidc.isUserLoggedIn);
+            const { isUserLoggedIn, user } =
+                userAuthentication.selectors.main(getState());
 
-            const { username, email } = userAuthentication.selectors.user(getState());
+            assert(isUserLoggedIn);
+
+            const { username, email } = user;
 
             // NOTE: Default values
             const userConfigs: UserConfigs = {
@@ -146,12 +148,12 @@ export const protectedThunks = {
                 gitCredentialCacheDuration: 0,
                 isBetaModeEnabled: false,
                 isDevModeEnabled: false,
-                isDarkModeEnabled: getIsDarkModeEnabledOsDefault(),
                 githubPersonalAccessToken: null,
                 doDisplayMySecretsUseInServiceDialog: true,
                 doDisplayAcknowledgeConfigVolatilityDialogIfNoVault: true,
                 selectedProjectId: null,
-                isCommandBarEnabled: paramsOfBootstrapCore.isCommandBarEnabledByDefault
+                isCommandBarEnabled: paramsOfBootstrapCore.isCommandBarEnabledByDefault,
+                userProfileStr: null
             };
 
             const dirPath = await dispatch(privateThunks.getDirPath());
@@ -210,18 +212,6 @@ export const selectors = (() => {
         return userConfigs as UserConfigs;
     });
 
-    // NOTE: This will not crash even if the user is not logged in.
-    const isDarkModeEnabled = (rootState: RootState): boolean | undefined => {
-        const { isUserLoggedIn } =
-            userAuthentication.selectors.authenticationState(rootState);
-
-        if (!isUserLoggedIn) {
-            return undefined;
-        }
-
-        return userConfigs(rootState).isDarkModeEnabled;
-    };
-
     const isVaultEnabled = createSelector(
         deploymentRegionManagement.selectors.currentDeploymentRegion,
         deploymentRegion => deploymentRegion.vault !== undefined
@@ -230,7 +220,6 @@ export const selectors = (() => {
     return {
         userConfigs,
         userConfigsWithUpdateProgress: state,
-        isDarkModeEnabled,
         isVaultEnabled
     };
 })();

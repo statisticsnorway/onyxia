@@ -4,20 +4,15 @@ import type { Catalog } from "./Catalog";
 import type { Chart } from "./Chart";
 import type { HelmRelease } from "./HelmRelease";
 import type { User } from "./User";
-import { JSONSchema } from "./JSONSchema";
+import type { JSONSchema } from "./JSONSchema";
 import type { NonPostableEvt } from "evt";
 import type { Stringifyable } from "core/tools/Stringifyable";
+import type { OidcParams } from "./OidcParams";
 
 export type OnyxiaApi = {
     getAvailableRegionsAndOidcParams: () => Promise<{
         regions: DeploymentRegion[];
-        oidcParams:
-            | {
-                  issuerUri: string;
-                  clientId: string;
-                  serializedExtraQueryParams: string | undefined;
-              }
-            | undefined;
+        oidcParams: OidcParams | undefined;
     }>;
 
     getIp: () => Promise<string>;
@@ -39,7 +34,7 @@ export type OnyxiaApi = {
         chartName: string;
         chartVersion: string;
     }) => Promise<{
-        helmValuesSchema: JSONSchema;
+        helmValuesSchema: JSONSchema | undefined;
         helmValuesYaml: string;
         helmChartSourceUrls: string[];
         helmDependencies: {
@@ -80,7 +75,10 @@ export type OnyxiaApi = {
 
     onboard: (params: { group: string | undefined }) => Promise<void>;
 
-    getQuotas: () => Promise<Record<string, Record<"spec" | "usage", string | number>>>;
+    // NOTE: Undefined if quotas are disabled on instance (403 response)
+    getQuotas: () => Promise<
+        Record<string, Record<"spec" | "usage", string | number>> | undefined
+    >;
 
     kubectlLogs: (params: {
         helmReleaseName: string;
@@ -97,4 +95,6 @@ export type OnyxiaApi = {
         }) => void;
         evtUnsubscribe: NonPostableEvt<void>;
     }) => Promise<void>;
+
+    getUserProfileJsonSchema: () => Promise<JSONSchema | undefined>;
 };

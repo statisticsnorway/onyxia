@@ -13,7 +13,7 @@ import { declareComponentKeys } from "i18nifty";
 import { useConstCallback } from "powerhooks/useConstCallback";
 import { IconButton } from "onyxia-ui/IconButton";
 import { CircularProgress } from "onyxia-ui/CircularProgress";
-import { useCoreState, useCore } from "core";
+import { useCoreState, getCoreSync } from "core";
 import { useFromNow } from "ui/shared/formattedDate";
 import { getIconUrlByName } from "lazy-icons";
 
@@ -23,12 +23,14 @@ export type Props = {
     className?: string;
 };
 
-export const AccountKubernetesTab = memo((props: Props) => {
+const AccountKubernetesTab = memo((props: Props) => {
     const { className } = props;
 
     const { classes, theme } = useStyles();
 
-    const { k8sCodeSnippets } = useCore().functions;
+    const {
+        functions: { k8sCodeSnippets }
+    } = getCoreSync();
 
     const {
         isReady,
@@ -160,6 +162,8 @@ export const AccountKubernetesTab = memo((props: Props) => {
         </div>
     );
 });
+
+export default AccountKubernetesTab;
 
 const { i18n } = declareComponentKeys<
     | "credentials section title"

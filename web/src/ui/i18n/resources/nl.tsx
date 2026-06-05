@@ -9,7 +9,7 @@ import { MaybeLink } from "ui/shared/MaybeLink";
 export const translations: Translations<"nl"> = {
     /* spell-checker: disable */
     Account: {
-        infos: "Accountgegevens",
+        profile: "Profiel",
         git: undefined,
         storage: "Verbinding met opslag",
         k8sCodeSnippets: "Verbinding met Kubernetes",
@@ -20,13 +20,25 @@ export const translations: Translations<"nl"> = {
         "personal tokens tooltip": 'Of "token" in het Engels.',
         vault: "Vault"
     },
-    AccountInfoTab: {
-        "general information": "Algemene informatie",
-        "user id": "Gebruikersnaam (IDEP)",
-        "full name": "Volledige naam",
-        email: "E-mailadres",
-        "instructions about how to change password":
-            'Om uw wachtwoord te wijzigen, logt u simpelweg uit en klikt u op de link "wachtwoord vergeten".'
+    AccountProfileTab: {
+        "account id": "Account-ID",
+        "account id helper":
+            "Je ontastbare identificaties die gekoppeld zijn aan de identiteit waarmee je inlogt op het platform",
+        "user id": "Gebruikers-ID",
+        email: "E-mail",
+        "account management": "Accountbeheer"
+    },
+    UserProfileForm: {
+        "customizable profile": "Aanpasbaar profiel",
+        "customizable profile helper":
+            "Nuttige informatie voor de automatische configuratie van uw diensten",
+        save: "Opslaan",
+        restore: "Herstellen"
+    },
+    ConfirmNavigationDialog: {
+        "you have unsaved changes": "Je hebt niet-opgeslagen wijzigingen!",
+        cancel: "Annuleren",
+        "continue without saving": "Doorgaan zonder op te slaan"
     },
     AccountGitTab: {
         gitName: "Gebruikersnaam voor Git",
@@ -300,9 +312,9 @@ export const translations: Translations<"nl"> = {
         "reset helper dialogs helper text":
             "De berichtvensters waarvan u heeft gevraagd ze niet meer weer te geven, opnieuw initialiseren"
     },
-    MyFiles: {
-        "page title - my files": "Mijn bestanden",
-        "what this page is used for - my files": "Sla hier uw gegevensbestanden op.",
+    FileExplorerEntry: {
+        "page title - file explorer": "Bestandsverkenner",
+        "what this page is used for - file explorer": "Sla hier uw gegevensbestanden op.",
         "help content": ({ accountTabLink, docHref }) => (
             <>
                 Lezen{" "}
@@ -312,9 +324,25 @@ export const translations: Translations<"nl"> = {
                 . &nbsp;
                 <MuiLink {...accountTabLink}>Minio-clients instellen</MuiLink>.
             </>
-        )
+        ),
+        "title personal": "Mijn gegevens",
+        "description personal": "Je eigen bestanden en datasets.",
+        "title project": ({ projectName }) => `Project ${projectName}`,
+        "description project": ({ projectName }) =>
+            `Gedeelde opslagruimte voor project ${projectName}`,
+        tags: ({ type }) => {
+            switch (type) {
+                case "personal":
+                    return "Mijn gegevens";
+                case "project":
+                    return "Groepsgegevens";
+            }
+        }
     },
-    MyFilesDisabledDialog: {
+    S3EntryCard: {
+        "space path": "Ruimtepad"
+    },
+    FileExplorerDisabledDialog: {
         "dialog title": "Geen S3-server geconfigureerd",
         "dialog body":
             "Er is geen S3-server geconfigureerd voor deze instantie. Je kunt er echter handmatig een toevoegen om de S3-bestandsverkenner in te schakelen.",
@@ -373,12 +401,16 @@ export const translations: Translations<"nl"> = {
         delete: "verwijderen",
         "upload file": "Een bestand uploaden",
         "copy path": "De naam van het S3-object kopiëren",
-        "create directory": "Nieuwe map",
+        "create new empty directory": "Nieuwe map",
         refresh: "vernieuwen",
+        "download directory": "Downloaden",
         new: "Nieuw",
         share: "Delen",
         "alt list view": "Toon lijst",
         "alt block view": "Toon blok"
+    },
+    ExplorerDownloadSnackbar: {
+        "download preparation": "Voorbereiding van de download ..."
     },
     SecretsExplorerButtonBar: {
         secret: "geheim",
@@ -386,7 +418,7 @@ export const translations: Translations<"nl"> = {
         delete: "verwijderen",
         "create secret": "Nieuw geheim",
         "copy path": "Gebruiken binnen de dienst",
-        "create directory": "Nieuwe map",
+        "create new empty directory": "Nieuwe map",
         refresh: "vernieuwen",
         "create what": ({ what }) => `Nieuw ${what}`,
         new: "Nieuw"
@@ -505,6 +537,8 @@ export const translations: Translations<"nl"> = {
         "divider: onyxia instance specific features":
             "Functionaliteiten die specifiek zijn voor deze instantie van Onyxia",
         dataExplorer: "Data Verkenner",
+        fileExplorer: "Bestanden Verkenner",
+        dataCollection: "Collecties Verkenner",
         sqlOlapShell: "SQL OLAP Shell"
     },
     AutoLogoutCountdown: {
@@ -551,7 +585,8 @@ export const translations: Translations<"nl"> = {
         header: "Catalogus van de diensten",
         "no result found": ({ forWhat }) => `Geen resultaat gevonden voor ${forWhat}`,
         "search results": "Resultaten van de zoekopdracht",
-        search: "Zoeken"
+        search: "Zoeken",
+        "title all catalog": "Alle"
     },
     CatalogChartCard: {
         launch: "Opstarten",
@@ -726,6 +761,19 @@ Voel je vrij om te verkennen en de controle over je Kubernetes-implementaties te
     FormFieldGroupComponent: {
         add: "Toevoegen"
     },
+    AutoInjectSwitch: {
+        tooltip: ({ isAutoInjected }) => (
+            <>
+                Indien ingeschakeld, wordt deze configuratie automatisch geïnjecteerd in
+                je services. Je kunt deze alsnog handmatig toevoegen bij het starten van
+                een service, zelfs als deze optie is uitgeschakeld.
+                <br />
+                <br />
+                Huidige status:{" "}
+                <strong>{isAutoInjected ? "ingeschakeld" : "uitgeschakeld"}</strong>
+            </>
+        )
+    },
     NumberFormField: {
         "below minimum": ({ minimum }) => `Moet groter dan of gelijk aan ${minimum} zijn`,
         "not a number": "Geen getal",
@@ -812,7 +860,6 @@ Voel je vrij om te verkennen en de controle over je Kubernetes-implementaties te
         )
     },
     Footer: {
-        contribute: "Bijdragen aan het project",
         "terms of service": "Gebruiksvoorwaarden",
         "change language": "Taal wijzigen",
         "dark mode switch": "Schakelaar voor donkere modus"
@@ -891,7 +938,11 @@ Voel je vrij om te verkennen en de controle over je Kubernetes-implementaties te
     MyServicesRestorableConfigOptions: {
         edit: "Wijzigen",
         "copy link": "URL kopiëren",
-        "remove bookmark": "Verwijderen"
+        "remove bookmark": "Verwijderen",
+        "move down": "Verplaats omlaag",
+        "move up": "Verplaats omhoog",
+        "move to top": "Verplaats helemaal naar boven",
+        "move to bottom": "Verplaats helemaal naar beneden"
     },
     MyServicesRestorableConfig: {
         edit: "Wijzigen",
@@ -971,7 +1022,12 @@ Voel je vrij om te verkennen en de controle over je Kubernetes-implementaties te
         "resize table": "Formaat wijzigen",
         "unsupported file type": ({ supportedFileTypes }) =>
             `Niet-ondersteund gegevensformaat. Ondersteunde typen zijn: ${supportedFileTypes.join(", ")}.`,
-        "can't fetch file": "Kan gegevensbestand niet ophalen"
+        "no s3 client":
+            "Geen S3-client geconfigureerd. Ga naar instellingen om er een voor de verkenner in te schakelen.",
+        "unsupported protocol":
+            "Niet-ondersteunde URL. Ondersteunde protocollen zijn https:// en s3://.",
+        "https fetch error": "Kan HTTPS-bestand niet ophalen.",
+        "query error": "DuckDB-queryfout."
     },
     UrlInput: {
         load: "Laden",
@@ -1118,6 +1174,36 @@ Voel je vrij om te verkennen en de controle over je Kubernetes-implementaties te
             return `${count} item${plural} geselecteerd`;
         },
         "label rows per page": "Items per pagina"
+    },
+    DatasetCard: {
+        publishedOn: "Gepubliceerd op",
+        datasetPage: "Datasetpagina",
+        license: "Licentie:",
+        format: "Formaat",
+        size: "Grootte",
+        distributions: "Distributies",
+        visualize: "Visualiseren",
+        unknown: "Onbekend"
+    },
+    DataCollection: {
+        "page header help title":
+            "Voer gewoon de https://-URL van je DCAT JSON-LD-schema in",
+        "page header title": "Datacatalogus",
+        "page header help content": ({ demoCatalogLink }) => (
+            <>
+                Voer eenvoudig de <code>https://</code>-URL van een datacatalogus in om
+                een voorbeeld te bekijken.
+                <br />
+                Weet je niet waar je moet beginnen? Probeer deze{" "}
+                <MuiLink {...demoCatalogLink}>democatalogus</MuiLink>!
+            </>
+        ),
+        "https fetch error": "De HTTPS-resource kon niet worden opgehaald.",
+        "invalid json response": "De response is geen geldige JSON.",
+        "json-ld compact error": "De JSON-LD-response kon niet worden gecompacteerd.",
+        "json-ld frame error": "De JSON-LD-response kon niet worden geframed.",
+        "datasets parsing error":
+            "De datasets uit de catalogus konden niet worden geparseerd."
     }
     /* spell-checker: enable */
 };

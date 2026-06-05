@@ -4,7 +4,7 @@ import { SettingSectionHeader } from "ui/shared/SettingSectionHeader";
 import { SettingField } from "ui/shared/SettingField";
 import { useDarkMode } from "onyxia-ui";
 import { useConstCallback } from "powerhooks/useConstCallback";
-import { useCore, useCoreState } from "core";
+import { useCoreState, getCoreSync } from "core";
 import { declareComponentKeys } from "i18nifty";
 import { env } from "env";
 
@@ -12,7 +12,7 @@ export type Props = {
     className?: string;
 };
 
-export const AccountUserInterfaceTab = memo((props: Props) => {
+const AccountUserInterfaceTab = memo((props: Props) => {
     const { className } = props;
 
     const { t } = useTranslation({ AccountUserInterfaceTab });
@@ -23,7 +23,9 @@ export const AccountUserInterfaceTab = memo((props: Props) => {
         setIsDarkModeEnabled(!isDarkModeEnabled)
     );
 
-    const { userConfigs } = useCore().functions;
+    const {
+        functions: { userConfigs }
+    } = getCoreSync();
 
     const { isBetaModeEnabled, isDevModeEnabled, isCommandBarEnabled } = useCoreState(
         "userConfigs",
@@ -109,6 +111,8 @@ export const AccountUserInterfaceTab = memo((props: Props) => {
         </div>
     );
 });
+
+export default AccountUserInterfaceTab;
 
 const { i18n } = declareComponentKeys<
     | "title"

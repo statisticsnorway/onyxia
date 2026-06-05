@@ -5,7 +5,7 @@ import { ButtonBar, type ButtonBarProps } from "onyxia-ui/ButtonBar";
 import { declareComponentKeys } from "i18nifty";
 import { getIconUrlByName } from "lazy-icons";
 
-export type Props = {
+export type SecretsExplorerButtonBarProps = {
     selectedItemKind: "file" | "directory" | "none";
     isSelectedItemInEditingState: boolean;
     isFileOpen: boolean;
@@ -13,7 +13,7 @@ export type Props = {
     callback: (buttonId: ButtonId) => void;
 };
 
-export const SecretsExplorerButtonBar = memo((props: Props) => {
+export const SecretsExplorerButtonBar = memo((props: SecretsExplorerButtonBarProps) => {
     const { selectedItemKind, isSelectedItemInEditingState, isFileOpen, callback } =
         props;
 
@@ -33,7 +33,7 @@ export const SecretsExplorerButtonBar = memo((props: Props) => {
                             return getIconUrlByName("Cached");
                         case "copy path":
                             return getIconUrlByName("FilterNone");
-                        case "create directory":
+                        case "create new empty directory":
                             return getIconUrlByName("Add");
                         case "new":
                             return getIconUrlByName("Add");
@@ -54,7 +54,7 @@ export const SecretsExplorerButtonBar = memo((props: Props) => {
                                 isFileOpen
                             );
                         case "new":
-                        case "create directory":
+                        case "create new empty directory":
                             return isFileOpen;
                         case "delete":
                             return selectedItemKind === "none" || isFileOpen;
@@ -83,7 +83,7 @@ const buttonIds = [
     "refresh",
     "rename",
     "new",
-    "create directory",
+    "create new empty directory",
     "delete",
     "copy path"
 ] as const;

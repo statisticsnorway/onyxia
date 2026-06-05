@@ -1,10 +1,10 @@
 import "minimal-polyfills/Object.fromEntries";
-import { createRouter, defineRoute, param, createGroup, type Route } from "type-route";
+import { defineRoute, param, createGroup } from "type-route";
 import type { QueryStringSerializer } from "type-route";
 import { partition } from "evt/tools/reducers/partition";
 import { assert, type Equals } from "tsafe/assert";
 import type { ValueSerializer } from "type-route";
-import { StringifyableAtomic } from "core/tools/Stringifyable";
+import { type StringifyableAtomic } from "core/tools/Stringifyable";
 
 const { helmValuesPatchWrap, queryStringSerializer } = (() => {
     const helmValuesPatch_key = "helmValuesPatch";
@@ -36,8 +36,6 @@ const { helmValuesPatchWrap, queryStringSerializer } = (() => {
                             !queryParamKey.startsWith("oidc-spa.")
                     )
                 );
-
-            console.log({ queryParamsEntries_helmValuesPatch, queryParamsEntries_other });
 
             const helmValuesPatch = queryParamsEntries_helmValuesPatch.map(
                 ([queryParamKey, queryParamValue]): HelmValuesPatchEntry => ({
@@ -191,8 +189,4 @@ export const routeDefs = {
     )
 };
 
-export const routeGroup = createGroup(Object.values(createRouter(routeDefs).routes));
-
-export type PageRoute = Route<typeof routeGroup>;
-
-export const getDoRequireUserLoggedIn: (route: PageRoute) => boolean = () => true;
+export const routeGroup = createGroup(routeDefs);

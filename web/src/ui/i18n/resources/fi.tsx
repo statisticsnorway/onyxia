@@ -9,7 +9,7 @@ import { MaybeLink } from "ui/shared/MaybeLink";
 export const translations: Translations<"fi"> = {
     /* spell-checker: disable */
     Account: {
-        infos: "Tilin tiedot",
+        profile: "Profiili",
         git: undefined,
         storage: "Yhdistä tallennustilaan",
         k8sCodeSnippets: "Kubernetes",
@@ -21,13 +21,25 @@ export const translations: Translations<"fi"> = {
             "Sinulle generoidut salasanat, joilla on määritelty voimassaoloaika",
         vault: "Vault"
     },
-    AccountInfoTab: {
-        "general information": "Yleiset tiedot",
-        "user id": "Käyttäjätunnus (IDEP)",
-        "full name": "Koko nimi",
-        email: "Sähköpostiosoite",
-        "instructions about how to change password":
-            'Vaihtaaksesi salasanasi, kirjaudu vain ulos ja klikkaa "unohdin salasanani" -linkkiä.'
+    AccountProfileTab: {
+        "account id": "Tilin tunniste",
+        "account id helper":
+            "Aineettomat tunnisteesi, jotka liittyvät siihen henkilöllisyyteen, jolla kirjaudut alustalle",
+        "user id": "Käyttäjätunnus",
+        email: "Sähköposti",
+        "account management": "Tilinhallinta"
+    },
+    UserProfileForm: {
+        "customizable profile": "Mukautettava profiili",
+        "customizable profile helper":
+            "Hyödyllistä tietoa palvelujen automaattista konfigurointia varten",
+        save: "Tallenna",
+        restore: "Palauta"
+    },
+    ConfirmNavigationDialog: {
+        "you have unsaved changes": "Sinulla on tallentamattomia muutoksia!",
+        cancel: "Peruuta",
+        "continue without saving": "Jatka tallentamatta"
     },
     AccountGitTab: {
         gitName: "Käyttäjänimi Gitille",
@@ -296,9 +308,9 @@ export const translations: Translations<"fi"> = {
         "reset helper dialogs helper text":
             "Nollaa ohjeviestit, joista on pyydetty, ettei niitä näytetä uudelleen"
     },
-    MyFiles: {
-        "page title - my files": "Omat tiedostot",
-        "what this page is used for - my files":
+    FileExplorerEntry: {
+        "page title - file explorer": "Tiedostoselain",
+        "what this page is used for - file explorer":
             "Täällä voit selata S3 Bucket -tiedostojasi.",
         "help content": ({ accountTabLink, docHref }) => (
             <>
@@ -309,9 +321,25 @@ export const translations: Translations<"fi"> = {
                 . &nbsp;
                 <MuiLink {...accountTabLink}>Määritä Minio-asiakkaat</MuiLink>.
             </>
-        )
+        ),
+        "title personal": "Omat tietoni",
+        "description personal": "Omat tiedostosi ja tietoaineistosi.",
+        "title project": ({ projectName }) => `Projekti ${projectName}`,
+        "description project": ({ projectName }) =>
+            `Projektin ${projectName} yhteinen tallennustila`,
+        tags: ({ type }) => {
+            switch (type) {
+                case "personal":
+                    return "Omat tiedot";
+                case "project":
+                    return "Ryhmän tiedot";
+            }
+        }
     },
-    MyFilesDisabledDialog: {
+    S3EntryCard: {
+        "space path": "Tilapolku"
+    },
+    FileExplorerDisabledDialog: {
         "dialog title": "S3-palvelinta ei ole määritetty",
         "dialog body":
             "Tälle instanssille ei ole määritetty S3-palvelinta. Voit kuitenkin lisätä sellaisen manuaalisesti ottaaksesi käyttöön S3-tiedostonhallinnan.",
@@ -371,7 +399,7 @@ export const translations: Translations<"fi"> = {
         delete: "poista",
         "create secret": "Luo salaisuus",
         "copy path": "Käytä palvelussa",
-        "create directory": "Luo hakemisto",
+        "create new empty directory": "Luo hakemisto",
         refresh: "päivitä",
         "create what": ({ what }) => `Luo ${what}`,
         new: "Uusi"
@@ -379,14 +407,18 @@ export const translations: Translations<"fi"> = {
     ExplorerButtonBar: {
         file: "tiedosto",
         delete: "poista",
+        "download directory": "Lataa",
         "upload file": "Lataa tiedosto",
         "copy path": "Kopioi S3-objektin nimi",
-        "create directory": "Luo hakemisto",
+        "create new empty directory": "Luo hakemisto",
         refresh: "päivitä",
         new: "Uusi",
         share: "Jaa",
         "alt list view": "Näytä lista",
         "alt block view": "Näytä lohko"
+    },
+    ExplorerDownloadSnackbar: {
+        "download preparation": "Latauksen valmistelu ..."
     },
     ExplorerItems: {
         "empty directory": "Tämä hakemisto on tyhjä"
@@ -500,6 +532,8 @@ export const translations: Translations<"fi"> = {
         "divider: onyxia instance specific features":
             "Onyxia-instanssin erityisominaisuudet",
         dataExplorer: "Data Explorer",
+        fileExplorer: "Tiedostonhallinta",
+        dataCollection: "Kokoelmien selains",
         sqlOlapShell: "SQL OLAP-kuori"
     },
     AutoLogoutCountdown: {
@@ -547,7 +581,8 @@ export const translations: Translations<"fi"> = {
         header: "Palvelukatalogi",
         "no result found": ({ forWhat }) => `Tuloksia ei löytynyt haulle ${forWhat}`,
         "search results": "Hakutulokset",
-        search: "Haku"
+        search: "Haku",
+        "title all catalog": "Kaikki"
     },
     CatalogChartCard: {
         launch: "Käynnistä",
@@ -715,6 +750,19 @@ Tutustu vapaasti ja ota hallintaan Kubernetes-julkaisusi!
     FormFieldGroupComponent: {
         add: "Lisää"
     },
+    AutoInjectSwitch: {
+        tooltip: ({ isAutoInjected }) => (
+            <>
+                Jos tämä asetus on käytössä, se lisätään automaattisesti palveluihisi.
+                Voit silti lisätä sen manuaalisesti palvelua käynnistäessäsi, vaikka tämä
+                asetus olisi pois käytöstä.
+                <br />
+                <br />
+                Nykyinen tila:{" "}
+                <strong>{isAutoInjected ? "käytössä" : "ei käytössä"}</strong>
+            </>
+        )
+    },
     NumberFormField: {
         "below minimum": ({ minimum }) =>
             `Täytyy olla suurempi tai yhtä suuri kuin ${minimum}`,
@@ -800,7 +848,6 @@ Tutustu vapaasti ja ota hallintaan Kubernetes-julkaisusi!
         )
     },
     Footer: {
-        contribute: "Osallistu",
         "terms of service": "Käyttöehdot",
         "change language": "Vaihda kieli",
         "dark mode switch": "Tumma tila"
@@ -880,7 +927,11 @@ Tutustu vapaasti ja ota hallintaan Kubernetes-julkaisusi!
     MyServicesRestorableConfigOptions: {
         edit: "Muokkaa",
         "copy link": "Kopioi URL-osoite",
-        "remove bookmark": "Poista"
+        "remove bookmark": "Poista",
+        "move down": "Siirrä alas",
+        "move up": "Siirrä ylös",
+        "move to top": "Siirrä ylimmäksi",
+        "move to bottom": "Siirrä alimmaksi"
     },
     MyServicesRestorableConfig: {
         edit: "Muokkaa",
@@ -960,7 +1011,12 @@ Tutustu vapaasti ja ota hallintaan Kubernetes-julkaisusi!
         "resize table": "Muuta taulukon kokoa",
         "unsupported file type": ({ supportedFileTypes }) =>
             `Tuettua tiedostomuotoa ei tunnistettu. Tuetut tyypit ovat: ${supportedFileTypes.join(", ")}.`,
-        "can't fetch file": "Tietotiedostoa ei voida hakea"
+        "no s3 client":
+            "S3-asiakasta ei ole määritetty. Siirry asetuksiin ja ota sellainen käyttöön Explorerissa.",
+        "unsupported protocol":
+            "URL ei ole tuettu. Tuetut protokollat ovat https:// ja s3://.",
+        "https fetch error": "HTTPS-tiedostoa ei voitu noutaa.",
+        "query error": "DuckDB-kyselyvirhe."
     },
     UrlInput: {
         load: "Lataa",
@@ -1107,6 +1163,34 @@ Tutustu vapaasti ja ota hallintaan Kubernetes-julkaisusi!
     },
     CustomDataGridToolbarColumnsButton: {
         toolbarColumnsLabel: "Sarakkeet"
+    },
+    DatasetCard: {
+        publishedOn: "Julkaistu",
+        datasetPage: "Aineistosivu",
+        license: "Lisenssi:",
+        format: "Muoto",
+        size: "Koko",
+        distributions: "Jakelut",
+        visualize: "Visualisoi",
+        unknown: "Tuntematon"
+    },
+    DataCollection: {
+        "page header help title": "Syötä vain DCAT JSON-LD -skeemasi https://-osoite",
+        "page header title": "Tietoluettelo",
+        "page header help content": ({ demoCatalogLink }) => (
+            <>
+                Syötä vain tietoluettelon <code>https://</code>-URL-osoite nähdäksesi
+                esikatselun.
+                <br />
+                Etkö tiedä, mistä aloittaa? Kokeile tätä{" "}
+                <MuiLink {...demoCatalogLink}>demoluetteloa</MuiLink>!
+            </>
+        ),
+        "https fetch error": "HTTPS-resurssia ei voitu hakea.",
+        "invalid json response": "Vastaus ei ole kelvollista JSONia.",
+        "json-ld compact error": "JSON-LD-vastausta ei voitu tiivistää.",
+        "json-ld frame error": "JSON-LD-vastausta ei voitu kehystää.",
+        "datasets parsing error": "Katalogin datasettejä ei voitu jäsentää."
     }
     /* spell-checker: enable */
 };

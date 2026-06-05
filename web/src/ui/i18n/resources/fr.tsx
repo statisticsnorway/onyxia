@@ -9,7 +9,7 @@ import { MaybeLink } from "ui/shared/MaybeLink";
 export const translations: Translations<"fr"> = {
     /* spell-checker: disable */
     Account: {
-        infos: "Information du compte",
+        profile: "Profil",
         git: undefined,
         storage: "Connexion au stockage",
         k8sCodeSnippets: "Connexion à Kubernetes",
@@ -20,13 +20,25 @@ export const translations: Translations<"fr"> = {
         "personal tokens tooltip": 'Ou en anglais "token".',
         vault: "Vault"
     },
-    AccountInfoTab: {
-        "general information": "Informations générales",
-        "user id": "Identifiant (IDEP)",
-        "full name": "Nom complet",
-        email: "Adresse mail",
-        "instructions about how to change password":
-            'Pour changer votre mot de passe, déconnectez-vous simplement, puis cliquez sur le lien "mot de passe oublié".'
+    AccountProfileTab: {
+        "account id": "Identifiant de compte",
+        "account id helper":
+            "Vos identifiants intangibles liés à l'identité que vous utilisez pour vous connecter à la plateforme",
+        "user id": "ID utilisateur",
+        email: "Email",
+        "account management": "Gestion du compte"
+    },
+    UserProfileForm: {
+        "customizable profile": "Profil personnalisable",
+        "customizable profile helper":
+            "Informations utiles à la configuration automatique de vos services",
+        save: "Enregistrer",
+        restore: "Restaurer"
+    },
+    ConfirmNavigationDialog: {
+        "you have unsaved changes": "Vous avez des modifications non enregistrées !",
+        cancel: "Annuler",
+        "continue without saving": "Continuer sans enregistrer"
     },
     AccountGitTab: {
         gitName: "Nom d'utilisateur pour Git",
@@ -73,7 +85,7 @@ export const translations: Translations<"fr"> = {
             "Pour accéder au stockage en dehors des services du datalab",
         "init script section helper":
             "Téléchargez ou copiez le script d'initialisation dans le langage de programmation de votre choix.",
-        "expires in": ({ howMuchTime }) => `Expire dans ${howMuchTime}`
+        "expires in": ({ howMuchTime }) => `Expire ${howMuchTime}`
     },
     AccountKubernetesTab: {
         "credentials section title": "Connection au cluster Kubernetes",
@@ -120,7 +132,7 @@ export const translations: Translations<"fr"> = {
                 local.
             </>
         ),
-        "expires in": ({ howMuchTime }) => `Le token expire dans ${howMuchTime}`
+        "expires in": ({ howMuchTime }) => `Le token expire ${howMuchTime}`
     },
     ProjectSettings: {
         "page header title": "Paramètres du projet",
@@ -197,10 +209,10 @@ export const translations: Translations<"fr"> = {
         "workingDirectoryPath textField label": "Chemin du répertoire de travail",
         "workingDirectoryPath textField helper text": (
             <>
-                Cela vous permet de spécifier le seau et le préfixe de l'objet S3 que vous
-                possédez sur le service S3. <br />
-                Exemple : <code>mon-seau/mon-préfixe/</code> ou{" "}
-                <code>juste mon-seau/</code> si vous possédez tout le seau.
+                Cela vous permet de spécifier le bucket et le préfixe de l'objet S3 que
+                vous possédez sur le service S3. <br />
+                Exemple : <code>mon-bucket/mon-préfixe/</code> ou{" "}
+                <code>juste mon-bucket/</code> si vous possédez tout le bucket.
             </>
         ),
         "account credentials": "Identifiants du compte",
@@ -220,7 +232,7 @@ export const translations: Translations<"fr"> = {
         "url style helper text": `Spécifiez comment votre serveur S3 formate l'URL pour télécharger des fichiers.`,
         "path style label": ({ example }) => (
             <>
-                Style de chemin
+                Path style
                 {example !== undefined && (
                     <>
                         :&nbsp;
@@ -231,7 +243,7 @@ export const translations: Translations<"fr"> = {
         ),
         "virtual-hosted style label": ({ example }) => (
             <>
-                Style hébergé virtuellement
+                Virtual-hosted style
                 {example !== undefined && (
                     <>
                         :&nbsp;
@@ -303,9 +315,10 @@ export const translations: Translations<"fr"> = {
         "reset helper dialogs helper text":
             "Réinitialiser les fenêtres de messages que vous avez demandé de ne plus afficher"
     },
-    MyFiles: {
-        "page title - my files": "Mes fichiers",
-        "what this page is used for - my files": "Stocker ici vos fichiers de données.",
+    FileExplorerEntry: {
+        "page title - file explorer": "Explorateur de fichiers",
+        "what this page is used for - file explorer":
+            "Stocker ici vos fichiers de données.",
         "help content": ({ accountTabLink, docHref }) => (
             <>
                 Lire{" "}
@@ -317,9 +330,25 @@ export const translations: Translations<"fr"> = {
                     Configurer les clients MinIO
                 </MuiLink>.
             </>
-        )
+        ),
+        "title personal": "Mes données",
+        "description personal": "Vos propres fichiers et jeux de données.",
+        "title project": ({ projectName }) => `Projet ${projectName}`,
+        "description project": ({ projectName }) =>
+            `Espace de stockage partagé pour le projet ${projectName}`,
+        tags: ({ type }) => {
+            switch (type) {
+                case "personal":
+                    return "Mes données";
+                case "project":
+                    return "Données de groupe";
+            }
+        }
     },
-    MyFilesDisabledDialog: {
+    S3EntryCard: {
+        "space path": "Chemin de l'espace"
+    },
+    FileExplorerDisabledDialog: {
         "dialog title": "Aucun serveur S3 configuré",
         "dialog body":
             "Il n'y a aucun serveur S3 configuré pour cette instance. Mais vous pouvez en ajouter un manuellement pour activer l'explorateur de fichiers S3.",
@@ -378,12 +407,16 @@ export const translations: Translations<"fr"> = {
         delete: "supprimer",
         "upload file": "Téléverser un fichier",
         "copy path": "Copier le nom de l'objet S3",
-        "create directory": "Nouveau dossier",
+        "create new empty directory": "Nouveau dossier",
         refresh: "rafraîchir",
         new: "Nouveau",
         share: "Partager",
         "alt list view": "Afficher la liste",
-        "alt block view": "Afficher en bloc"
+        "alt block view": "Afficher en bloc",
+        "download directory": "Télécharger"
+    },
+    ExplorerDownloadSnackbar: {
+        "download preparation": "Préparation du téléchargement ..."
     },
     SecretsExplorerButtonBar: {
         secret: "secret",
@@ -391,7 +424,7 @@ export const translations: Translations<"fr"> = {
         delete: "supprimer",
         "create secret": "Nouveau secret",
         "copy path": "Utiliser dans le service",
-        "create directory": "Nouveau dossier",
+        "create new empty directory": "Nouveau dossier",
         refresh: "rafraîchir",
         "create what": ({ what }) => `Nouveau ${what}`,
         new: "Nouveau"
@@ -509,6 +542,8 @@ export const translations: Translations<"fr"> = {
         "divider: onyxia instance specific features":
             "Fonctionnalités spécifiques à cette instance d'Onyxia",
         dataExplorer: "Explorateur de Données",
+        fileExplorer: "Explorateur de Fichiers",
+        dataCollection: "Explorateur de Collections",
         sqlOlapShell: "Coquille SQL OLAP"
     },
     AutoLogoutCountdown: {
@@ -556,7 +591,8 @@ export const translations: Translations<"fr"> = {
         header: "Catalogue de services",
         "no result found": ({ forWhat }) => `Aucun résultat trouvé pour ${forWhat}`,
         "search results": "Résultats de la recherche",
-        search: "Rechercher"
+        search: "Rechercher",
+        "title all catalog": "Tous"
     },
     CatalogChartCard: {
         launch: "Lancer",
@@ -730,6 +766,18 @@ N'hésitez pas à explorer et à prendre en main vos déploiements Kubernetes !
     FormFieldGroupComponent: {
         add: "Ajouter"
     },
+    AutoInjectSwitch: {
+        tooltip: ({ isAutoInjected }) => (
+            <>
+                Si activé, cette configuration sera automatiquement injectée dans vos
+                services. Vous pouvez tout de même l’ajouter manuellement lors du
+                lancement d’un service, même si cette option reste désactivée.
+                <br />
+                <br />
+                État actuel : <strong>{isAutoInjected ? "activé" : "désactivé"}</strong>
+            </>
+        )
+    },
     NumberFormField: {
         "below minimum": ({ minimum }) => `Doit être supérieur ou égal à ${minimum}`,
         "not a number": "Pas un nombre",
@@ -819,7 +867,6 @@ N'hésitez pas à explorer et à prendre en main vos déploiements Kubernetes !
         )
     },
     Footer: {
-        contribute: "Contribuer au projet",
         "terms of service": "Conditions d'utilisation",
         "change language": "Changer la langue",
         "dark mode switch": "Interrupteur pour le mode sombre"
@@ -899,7 +946,11 @@ N'hésitez pas à explorer et à prendre en main vos déploiements Kubernetes !
     MyServicesRestorableConfigOptions: {
         edit: "Modifier",
         "copy link": "Copier l'URL",
-        "remove bookmark": "Supprimer"
+        "remove bookmark": "Supprimer",
+        "move down": "Déplacer vers le bas",
+        "move up": "Déplacer vers le haut",
+        "move to top": "Déplacer tout en haut",
+        "move to bottom": "Déplacer tout en bas"
     },
     MyServicesRestorableConfig: {
         edit: "Modifier",
@@ -982,7 +1033,12 @@ N'hésitez pas à explorer et à prendre en main vos déploiements Kubernetes !
         "resize table": "Redimensionner",
         "unsupported file type": ({ supportedFileTypes }) =>
             `Format de données non pris en charge. Les types pris en charge sont : ${supportedFileTypes.join(", ")}.`,
-        "can't fetch file": "Impossible de récupérer le fichier de données"
+        "no s3 client":
+            "Aucun client S3 configuré. Allez dans les paramètres pour en activer un pour l’explorateur.",
+        "unsupported protocol":
+            "URL non prise en charge. Les protocoles supportés sont https:// et s3://.",
+        "https fetch error": "Impossible de récupérer le fichier HTTPS.",
+        "query error": "Erreur de requête DuckDB."
     },
     UrlInput: {
         load: "Charger",
@@ -1129,6 +1185,36 @@ N'hésitez pas à explorer et à prendre en main vos déploiements Kubernetes !
             return `${count} élément${plural} sélectionnée${plural}`;
         },
         "label rows per page": "Éléments par page"
+    },
+    DatasetCard: {
+        publishedOn: "Publié le",
+        datasetPage: "Page du jeu de données",
+        license: "Licence :",
+        format: "Format",
+        size: "Taille",
+        distributions: "Distributions",
+        visualize: "Visualiser",
+        unknown: "Inconnu"
+    },
+    DataCollection: {
+        "page header help title":
+            "Entrez simplement l'URL https:// de votre schema jsonld dcat",
+        "page header title": "Catalogue de données",
+        "page header help content": ({ demoCatalogLink }) => (
+            <>
+                Entrez simplement l'URL <code>https://</code> d'un catalogue de données
+                pour le prévisualiser.
+                <br />
+                Vous ne savez pas par où commencer ? Essayez ce{" "}
+                <MuiLink {...demoCatalogLink}>catalogue de démonstration</MuiLink> !
+            </>
+        ),
+        "https fetch error": "Impossible de récupérer la ressource HTTPS.",
+        "invalid json response": "La réponse n'est pas un JSON valide.",
+        "json-ld compact error": "Impossible de compacter la réponse JSON-LD.",
+        "json-ld frame error": "Impossible de structurer la réponse JSON-LD.",
+        "datasets parsing error":
+            "Impossible d'analyser les jeux de données du catalogue."
     }
     /* spell-checker: enable */
 };

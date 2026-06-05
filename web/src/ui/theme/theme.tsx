@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createOnyxiaUi, defaultGetTypographyDesc } from "onyxia-ui";
-import { palette } from "./palette";
+import { getPalette } from "./palette";
 import { env } from "env";
 import { loadThemedFavicon as loadThemedFavicon_base } from "./loadThemedFavicon";
 import { Evt } from "evt";
@@ -25,7 +25,7 @@ const {
         }),
         fontFamily: `'${env.FONT.fontFamily}'`
     }),
-    palette,
+    palette: getPalette,
     splashScreenParams: isStorybook
         ? undefined
         : {
@@ -34,6 +34,8 @@ const {
               minimumDisplayDuration: 0
           }
 });
+
+export { evtTheme };
 
 pluginSystemInitTheme({
     evtTheme: Evt.loosenType(evtTheme),

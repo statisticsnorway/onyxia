@@ -8,8 +8,8 @@ import { BrandHeaderSection } from "ui/shared/BrandHeaderSection";
 import { routes } from "ui/routes";
 import { ProjectSelect } from "./ProjectSelect";
 import { RegionSelect } from "./RegionSelect";
-import { useCore, useCoreState } from "core";
-import { urlToLink } from "ui/routes";
+import { getCoreSync, useCoreState } from "core";
+import { useUrlToLink } from "ui/routes";
 import { LocalizedMarkdown } from "ui/shared/Markdown";
 import { getIconUrl } from "lazy-icons";
 
@@ -24,9 +24,13 @@ export function Header(props: Props) {
 
     const { classes, cx } = useStyles();
 
-    const { userAuthentication } = useCore().functions;
+    const {
+        functions: { userAuthentication }
+    } = getCoreSync();
 
-    const { isUserLoggedIn } = useCoreState("userAuthentication", "authenticationState");
+    const { isUserLoggedIn } = useCoreState("userAuthentication", "main");
+
+    const { urlToLink } = useUrlToLink();
 
     return (
         <header className={cx(classes.root, className)}>
@@ -84,7 +88,6 @@ export type I18n = typeof i18n;
 
 const useStyles = tss.withName({ Header }).create(({ theme }) => ({
     root: {
-        backgroundColor: theme.colors.useCases.surfaces.background,
         overflow: "auto",
         display: "flex",
         alignItems: "center",

@@ -1,7 +1,7 @@
 import { useMemo, memo } from "react";
 import { useTranslation } from "ui/i18n";
 import { SettingField, type Props as SettingFieldProps } from "ui/shared/SettingField";
-import { useCoreState, useCore } from "core";
+import { useCoreState, getCoreSync } from "core";
 import { useCallbackFactory } from "powerhooks/useCallbackFactory";
 import { copyToClipboard } from "ui/tools/copyToClipboard";
 import { tss } from "tss";
@@ -18,7 +18,7 @@ export type Props = {
     className?: string;
 };
 
-export const AccountGitTab = memo((props: Props) => {
+const AccountGitTab = memo((props: Props) => {
     const { className } = props;
 
     const { t } = useTranslation({ AccountGitTab });
@@ -31,7 +31,9 @@ export const AccountGitTab = memo((props: Props) => {
 
     const userConfigsState = useCoreState("userConfigs", "userConfigsWithUpdateProgress");
 
-    const { userConfigs } = useCore().functions;
+    const {
+        functions: { userConfigs }
+    } = getCoreSync();
 
     const onRequestEditFactory = useCallbackFactory(
         ([key]: [EditableFieldKey], [value]: [string]) =>
@@ -92,6 +94,8 @@ export const AccountGitTab = memo((props: Props) => {
         </div>
     );
 });
+
+export default AccountGitTab;
 
 const { i18n } = declareComponentKeys<
     | "gitName"

@@ -5,6 +5,7 @@ import { assert, is } from "tsafe/assert";
 import { id } from "tsafe/id";
 import { exclude } from "tsafe/exclude";
 import * as projectManagement from "core/usecases/projectManagement";
+import { getServiceOpenUrlAndMaybeAddPortToPostInstallInstructionsUrls } from "./decoupledLogic/getServiceOpenUrlAndMaybeAddPortToPostInstallInstructionsUrls";
 
 const state = (rootState: RootState) => rootState[name];
 
@@ -72,16 +73,36 @@ const services = createSelector(
                 return { helmRelease, ownership } as const;
             })
             .filter(exclude(undefined))
+            .map(({ helmRelease, ownership }) => {
+                const { openUrl, postInstallInstructions_patched } =
+                    getServiceOpenUrlAndMaybeAddPortToPostInstallInstructionsUrls({
+                        helmRelease,
+                        kubernetesClusterIngressPort: state.kubernetesClusterIngressPort
+                    });
+
+                return {
+                    helmRelease,
+                    ownership,
+                    openUrl,
+                    postInstallInstructions_patched
+                };
+            })
             .map(
-                ({ helmRelease, ownership }): Service => ({
+                ({
+                    helmRelease,
+                    ownership,
+                    openUrl,
+                    postInstallInstructions_patched
+                }): Service => ({
                     helmReleaseName: helmRelease.helmReleaseName,
                     chartName: helmRelease.chartName,
                     ownership,
                     friendlyName: helmRelease.friendlyName ?? helmRelease.chartName,
                     iconUrl: logoUrlByReleaseName[helmRelease.helmReleaseName],
+
                     startedAt: helmRelease.startedAt,
-                    openUrl: [...helmRelease.urls].sort()[0],
-                    postInstallInstructions: helmRelease.postInstallInstructions,
+                    openUrl,
+                    postInstallInstructions: postInstallInstructions_patched,
                     servicePassword: (() => {
                         const { postInstallInstructions } = helmRelease;
 

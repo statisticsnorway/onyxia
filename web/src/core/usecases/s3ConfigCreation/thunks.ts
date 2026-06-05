@@ -1,5 +1,5 @@
 import type { Thunks } from "core/bootstrap";
-import { actions, type State, ChangeValueParams } from "./state";
+import { actions, type State, type ChangeValueParams } from "./state";
 import { assert } from "tsafe/assert";
 import { privateSelectors } from "./selectors";
 import * as s3ConfigManagement from "core/usecases/s3ConfigManagement";
@@ -106,7 +106,10 @@ export const thunks = {
                                   projectManagement.protectedSelectors.currentProject(
                                       getState()
                                   );
-                              const user = userAuthentication.selectors.user(getState());
+                              const { isUserLoggedIn, user } =
+                                  userAuthentication.selectors.main(getState());
+
+                              assert(isUserLoggedIn);
 
                               return project.group === undefined
                                   ? {

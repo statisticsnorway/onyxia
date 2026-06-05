@@ -16,8 +16,12 @@ import {
     type RootForm,
     mutateHelmValues_addArrayItem,
     mutateHelmValues_removeArrayItem,
-    mutateHelmValues_update
+    mutateHelmValues_update,
+    computeAutocompleteOptions
 } from "./decoupledLogic";
+import { same } from "evt/tools/inDepth/same";
+import { assignValueAtPath } from "core/tools/Stringifyable";
+import type { DeepPartial } from "core/tools/DeepPartial";
 
 type State = State.NotInitialized | State.Ready;
 
@@ -33,6 +37,7 @@ export declare namespace State {
         chartVersion: string;
         chartVersion_default: string;
         xOnyxiaContext: XOnyxiaContext;
+        xOnyxiaContext_autocompleteOptions: DeepPartial<XOnyxiaContext>;
 
         friendlyName: string;
         friendlyName_default: string;
@@ -57,7 +62,7 @@ export declare namespace State {
         helmValues: Record<string, Stringifyable>;
         helmValuesYaml: string;
 
-        helmValuesSchema_forDataTextEditor: JSONSchema;
+        helmValuesSchema_forDataTextEditor: JSONSchema | undefined;
 
         chartIconUrl: string | undefined;
         catalogRepositoryUrl: string;
@@ -65,6 +70,19 @@ export declare namespace State {
         k8sRandomSubdomain: string;
         helmChartSourceUrls: string[];
         availableChartVersions: string[];
+
+        infoAmountInHelmValues: "user provided" | "include values.yaml defaults";
+
+        autocompleteOptions: {
+            helmValuesPath: (string | number)[];
+            options: {
+                optionValue: string;
+                overwrite: {
+                    helmValuesPath: (string | number)[];
+                    helmValues_subtree: Stringifyable;
+                };
+            }[];
+        }[];
     };
 }
 
@@ -87,7 +105,10 @@ export const { reducer, actions } = createUsecaseActions({
                     payload
                 }: {
                     payload: {
-                        readyState: Omit<State.Ready, "stateDescription" | "helmValues">;
+                        readyState: Omit<
+                            State.Ready,
+                            "stateDescription" | "helmValues" | "autocompleteOptions"
+                        >;
                         helmValuesPatch: {
                             path: (string | number)[];
                             value: StringifyableAtomic | undefined;
@@ -100,7 +121,8 @@ export const { reducer, actions } = createUsecaseActions({
                 const state: State.Ready = {
                     stateDescription: "ready",
                     ...readyState_partial,
-                    helmValues: structuredClone(readyState_partial.helmValues_default)
+                    helmValues: structuredClone(readyState_partial.helmValues_default),
+                    autocompleteOptions: []
                 };
 
                 applyDiffPatch({
@@ -109,6 +131,39 @@ export const { reducer, actions } = createUsecaseActions({
                 });
 
                 return state;
+            },
+            infoAmountInHelmValuesChanged: (
+                state,
+                {
+                    payload
+                }: {
+                    payload: {
+                        infoAmountInHelmValues:
+                            | "user provided"
+                            | "include values.yaml defaults";
+                        helmValuesPatch: {
+                            path: (string | number)[];
+                            value: StringifyableAtomic | undefined;
+                        }[];
+                        helmValues_default: Record<string, Stringifyable>;
+                    };
+                }
+            ) => {
+                const { infoAmountInHelmValues, helmValuesPatch, helmValues_default } =
+                    payload;
+
+                assert(state.stateDescription === "ready");
+
+                const helmValues = structuredClone(helmValues_default);
+
+                applyDiffPatch({
+                    objectOrArray: helmValues,
+                    diffPatch: helmValuesPatch
+                });
+
+                state.helmValues_default = helmValues_default;
+                state.helmValues = helmValues;
+                state.infoAmountInHelmValues = infoAmountInHelmValues;
             },
             formFieldValueChanged: (
                 state,
@@ -132,6 +187,68 @@ export const { reducer, actions } = createUsecaseActions({
                     formFieldValue,
                     rootForm
                 });
+            },
+            formFieldValueChanged_autocompleteSelection: (
+                state,
+                {
+                    payload
+                }: {
+                    payload: {
+                        helmValuesPath: (string | number)[];
+                        optionValue: string;
+                    };
+                }
+            ) => {
+                const { helmValuesPath, optionValue } = payload;
+
+                assert(state.stateDescription === "ready");
+
+                const entry = state.autocompleteOptions.find(entry =>
+                    same(entry.helmValuesPath, helmValuesPath)
+                );
+
+                assert(entry !== undefined);
+
+                const option = entry.options.find(
+                    option => option.optionValue === optionValue
+                );
+
+                assert(option !== undefined);
+
+                const { overwrite } = option;
+
+                assignValueAtPath({
+                    stringifyableObjectOrArray: state.helmValues,
+                    path: overwrite.helmValuesPath,
+                    value: overwrite.helmValues_subtree
+                });
+            },
+            autocompletePanelOpened: (
+                state,
+                { payload }: { payload: { helmValuesPath: (string | number)[] } }
+            ) => {
+                const { helmValuesPath } = payload;
+
+                assert(state.stateDescription === "ready");
+
+                const options = computeAutocompleteOptions({
+                    helmValuesPath: helmValuesPath,
+                    helmValues: state.helmValues,
+                    helmValuesSchema: state.helmValuesSchema,
+                    xOnyxiaContext: state.xOnyxiaContext,
+                    xOnyxiaContext_autoCompleteOptions:
+                        state.xOnyxiaContext_autocompleteOptions
+                });
+
+                state.autocompleteOptions = [
+                    ...state.autocompleteOptions.filter(
+                        entry => !same(entry.helmValuesPath, helmValuesPath)
+                    ),
+                    {
+                        helmValuesPath,
+                        options
+                    }
+                ];
             },
             helmValuesChanged: (
                 state,

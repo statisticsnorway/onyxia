@@ -1,4 +1,4 @@
-import { createRouter, defineRoute, param, createGroup, type Route } from "type-route";
+import { defineRoute, param, createGroup } from "type-route";
 
 export const routeDefs = {
     myServices: defineRoute(
@@ -10,8 +10,4 @@ export const routeDefs = {
     )
 };
 
-export const routeGroup = createGroup(Object.values(createRouter(routeDefs).routes));
-
-export type PageRoute = Route<typeof routeGroup>;
-
-export const getDoRequireUserLoggedIn: (route: PageRoute) => boolean = () => true;
+export const routeGroup = createGroup(routeDefs);

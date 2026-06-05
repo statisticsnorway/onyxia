@@ -45,6 +45,8 @@ import { same } from "evt/tools/inDepth/same";
 import { JsonSchemaDialog } from "./JsonSchemaDialog";
 import { Button } from "onyxia-ui/Button";
 import DataObjectIcon from "@mui/icons-material/DataObject";
+import Checkbox from "@mui/material/Checkbox";
+import FormControlLabel from "@mui/material/FormControlLabel";
 
 const ajv = new Ajv({
     strict: false
@@ -59,7 +61,18 @@ export type Props = {
     value: Stringifyable;
     onChange: (newValue: Stringifyable) => void;
     onErrorMsgChanged?: (errorMsg: string | undefined) => void;
-    jsonSchema: Record<string, Stringifyable>;
+    jsonSchema: Record<string, Stringifyable> | undefined;
+
+    additionalValidation?: (
+        value: Stringifyable
+    ) => { isValid: true } | { isValid: false; errorMsg: string };
+
+    allDefaults?: {
+        isChecked: boolean;
+        onIsCheckedChange: (isChecked: boolean) => void;
+    };
+
+    isJson5Enabled?: boolean;
 };
 
 {
@@ -67,7 +80,16 @@ export type Props = {
         import("../TextEditor").Props,
         "extensions" | "value" | "onChange" | "children"
     > &
-        Pick<Props, "value" | "onChange" | "jsonSchema" | "onErrorMsgChanged">;
+        Pick<
+            Props,
+            | "value"
+            | "onChange"
+            | "jsonSchema"
+            | "onErrorMsgChanged"
+            | "additionalValidation"
+            | "allDefaults"
+            | "isJson5Enabled"
+        >;
 
     assert<Equals<Props, Props_Expected>>;
 }
@@ -97,12 +119,26 @@ function parseValue(params: { valueStr: string; format: Format }): Stringifyable
 
 export default function DataTextEditor(props: Props) {
     const {
-        jsonSchema,
+        jsonSchema: jsonSchema_props,
         value: value_default,
         onChange,
         onErrorMsgChanged,
+        additionalValidation,
+        allDefaults,
+        isJson5Enabled = true,
         ...rest
     } = props;
+
+    const hasJsonSchema = jsonSchema_props !== undefined;
+
+    const jsonSchema = useMemo(
+        (): Record<string, Stringifyable> =>
+            jsonSchema_props ?? {
+                type: "object",
+                properties: {}
+            },
+        [jsonSchema_props]
+    );
 
     const jsonSchemaStr = useMemo(
         () => JSON.stringify(jsonSchema, null, 2),
@@ -121,18 +157,27 @@ export default function DataTextEditor(props: Props) {
     );
 
     const getErrorMsg = useConstCallback((value: Stringifyable) => {
-        if (ajvValidateFunction(value)) {
-            return undefined;
+        if (!ajvValidateFunction(value)) {
+            const { errors } = ajvValidateFunction;
+
+            assert(!!errors);
+
+            const [error] = errors;
+
+            assert(error !== undefined);
+
+            return error.message ?? "Invalid";
         }
-        const { errors } = ajvValidateFunction;
 
-        assert(!!errors);
+        if (additionalValidation !== undefined) {
+            const result = additionalValidation(value);
 
-        const [error] = errors;
+            if (!result.isValid) {
+                return result.errorMsg;
+            }
+        }
 
-        assert(error !== undefined);
-
-        return error.message ?? "Invalid";
+        return undefined;
     });
 
     const [errorMsg, setErrorMsg] = useState<string | undefined>(
@@ -283,42 +328,70 @@ export default function DataTextEditor(props: Props) {
             extensions={extensions}
             children={
                 <>
-                    <FormControl className={classes.formatWrapper} variant="standard">
-                        <Select
-                            value={format}
-                            label="Format"
-                            onChange={event => onFormatChange(event.target.value as any)}
-                        >
-                            <MenuItem value={"YAML"}>YAML</MenuItem>
-                            <MenuItem value={"JSON5"}>JSON5</MenuItem>
-                        </Select>
-                    </FormControl>
+                    {(isJson5Enabled || allDefaults !== undefined) && (
+                        <div className={classes.formatWrapper}>
+                            {isJson5Enabled && (
+                                <FormControl variant="standard">
+                                    <Select
+                                        value={format}
+                                        label="Format"
+                                        onChange={event =>
+                                            onFormatChange(event.target.value as any)
+                                        }
+                                    >
+                                        <MenuItem value={"YAML"}>YAML</MenuItem>
+                                        <MenuItem value={"JSON5"}>JSON5</MenuItem>
+                                    </Select>
+                                </FormControl>
+                            )}
+                            {allDefaults !== undefined && (
+                                <FormControlLabel
+                                    className={classes.allDefaultsLabel}
+                                    control={
+                                        <Checkbox
+                                            checked={allDefaults.isChecked}
+                                            onChange={event =>
+                                                allDefaults.onIsCheckedChange(
+                                                    event.target.checked
+                                                )
+                                            }
+                                        />
+                                    }
+                                    label="All defaults"
+                                />
+                            )}
+                        </div>
+                    )}
 
-                    <div className={classes.bottomLeft}>
-                        {errorMsg !== undefined && (
-                            <div className={classes.errorTextWrapper}>
-                                <Text typo="body 2" className={classes.errorText}>
-                                    <Icon icon={ErrorIcon} />
-                                    &nbsp;
-                                    {capitalize(errorMsg)}
-                                    &nbsp;
-                                </Text>
+                    {hasJsonSchema && (
+                        <>
+                            <div className={classes.bottomLeft}>
+                                {errorMsg !== undefined && (
+                                    <div className={classes.errorTextWrapper}>
+                                        <Text typo="body 2" className={classes.errorText}>
+                                            <Icon icon={ErrorIcon} />
+                                            &nbsp;
+                                            {capitalize(errorMsg)}
+                                            &nbsp;
+                                        </Text>
+                                    </div>
+                                )}
+                                <Button
+                                    startIcon={DataObjectIcon}
+                                    onClick={() => setIsJsonSchemaDialogOpen(true)}
+                                    variant="ternary"
+                                >
+                                    Schema
+                                </Button>
                             </div>
-                        )}
-                        <Button
-                            startIcon={DataObjectIcon}
-                            onClick={() => setIsJsonSchemaDialogOpen(true)}
-                            variant="ternary"
-                        >
-                            Schema
-                        </Button>
-                    </div>
 
-                    <JsonSchemaDialog
-                        isOpen={isJsonSchemaDialogOpen}
-                        onClose={onJsonSchemaDialogClose}
-                        jsonSchemaStr={jsonSchemaStr}
-                    />
+                            <JsonSchemaDialog
+                                isOpen={isJsonSchemaDialogOpen}
+                                onClose={onJsonSchemaDialogClose}
+                                jsonSchemaStr={jsonSchemaStr}
+                            />
+                        </>
+                    )}
                 </>
             }
         />
@@ -345,7 +418,14 @@ const useStyles = tss
             border: `1px solid ${theme.colors.useCases.surfaces.surface2}`,
             backgroundColor: theme.colors.useCases.surfaces.surface1,
             boxShadow: theme.shadows[2],
-            padding: theme.spacing(2)
+            padding: theme.spacing(2),
+            display: "flex",
+            flexDirection: "column",
+            gap: theme.spacing(3),
+            alignItems: "end",
+            "& > *": {
+                display: "inline"
+            }
         },
         bottomLeft: {
             position: "absolute",
@@ -366,5 +446,8 @@ const useStyles = tss
             border: `1px solid ${theme.colors.useCases.alertSeverity.error.background}`,
             backgroundColor: theme.colors.useCases.alertSeverity.error.background,
             boxShadow: theme.shadows[2]
+        },
+        allDefaultsLabel: {
+            marginRight: 0
         }
     }));

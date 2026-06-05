@@ -82,8 +82,9 @@ export default function UserProfileFormFields(
                             className={kcClsx("kcFormGroupClass")}
                             style={{
                                 display:
-                                    attribute.name === "password-confirm" &&
-                                    !doMakeUserConfirmPassword
+                                    attribute.annotations.inputType === "hidden" ||
+                                    (attribute.name === "password-confirm" &&
+                                        !doMakeUserConfirmPassword)
                                         ? "none"
                                         : undefined
                             }}
@@ -198,6 +199,16 @@ export default function UserProfileFormFields(
                     </Fragment>
                 );
             })}
+            {/* See: https://github.com/keycloak/keycloak/issues/38029 */}
+            {kcContext.locale !== undefined &&
+                formFieldStates.find(x => x.attribute.name === "locale") ===
+                    undefined && (
+                    <input
+                        type="hidden"
+                        name="locale"
+                        value={i18n.currentLanguage.languageTag}
+                    />
+                )}
         </>
     );
 }
@@ -325,6 +336,8 @@ function InputFiledByType(props: InputFiledByTypeProps) {
     const { attribute, valueOrValues } = props;
 
     switch (attribute.annotations.inputType) {
+        case "hidden":
+            return <input type="hidden" name={attribute.name} value={valueOrValues} />;
         case "textarea":
             return <TextareaTag {...props} />;
         case "select":

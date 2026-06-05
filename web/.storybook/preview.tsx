@@ -5,7 +5,7 @@ import React, { useEffect } from "react";
 import { OnyxiaUi } from "../src/ui/theme";
 import { injectCustomFontFaceIfNotAlreadyDone } from "../src/ui/theme/injectCustomFontFaceIfNotAlreadyDone";
 import {
-    Language,
+    type Language,
     languagesPrettyPrint,
     useLang,
     fallbackLanguage
@@ -29,6 +29,7 @@ const preview: Preview = {
         },
         docs: { disable: true, hidden: true }
     },
+
     globalTypes: {
         locale: {
             name: "Locale",
@@ -40,7 +41,9 @@ const preview: Preview = {
             }
         }
     },
+
     argTypes: {},
+
     decorators: [
         (Story, { globals: { locale } }) => {
             const isStorybookUiDark = useStorybookUiDarkMode();

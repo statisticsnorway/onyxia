@@ -1,15 +1,14 @@
-import axios from "axios";
 import type { S3BucketPolicy, S3Client, S3Object } from "core/ports/S3Client";
 import {
     getNewlyRequestedOrCachedTokenFactory,
-    createSessionStorageTokenPersistance
+    createSessionStorageTokenPersistence
 } from "core/tools/getNewlyRequestedOrCachedToken";
 import { assert, is } from "tsafe/assert";
 import type { Oidc } from "core/ports/Oidc";
 import { bucketNameAndObjectNameFromS3Path } from "./utils/bucketNameAndObjectNameFromS3Path";
 import { exclude } from "tsafe/exclude";
 import { fnv1aHashToHex } from "core/tools/fnv1aHashToHex";
-import { checkIfS3KeyIsPublic } from "core/tools/checkIfS3KeyIsPublic";
+import { getPolicyAttributes } from "core/tools/getPolicyAttributes";
 import { zS3BucketPolicy } from "./utils/policySchema";
 import {
     addObjectNameToListBucketCondition,
@@ -17,6 +16,7 @@ import {
     removeObjectNameFromListBucketCondition,
     removeResourceArnInGetObjectStatement
 } from "./utils/bucketPolicy";
+import type { OidcParams_Partial } from "core/ports/OnyxiaApi";
 
 export type ParamsOfCreateS3Client =
     | ParamsOfCreateS3Client.NoSts
@@ -43,12 +43,7 @@ export namespace ParamsOfCreateS3Client {
     export type Sts = Common & {
         isStsEnabled: true;
         stsUrl: string | undefined;
-        oidcParams:
-            | {
-                  issuerUri?: string;
-                  clientId: string;
-              }
-            | undefined;
+        oidcParams: OidcParams_Partial;
         durationSeconds: number | undefined;
         role:
             | {
@@ -64,7 +59,7 @@ export function createS3Client(
     params: ParamsOfCreateS3Client,
     getOidc: (
         oidcParams: ParamsOfCreateS3Client.Sts["oidcParams"]
-    ) => Promise<Oidc.LoggedIn>
+    ) => Promise<{ oidc: Oidc.LoggedIn; doClearCachedS3Token: boolean }>
 ): S3Client {
     const prApi = (async () => {
         const { getNewlyRequestedOrCachedToken, clearCachedToken } = await (async () => {
@@ -90,11 +85,11 @@ export function createS3Client(
                 };
             }
 
-            const oidc = await getOidc(params.oidcParams);
+            const { oidc, doClearCachedS3Token } = await getOidc(params.oidcParams);
 
             const { getNewlyRequestedOrCachedToken, clearCachedToken } =
                 getNewlyRequestedOrCachedTokenFactory({
-                    persistance: createSessionStorageTokenPersistance<{
+                    persistence: createSessionStorageTokenPersistence<{
                         // NOTE: StsToken are like ReturnType<S3Client["getToken"]> but we know that
                         // session token expiration time and acquisition time are defined.
                         accessKeyId: string;
@@ -103,101 +98,72 @@ export function createS3Client(
                         expirationTime: number;
                         acquisitionTime: number;
                     }>({
-                        sessionStorageKey:
-                            "s3ClientToken_" +
-                            fnv1aHashToHex(
-                                (() => {
-                                    const { durationSeconds, url, stsUrl, role } = params;
+                        sessionStorageKey: `s3ClientToken:${fnv1aHashToHex(
+                            (() => {
+                                const { durationSeconds, url, stsUrl, role } = params;
 
-                                    return JSON.stringify({
-                                        durationSeconds,
-                                        url,
-                                        stsUrl,
-                                        role
-                                    });
-                                })()
-                            )
+                                return JSON.stringify({
+                                    durationSeconds,
+                                    url,
+                                    stsUrl,
+                                    role
+                                });
+                            })()
+                        )}`
                     }),
                     requestNewToken: async () => {
+                        const { STSClient, AssumeRoleWithWebIdentityCommand } =
+                            await import("@aws-sdk/client-sts");
+
+                        const now = Date.now();
+
                         // NOTE: We renew the OIDC access token because it's expiration time
                         // cap the duration of the token we will request to minio so we want it
                         // as fresh as possible.
                         await oidc.renewTokens();
+                        const { accessToken: webIdentityToken } = await oidc.getTokens();
 
-                        const now = Date.now();
+                        // STS client: points either to AWS STS or MinIO’s STS endpoint
+                        const sts = new STSClient({
+                            region: params.region ?? "us-east-1",
+                            endpoint: params.stsUrl ?? params.url
+                            // Important: AssumeRoleWithWebIdentity should be unsigned; the SDK handles this.
+                            // Do NOT provide AWS credentials here.
+                            // If your STS implementation requires querystring-style requests, the SDK will handle that too.
+                        });
 
-                        const { data } = await axios
-                            .create({
-                                baseURL: params.stsUrl ?? params.url,
-                                headers: {
-                                    Accept: "*/*"
-                                }
-                            })
-                            .post<string>(
-                                "/?" +
-                                    Object.entries({
-                                        Action: "AssumeRoleWithWebIdentity",
-                                        WebIdentityToken: oidc.getTokens().accessToken,
-                                        DurationSeconds:
-                                            params.durationSeconds ?? 7 * 24 * 3600,
-                                        Version: "2011-06-15",
-                                        ...(params.role === undefined
-                                            ? {}
-                                            : {
-                                                  RoleSessionName:
-                                                      params.role.roleSessionName,
-                                                  RoleArn: params.role.roleARN
-                                              })
-                                    })
-                                        .map(([key, value]) =>
-                                            value === undefined
-                                                ? undefined
-                                                : `${key}=${value}`
-                                        )
-                                        .filter(exclude(undefined))
-                                        .join("&")
+                        const cmd = new AssumeRoleWithWebIdentityCommand({
+                            WebIdentityToken: webIdentityToken,
+                            DurationSeconds: params.durationSeconds ?? 7 * 24 * 3600,
+                            RoleArn: params.role?.roleARN,
+                            RoleSessionName: params.role?.roleSessionName
+                        });
+
+                        const { Credentials: credentials } = await sts.send(cmd);
+                        if (
+                            credentials === undefined ||
+                            !credentials.AccessKeyId ||
+                            !credentials.SecretAccessKey ||
+                            !credentials.SessionToken ||
+                            !credentials.Expiration
+                        ) {
+                            throw new Error(
+                                "Invalid STS response when assuming role with web identity"
                             );
-
-                        const parser = new DOMParser();
-                        const xmlDoc = parser.parseFromString(data, "text/xml");
-                        const root = xmlDoc.getElementsByTagName(
-                            "AssumeRoleWithWebIdentityResponse"
-                        )[0];
-
-                        const credentials = root.getElementsByTagName("Credentials")[0];
-                        const accessKeyId =
-                            credentials.getElementsByTagName("AccessKeyId")[0]
-                                .childNodes[0].nodeValue;
-                        const secretAccessKey =
-                            credentials.getElementsByTagName("SecretAccessKey")[0]
-                                .childNodes[0].nodeValue;
-                        const sessionToken =
-                            credentials.getElementsByTagName("SessionToken")[0]
-                                .childNodes[0].nodeValue;
-                        const expiration =
-                            credentials.getElementsByTagName("Expiration")[0]
-                                .childNodes[0].nodeValue;
-
-                        assert(
-                            accessKeyId !== null &&
-                                secretAccessKey !== null &&
-                                sessionToken !== null &&
-                                expiration !== null,
-                            "Error parsing minio response"
-                        );
+                        }
 
                         return {
-                            accessKeyId,
-                            secretAccessKey,
-                            sessionToken,
-                            expirationTime: new Date(expiration).getTime(),
+                            accessKeyId: credentials.AccessKeyId,
+                            secretAccessKey: credentials.SecretAccessKey,
+                            sessionToken: credentials.SessionToken,
+                            expirationTime: credentials.Expiration.getTime(),
                             acquisitionTime: now
                         };
                     },
                     returnCachedTokenIfStillValidForXPercentOfItsTTL: "90%"
                 });
 
-            if (oidc.isNewBrowserSession) {
+            if (doClearCachedS3Token) {
                 await clearCachedToken();
             }
 
@@ -236,7 +202,8 @@ export function createS3Client(
                         ? {
                               signer: {
                                   sign: request => Promise.resolve(request)
-                              }
+                              },
+                              credentials: { accessKeyId: "", secretAccessKey: "" }
                           }
                         : {
                               credentials: {
@@ -284,7 +251,11 @@ export function createS3Client(
                     !(error instanceof BucketAlreadyExists) &&
                     !(error instanceof BucketAlreadyOwnedByYou)
                 ) {
-                    throw error;
+                    console.log(
+                        "An unexpected error occurred while creating the bucket, we ignore it:",
+                        error
+                    );
+                    break create_bucket;
                 }
 
                 console.log(
@@ -331,22 +302,47 @@ export function createS3Client(
 
             const { awsS3Client } = await getAwsS3Client();
 
-            const resolveBucketPolicy = async () => {
-                const { GetBucketPolicyCommand, S3ServiceException } = await import(
-                    "@aws-sdk/client-s3"
-                );
-
-                let sendResp: import("@aws-sdk/client-s3").GetBucketPolicyCommandOutput;
-                try {
-                    sendResp = await awsS3Client.send(
-                        new GetBucketPolicyCommand({ Bucket: bucketName })
+            const { isBucketPolicyAvailable, allowedPrefix, bucketPolicy } =
+                await (async () => {
+                    const { GetBucketPolicyCommand, S3ServiceException } = await import(
+                        "@aws-sdk/client-s3"
                     );
-                } catch (error) {
-                    if (!(error instanceof S3ServiceException)) {
-                        console.error(
-                            "An unknown error occurred when fetching bucket policy",
-                            error
+
+                    let sendResp: import("@aws-sdk/client-s3").GetBucketPolicyCommandOutput;
+                    try {
+                        sendResp = await awsS3Client.send(
+                            new GetBucketPolicyCommand({ Bucket: bucketName })
                         );
+                    } catch (error) {
+                        if (!(error instanceof S3ServiceException)) {
+                            console.error(
+                                "An unknown error occurred when fetching bucket policy",
+                                error
+                            );
+                            return {
+                                isBucketPolicyAvailable: false,
+                                bucketPolicy: undefined,
+                                allowedPrefix: []
+                            };
+                        }
+
+                        switch (error.$metadata?.httpStatusCode) {
+                            case 404:
+                                console.info(
+                                    "Bucket policy does not exist (404), it's ok."
+                                );
+                                return {
+                                    isBucketPolicyAvailable: true,
+                                    bucketPolicy: undefined,
+                                    allowedPrefix: []
+                                };
+                            case 403:
+                                console.info("Access denied to bucket policy (403).");
+                                break;
+                            default:
+                                console.error("An S3 error occurred:", error.message);
+                                break;
+                        }
                         return {
                             isBucketPolicyAvailable: false,
                             bucketPolicy: undefined,
@@ -354,83 +350,64 @@ export function createS3Client(
                         };
                     }
 
-                    switch (error.$metadata?.httpStatusCode) {
-                        case 404:
-                            console.info("Bucket policy does not exist (404), it's ok.");
-                            return {
-                                isBucketPolicyAvailable: true,
-                                bucketPolicy: undefined,
-                                allowedPrefix: []
-                            };
-                        case 403:
-                            console.info("Access denied to bucket policy (403).");
-                            break;
-                        default:
-                            console.error("An S3 error occurred:", error.message);
-                            break;
+                    if (!sendResp.Policy) {
+                        return {
+                            isBucketPolicyAvailable: true,
+                            bucketPolicy: undefined,
+                            allowedPrefix: []
+                        };
                     }
-                    return {
-                        isBucketPolicyAvailable: false,
-                        bucketPolicy: undefined,
-                        allowedPrefix: []
-                    };
-                }
 
-                if (!sendResp.Policy) {
+                    const s3BucketPolicy = (() => {
+                        const s3BucketPolicy = JSON.parse(sendResp.Policy);
+
+                        try {
+                            // Validate and parse the policy
+                            zS3BucketPolicy.parse(s3BucketPolicy);
+                        } catch (error) {
+                            console.error(
+                                "Bucket policy isn't of the expected shape",
+                                error
+                            );
+                            return undefined;
+                        }
+
+                        assert(is<S3BucketPolicy>(s3BucketPolicy));
+
+                        return s3BucketPolicy;
+                    })();
+
+                    if (s3BucketPolicy === undefined) {
+                        return {
+                            isBucketPolicyAvailable: false,
+                            bucketPolicy: undefined,
+                            allowedPrefix: []
+                        };
+                    }
+
+                    // Extract allowed prefixes based on the policy statements
+                    const allowedPrefix = (s3BucketPolicy.Statement ?? [])
+                        .filter(
+                            statement =>
+                                statement.Effect === "Allow" &&
+                                (statement.Action.includes("s3:GetObject") ||
+                                    statement.Action.includes("s3:*"))
+                        )
+                        .flatMap(statement =>
+                            Array.isArray(statement.Resource)
+                                ? statement.Resource
+                                : [statement.Resource]
+                        )
+                        .map(resource =>
+                            resource.replace(`arn:aws:s3:::${bucketName}/`, "")
+                        );
+
                     return {
                         isBucketPolicyAvailable: true,
-                        bucketPolicy: undefined,
-                        allowedPrefix: []
+                        bucketPolicy: s3BucketPolicy,
+                        allowedPrefix
                     };
-                }
-
-                const s3BucketPolicy = (() => {
-                    const s3BucketPolicy = JSON.parse(sendResp.Policy);
-
-                    try {
-                        // Validate and parse the policy
-                        zS3BucketPolicy.parse(s3BucketPolicy);
-                    } catch (error) {
-                        console.error("Bucket policy isn't of the expected shape", error);
-                        return undefined;
-                    }
-
-                    assert(is<S3BucketPolicy>(s3BucketPolicy));
-
-                    return s3BucketPolicy;
                 })();
-
-                if (s3BucketPolicy === undefined) {
-                    return {
-                        isBucketPolicyAvailable: false,
-                        bucketPolicy: undefined,
-                        allowedPrefix: []
-                    };
-                }
-
-                // Extract allowed prefixes based on the policy statements
-                const allowedPrefix = s3BucketPolicy.Statement.filter(
-                    statement =>
-                        statement.Effect === "Allow" &&
-                        (statement.Action.includes("s3:GetObject") ||
-                            statement.Action.includes("s3:*"))
-                )
-                    .flatMap(statement =>
-                        Array.isArray(statement.Resource)
-                            ? statement.Resource
-                            : [statement.Resource]
-                    )
-                    .map(resource => resource.replace(`arn:aws:s3:::${bucketName}/`, ""));
-
-                return {
-                    isBucketPolicyAvailable: true,
-                    bucketPolicy: s3BucketPolicy,
-                    allowedPrefix
-                };
-            };
-
-            const { isBucketPolicyAvailable, allowedPrefix, bucketPolicy } =
-                await resolveBucketPolicy();
 
             const Contents: import("@aws-sdk/client-s3")._Object[] = [];
             const CommonPrefixes: import("@aws-sdk/client-s3").CommonPrefix[] = [];
@@ -456,8 +433,8 @@ export function createS3Client(
                 } while (continuationToken !== undefined);
             }
 
-            const isPathPublic = (path: string) => {
-                return checkIfS3KeyIsPublic(allowedPrefix, path);
+            const policyAttributes = (path: string) => {
+                return getPolicyAttributes(allowedPrefix, path);
             };
 
             const directories = CommonPrefixes.filter(exclude(undefined))
@@ -468,7 +445,7 @@ export function createS3Client(
                     return {
                         kind: "directory",
                         basename: split[split.length - 2],
-                        policy: isPathPublic(directoryPath) ? "public" : "private"
+                        ...policyAttributes(directoryPath)
                     } satisfies S3Object;
                 });
 
@@ -481,7 +458,7 @@ export function createS3Client(
                         basename: split[split.length - 1],
                         size: Size,
                         lastModified: LastModified,
-                        policy: isPathPublic(Key) ? "public" : "private"
+                        ...policyAttributes(Key)
                     } satisfies S3Object;
                 }
             );
@@ -577,20 +554,6 @@ export function createS3Client(
             });
 
             await upload.done();
-
-            const headObjectCommand = new (
-                await import("@aws-sdk/client-s3")
-            ).HeadObjectCommand({ Bucket: bucketName, Key: objectName });
-
-            const metadata = await awsS3Client.send(headObjectCommand);
-
-            return {
-                kind: "file",
-                basename: objectName,
-                size: metadata.ContentLength,
-                lastModified: metadata.LastModified,
-                policy: "private"
-            };
         },
         deleteFile: async ({ path }) => {
             const { bucketName, objectName } = bucketNameAndObjectNameFromS3Path(path);
@@ -614,20 +577,24 @@ export function createS3Client(
 
             const { awsS3Client } = await getAwsS3Client();
 
-            await awsS3Client.send(
-                new (await import("@aws-sdk/client-s3")).DeleteObjectsCommand({
-                    Bucket: bucketName,
-                    Delete: {
-                        Objects: paths.map(path => {
-                            const { objectName } =
-                                bucketNameAndObjectNameFromS3Path(path);
-                            return {
-                                Key: objectName
-                            };
-                        })
-                    }
-                })
-            );
+            const { DeleteObjectsCommand } = await import("@aws-sdk/client-s3");
+
+            const objects = paths.map(path => {
+                const { objectName } = bucketNameAndObjectNameFromS3Path(path);
+                return { Key: objectName };
+            });
+
+            try {
+                await awsS3Client.send(
+                    new DeleteObjectsCommand({
+                        Bucket: bucketName,
+                        Delete: { Objects: objects }
+                    })
+                );
+            } catch (err) {
+                console.warn("Bulk delete failed, falling back to single deletes:", err);
+                await Promise.all(paths.map(path => s3Client.deleteFile({ path })));
+            }
         },
         getFileDownloadUrl: async ({ path, validityDurationSecond }) => {
             const { bucketName, objectName } = bucketNameAndObjectNameFromS3Path(path);
@@ -652,6 +619,32 @@ export function createS3Client(
             return downloadUrl;
         },
 
+        getFileContent: async ({ path, range }) => {
+            const { bucketName, objectName } = bucketNameAndObjectNameFromS3Path(path);
+
+            const { getAwsS3Client } = await prApi;
+            const { awsS3Client } = await getAwsS3Client();
+
+            const { GetObjectCommand } = await import("@aws-sdk/client-s3");
+
+            const response = await awsS3Client.send(
+                new GetObjectCommand({
+                    Bucket: bucketName,
+                    Key: objectName,
+                    ...(range !== undefined ? { Range: range } : {})
+                })
+            );
+
+            assert(response.Body instanceof ReadableStream);
+
+            return {
+                stream: response.Body,
+                lastModified: response.LastModified,
+                size: response.ContentLength,
+                contentType: response.ContentType
+            };
+        },
+
         getFileContentType: async ({ path }) => {
             const { bucketName, objectName } = bucketNameAndObjectNameFromS3Path(path);
 
@@ -668,29 +661,6 @@ export function createS3Client(
 
             return head.ContentType;
         }
-
-        // "getPresignedUploadUrl": async ({ path, validityDurationSecond }) => {
-        //     const { bucketName, objectName } = bucketNameAndObjectNameFromS3Path(path);
-
-        //     const { getAwsS3Client } = await prApi;
-
-        //     const { awsS3Client } = await getAwsS3Client();
-
-        //     const updloadUrl = await (
-        //         await import("@aws-sdk/s3-request-presigner")
-        //     ).getSignedUrl(
-        //         awsS3Client,
-        //         new (await import("@aws-sdk/client-s3")).PutObjectCommand({
-        //             "Bucket": bucketName,
-        //             "Key": objectName
-        //         }),
-        //         {
-        //             "expiresIn": validityDurationSecond
-        //         }
-        //     );
-
-        //     return updloadUrl;
-        // }
     };
 
     return s3Client;

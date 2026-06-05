@@ -9,7 +9,7 @@ import { MaybeLink } from "ui/shared/MaybeLink";
 export const translations: Translations<"no"> = {
     /* spell-checker: disable */
     Account: {
-        infos: "Kontoinformasjon",
+        profile: "Profil",
         git: undefined,
         storage: "Koble til lagring",
         k8sCodeSnippets: "Kubernetes",
@@ -21,13 +21,25 @@ export const translations: Translations<"no"> = {
             "Passord som genereres for deg og har en gitt gyldighetsperiode",
         vault: "Vault"
     },
-    AccountInfoTab: {
-        "general information": "Generell informasjon",
-        "user id": "Bruker-ID (IDEP)",
-        "full name": "Fullt navn",
-        email: "E-postadresse",
-        "instructions about how to change password":
-            'For å endre passordet ditt, logg ut og klikk på lenken for "glemt passord"'
+    AccountProfileTab: {
+        "account id": "Kontoidentifikator",
+        "account id helper":
+            "Dine immaterielle identifikatorer knyttet til identiteten du bruker for å logge inn på plattformen",
+        "user id": "Bruker-ID",
+        email: "E-post",
+        "account management": "Kontoadministrasjon"
+    },
+    UserProfileForm: {
+        "customizable profile": "Tilpassbar profil",
+        "customizable profile helper":
+            "Nyttig informasjon for automatisk konfigurasjon av tjenestene dine",
+        save: "Lagre",
+        restore: "Gjenopprett"
+    },
+    ConfirmNavigationDialog: {
+        "you have unsaved changes": "Du har ulagrede endringer!",
+        cancel: "Avbryt",
+        "continue without saving": "Fortsett uten å lagre"
     },
     AccountGitTab: {
         gitName: "Brukernavn for Git",
@@ -296,9 +308,9 @@ export const translations: Translations<"no"> = {
         "reset helper dialogs helper text":
             "Tilbakestill meldingsvinduer som er bedt om å ikke vises igjen"
     },
-    MyFiles: {
-        "page title - my files": "Mine filer",
-        "what this page is used for - my files": "Her kan du bla gjennom S3-bøtter.",
+    FileExplorerEntry: {
+        "page title - file explorer": "Filutforsker",
+        "what this page is used for - file explorer": "Her kan du bla gjennom S3-bøtter.",
         "help content": ({ accountTabLink, docHref }) => (
             <>
                 Les{" "}
@@ -308,9 +320,25 @@ export const translations: Translations<"no"> = {
                 . &nbsp;
                 <MuiLink {...accountTabLink}>Konfigurer minio-klientene</MuiLink>.
             </>
-        )
+        ),
+        "title personal": "Mine data",
+        "description personal": "Dine egne filer og datasett.",
+        "title project": ({ projectName }) => `Prosjekt ${projectName}`,
+        "description project": ({ projectName }) =>
+            `Felles lagringsområde for prosjektet ${projectName}`,
+        tags: ({ type }) => {
+            switch (type) {
+                case "personal":
+                    return "Mine data";
+                case "project":
+                    return "Gruppedata";
+            }
+        }
     },
-    MyFilesDisabledDialog: {
+    S3EntryCard: {
+        "space path": "Områdesti"
+    },
+    FileExplorerDisabledDialog: {
         "dialog title": "Ingen S3-server konfigurert",
         "dialog body":
             "Det er ingen S3-server konfigurert for denne instansen. Men du kan legge til en manuelt for å aktivere S3-filutforskeren.",
@@ -371,7 +399,7 @@ export const translations: Translations<"no"> = {
         delete: "slett",
         "create secret": "Opprett hemmelighet",
         "copy path": "Bruk i en tjeneste",
-        "create directory": "Opprett katalog",
+        "create new empty directory": "Opprett katalog",
         refresh: "oppdater",
         "create what": ({ what }) => `Opprett ${what}`,
         new: "Ny"
@@ -381,12 +409,16 @@ export const translations: Translations<"no"> = {
         delete: "slett",
         "upload file": "Last opp fil",
         "copy path": "Kopier S3-objektnavnet",
-        "create directory": "Opprett katalog",
+        "create new empty directory": "Opprett katalog",
         refresh: "oppdater",
+        "download directory": "Last ned",
         new: "Ny",
         share: "Del",
         "alt list view": "Vis liste",
         "alt block view": "Vis blokk"
+    },
+    ExplorerDownloadSnackbar: {
+        "download preparation": "Forberedelse av nedlasting ..."
     },
     ExplorerItems: {
         "empty directory": "Denne katalogen er tom"
@@ -502,6 +534,8 @@ export const translations: Translations<"no"> = {
         "divider: onyxia instance specific features":
             "Onyxia-instansspesifikke funksjoner",
         dataExplorer: "Datautforsker",
+        fileExplorer: "Filutforsker",
+        dataCollection: "Samlingseksplorer",
         sqlOlapShell: "SQL OLAP-Skall"
     },
     AutoLogoutCountdown: {
@@ -548,7 +582,8 @@ export const translations: Translations<"no"> = {
         header: "Tjenestekatalog",
         "no result found": ({ forWhat }) => `Ingen resultater funnet for ${forWhat}`,
         "search results": "Søkeresultat",
-        search: "Søk"
+        search: "Søk",
+        "title all catalog": "Alle"
     },
     CatalogChartCard: {
         launch: "Start",
@@ -720,6 +755,19 @@ Utforsk gjerne og ta kontroll over tjenestene du kjører på Kubernetes!
     FormFieldGroupComponent: {
         add: "Legg til"
     },
+    AutoInjectSwitch: {
+        tooltip: ({ isAutoInjected }) => (
+            <>
+                Hvis aktivert, vil denne konfigurasjonen automatisk bli injisert i
+                tjenestene dine. Du kan fortsatt legge den til manuelt når du starter en
+                tjeneste, selv om dette er deaktivert.
+                <br />
+                <br />
+                Nåværende status:{" "}
+                <strong>{isAutoInjected ? "aktivert" : "deaktivert"}</strong>
+            </>
+        )
+    },
     NumberFormField: {
         "below minimum": ({ minimum }) => `Må være større enn eller lik ${minimum}`,
         "not a number": "Ikke et tall",
@@ -805,7 +853,6 @@ Utforsk gjerne og ta kontroll over tjenestene du kjører på Kubernetes!
         )
     },
     Footer: {
-        contribute: "Bidra",
         "terms of service": "Vilkår for bruk",
         "change language": "Bytt språk",
         "dark mode switch": "Mørk modus"
@@ -884,7 +931,11 @@ Utforsk gjerne og ta kontroll over tjenestene du kjører på Kubernetes!
     MyServicesRestorableConfigOptions: {
         edit: "Rediger",
         "copy link": "Kopier URL-lenke",
-        "remove bookmark": "Slett"
+        "remove bookmark": "Slett",
+        "move down": "Flytt ned",
+        "move up": "Flytt opp",
+        "move to top": "Flytt helt til toppen",
+        "move to bottom": "Flytt helt til bunnen"
     },
     MyServicesRestorableConfig: {
         edit: "Rediger",
@@ -963,7 +1014,12 @@ Utforsk gjerne og ta kontroll over tjenestene du kjører på Kubernetes!
         "resize table": "Endre størrelse",
         "unsupported file type": ({ supportedFileTypes }) =>
             `Ikke støttet dataformat. Støttede typer er: ${supportedFileTypes.join(", ")}.`,
-        "can't fetch file": "Kan ikke hente datafilen"
+        "no s3 client":
+            "Ingen S3-klient konfigurert. Gå til innstillinger for å aktivere en for utforskeren.",
+        "unsupported protocol":
+            "URL støttes ikke. Støttede protokoller er https:// og s3://.",
+        "https fetch error": "Kunne ikke hente HTTPS-fil.",
+        "query error": "DuckDB-spørringsfeil."
     },
     UrlInput: {
         load: "Last",
@@ -1110,6 +1166,35 @@ Utforsk gjerne og ta kontroll over tjenestene du kjører på Kubernetes!
     },
     CustomDataGridToolbarColumnsButton: {
         toolbarColumnsLabel: "Kolonner"
+    },
+    DatasetCard: {
+        publishedOn: "Publisert",
+        datasetPage: "Datasett-side",
+        license: "Lisens:",
+        format: "Format",
+        size: "Størrelse",
+        distributions: "Distribusjoner",
+        visualize: "Visualiser",
+        unknown: "Ukjent"
+    },
+    DataCollection: {
+        "page header help title":
+            "Skriv bare inn https://-URL-en til DCAT JSON-LD-skjemaet ditt",
+        "page header title": "Datakatalog",
+        "page header help content": ({ demoCatalogLink }) => (
+            <>
+                Skriv ganske enkelt inn <code>https://</code>-URL-en til en datakatalog
+                for å forhåndsvise den.
+                <br />
+                Usikker på hvor du skal begynne? Prøv denne{" "}
+                <MuiLink {...demoCatalogLink}>demokatalogen</MuiLink>!
+            </>
+        ),
+        "https fetch error": "Kunne ikke hente HTTPS-ressursen.",
+        "invalid json response": "Svaret er ikke gyldig JSON.",
+        "json-ld compact error": "Klarte ikke å komprimere JSON-LD-responsen.",
+        "json-ld frame error": "Klarte ikke å frame JSON-LD-responsen.",
+        "datasets parsing error": "Kunne ikke tolke datasett fra katalogen."
     }
     /* spell-checker: enable */
 };

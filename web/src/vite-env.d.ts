@@ -15,6 +15,8 @@ type ImportMetaEnv = {
   HEADER_TEXT_FOCUS: string
   DARK_MODE: string
   PALETTE_OVERRIDE: string
+  PALETTE_OVERRIDE_LIGHT: string
+  PALETTE_OVERRIDE_DARK: string
   FONT: string
   SPLASHSCREEN_LOGO: string
   SPLASHSCREEN_LOGO_SCALE_FACTOR: string
@@ -25,6 +27,7 @@ type ImportMetaEnv = {
   SOCIAL_MEDIA_IMAGE: string
   BACKGROUND_ASSET: string
   HEADER_LINKS: string
+  FOOTER_LINKS: string
   LEFTBAR_LINKS: string
   DISABLE_HOMEPAGE: string
   HOMEPAGE_LOGO: string
@@ -50,6 +53,7 @@ type ImportMetaEnv = {
   DISABLE_AUTO_LAUNCH: string
   AUTHENTICATION_GLOBALLY_REQUIRED: string
   SAMPLE_DATASET_URL: string
+  SAMPLE_DATA_COLLECTION_URL: string
   QUOTA_WARNING_THRESHOLD: string
   QUOTA_CRITICAL_THRESHOLD: string
   RUNNING_TIME_THRESHOLD_HOURS: string
@@ -57,10 +61,11 @@ type ImportMetaEnv = {
   S3_DOCUMENTATION_LINK: string
   VAULT_DOCUMENTATION_LINK: string
   ONYXIA_API_URL: string
+  DISABLE_DISPLAY_ALL_CATALOG: string
   ONYXIA_VERSION: string
   ONYXIA_VERSION_URL: string
-  ALLOW_THEME_TESTING_VIA_URL: string
   SCREEN_SCALER: string
+  OIDC_DEBUG_LOGS: string
   // @user-defined-start
   /*
    * Here you can define your own special variables

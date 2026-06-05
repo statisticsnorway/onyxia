@@ -9,6 +9,8 @@ import { fnv1aHashToHex } from "core/tools/fnv1aHashToHex";
 import { assert, type Equals } from "tsafe/assert";
 import { getProjectS3ConfigId } from "./projectS3ConfigId";
 import type * as s3ConfigConnectionTest from "core/usecases/s3ConfigConnectionTest";
+import type { LocalizedString } from "core/ports/OnyxiaApi";
+import type { ResolvedAdminBookmark } from "./resolveS3AdminBookmarks";
 
 export type S3Config = S3Config.FromDeploymentRegion | S3Config.FromProject;
 
@@ -25,7 +27,34 @@ export namespace S3Config {
     export type FromDeploymentRegion = Common & {
         origin: "deploymentRegion";
         paramsOfCreateS3Client: ParamsOfCreateS3Client;
+        locations: FromDeploymentRegion.Location[];
     };
+
+    export namespace FromDeploymentRegion {
+        export type Location =
+            | Location.Personal
+            | Location.Project
+            | Location.AdminBookmark;
+
+        export namespace Location {
+            type Common = { directoryPath: string };
+
+            export type Personal = Common & {
+                type: "personal";
+            };
+
+            export type Project = Common & {
+                type: "project";
+                projectName: string;
+            };
+            export type AdminBookmark = Common & {
+                type: "bookmark";
+                title: LocalizedString;
+                description?: LocalizedString;
+                tags: LocalizedString[] | undefined;
+            };
+        }
+    }
 
     export type FromProject = Common & {
         origin: "project";
@@ -43,10 +72,15 @@ export namespace S3Config {
 export function getS3Configs(params: {
     projectConfigsS3: projectManagement.ProjectConfigs["s3"];
     s3RegionConfigs: DeploymentRegion.S3Config[];
+    resolvedAdminBookmarks: ResolvedAdminBookmark[];
     configTestResults: s3ConfigConnectionTest.ConfigTestResult[];
     ongoingConfigTests: s3ConfigConnectionTest.OngoingConfigTest[];
     username: string;
     projectGroup: string | undefined;
+    groupProjects: {
+        name: string;
+        group: string;
+    }[];
 }): S3Config[] {
     const {
         projectConfigsS3: {
@@ -55,10 +89,12 @@ export function getS3Configs(params: {
             s3ConfigId_explorer
         },
         s3RegionConfigs,
+        resolvedAdminBookmarks,
         configTestResults,
         ongoingConfigTests,
         username,
-        projectGroup
+        projectGroup,
+        groupProjects
     } = params;
 
     const getDataSource = (params: {
@@ -160,7 +196,7 @@ export function getS3Configs(params: {
                 };
             })
             .sort((a, b) => b.creationTime - a.creationTime),
-        ...s3RegionConfigs.map((c): S3Config.FromDeploymentRegion => {
+        ...s3RegionConfigs.map((c, i): S3Config.FromDeploymentRegion => {
             const id = `region-${fnv1aHashToHex(
                 JSON.stringify(
                     Object.fromEntries(
@@ -186,6 +222,15 @@ export function getS3Configs(params: {
                 workingDirectory: c.workingDirectory,
                 context: workingDirectoryContext
             });
+
+            const personalWorkingDirectoryPath = getWorkingDirectoryPath({
+                workingDirectory: c.workingDirectory,
+                context: {
+                    type: "personalProject" as const,
+                    username
+                }
+            });
+
             const url = c.url;
             const pathStyleAccess = c.pathStyleAccess;
             const region = c.region;
@@ -205,16 +250,56 @@ export function getS3Configs(params: {
                 })
             };
 
+            const adminBookmarks: S3Config.FromDeploymentRegion.Location.AdminBookmark[] =
+                (() => {
+                    const entry = resolvedAdminBookmarks.find(
+                        ({ s3ConfigIndex }) => s3ConfigIndex === i
+                    );
+
+                    if (entry === undefined) {
+                        return [];
+                    }
+
+                    return entry.bookmarkedDirectories.map(
+                        ({ title, description, fullPath, tags }) => ({
+                            title,
+                            description,
+                            type: "bookmark",
+                            directoryPath: fullPath,
+                            tags
+                        })
+                    );
+                })();
+
+            const projectsLocations: S3Config.FromDeploymentRegion.Location.Project[] =
+                groupProjects.map(({ group }) => {
+                    const directoryPath = getWorkingDirectoryPath({
+                        workingDirectory: c.workingDirectory,
+                        context: {
+                            type: "groupProject",
+                            projectGroup: group
+                        }
+                    });
+                    return { type: "project", directoryPath, projectName: group };
+                });
+
+            const dataSource = getDataSource({
+                url,
+                pathStyleAccess,
+                workingDirectoryPath
+            });
+
             return {
                 origin: "deploymentRegion",
                 id,
-                dataSource: getDataSource({
-                    url,
-                    pathStyleAccess,
-                    workingDirectoryPath
-                }),
+                dataSource,
                 region,
                 workingDirectoryPath,
+                locations: [
+                    { type: "personal", directoryPath: personalWorkingDirectoryPath },
+                    ...projectsLocations,
+                    ...adminBookmarks
+                ],
                 paramsOfCreateS3Client,
                 isXOnyxiaDefault: false,
                 isExplorerConfig: false

@@ -8,6 +8,10 @@ import { assert } from "tsafe/assert";
 import { getIconUrlByName } from "lazy-icons";
 import { tss } from "tss";
 import { IconButton } from "onyxia-ui/IconButton";
+import Autocomplete from "@mui/material/Autocomplete";
+import CircularProgress from "@mui/material/CircularProgress";
+import { id } from "tsafe/id";
+import { same } from "evt/tools/inDepth/same";
 
 type Props = {
     className?: string;
@@ -19,8 +23,18 @@ type Props = {
     pattern: string | undefined;
     onRemove: (() => void) | undefined;
     value: string;
-    onChange: (newValue: string) => void;
+    onChange: (params: {
+        newValue: string;
+        isAutocompleteOptionSelection: boolean;
+    }) => void;
     onErrorChange: (params: { hasError: boolean }) => void;
+    autocomplete:
+        | {
+              isLoadingOptions: boolean;
+              options: string[];
+              onPanelOpen: () => void;
+          }
+        | undefined;
 };
 
 export const TextFormField = memo((props: Props) => {
@@ -35,21 +49,63 @@ export const TextFormField = memo((props: Props) => {
         onRemove,
         value,
         onChange,
-        onErrorChange
+        onErrorChange,
+        autocomplete
     } = props;
 
+    type TValue = { newValue: string; isAutocompleteOptionSelection: boolean };
+
     const { serializedValue, setSerializedValue, errorMessageKey, resetToDefault } =
-        useFormField<string, string, "not matching pattern">({
+        useFormField<TValue, string, "not matching pattern">({
             throttleDelay: 500,
-            serializedValue: value,
+            serializedValue: JSON.stringify(
+                id<TValue>({ newValue: value, isAutocompleteOptionSelection: false })
+            ),
             onChange,
             parse: serializedValue => {
+                const { newValue, isAutocompleteOptionSelection } = JSON.parse(
+                    serializedValue
+                ) as TValue;
+
                 check_pattern: {
                     if (pattern === undefined) {
                         break check_pattern;
                     }
 
-                    if (!new RegExp(pattern).test(serializedValue)) {
+                    const regExp = new RegExp(pattern);
+
+                    const start_time = performance.now();
+
+                    let doesMatch: boolean | undefined;
+
+                    try {
+                        doesMatch = regExp.test(newValue);
+                    } catch (error) {
+                        assert(error instanceof Error);
+
+                        if (/too much recursion|stack|call stack/i.test(error.message)) {
+                            doesMatch = undefined;
+                        } else {
+                            throw error;
+                        }
+                    }
+
+                    if (performance.now() - start_time > 100 || doesMatch === undefined) {
+                        console.error(
+                            [
+                                "onyxia: Chart author warning",
+                                "The RegExp provided as `pattern` in values.schema.json is too expensive to be evaluated",
+                                "in a realtime form validation context and is freezing the UI.",
+                                `Problematic RegExp: ${pattern}`,
+                                "",
+                                "Please simplify this RegExp so it validates the same input without catastrophic backtracking.",
+                                "In particular, avoid nested quantifiers or ambiguous constructs",
+                                "(for example: `([…]+)+`)."
+                            ].join("\n")
+                        );
+                    }
+
+                    if (!doesMatch) {
                         return {
                             isValid: false,
                             errorMessageKey: "not matching pattern"
@@ -59,7 +115,10 @@ export const TextFormField = memo((props: Props) => {
 
                 return {
                     isValid: true,
-                    value: serializedValue
+                    value: {
+                        newValue,
+                        isAutocompleteOptionSelection
+                    }
                 };
             }
         });
@@ -98,46 +157,117 @@ export const TextFormField = memo((props: Props) => {
             inputId={inputId}
             onRemove={onRemove}
         >
-            <Input
-                id={inputId}
-                className={classes.input}
-                readOnly={isReadonly}
-                type={
-                    isSensitiveTextDisclosed === undefined || isSensitiveTextDisclosed
-                        ? "text"
-                        : "password"
-                }
-                multiline={doRenderAsTextArea}
-                minRows={doRenderAsTextArea ? 3 : undefined}
-                endAdornment={(() => {
-                    if (isSensitiveTextDisclosed === undefined) {
-                        return undefined;
-                    }
+            {(() => {
+                const commonPropsOfInput = {
+                    id: inputId,
+                    className: classes.input,
+                    readOnly: isReadonly,
+                    type:
+                        isSensitiveTextDisclosed === undefined || isSensitiveTextDisclosed
+                            ? "text"
+                            : "password",
 
+                    multiline: doRenderAsTextArea,
+                    minRows: doRenderAsTextArea ? 3 : undefined,
+                    endAdornment: (() => {
+                        if (isSensitiveTextDisclosed === undefined) {
+                            return undefined;
+                        }
+
+                        return (
+                            <InputAdornment position="end">
+                                <IconButton
+                                    aria-label={t("toggle password visibility")}
+                                    onClick={() =>
+                                        setIsSensitiveTextDisclosed(
+                                            !isSensitiveTextDisclosed
+                                        )
+                                    }
+                                    icon={getIconUrlByName(
+                                        isSensitiveTextDisclosed
+                                            ? "VisibilityOff"
+                                            : "Visibility"
+                                    )}
+                                />
+                            </InputAdornment>
+                        );
+                    })(),
+                    name: `${inputId}-no-autofill`,
+                    autoComplete: "off"
+                };
+
+                if (autocomplete === undefined) {
                     return (
-                        <InputAdornment position="end">
-                            <IconButton
-                                aria-label={t("toggle password visibility")}
-                                onClick={() =>
-                                    setIsSensitiveTextDisclosed(!isSensitiveTextDisclosed)
-                                }
-                                icon={getIconUrlByName(
-                                    isSensitiveTextDisclosed
-                                        ? "VisibilityOff"
-                                        : "Visibility"
-                                )}
-                            />
-                        </InputAdornment>
+                        <Input
+                            {...commonPropsOfInput}
+                            value={(JSON.parse(serializedValue) as TValue).newValue}
+                            onChange={event => {
+                                const newValue = event.target.value;
+                                setSerializedValue(
+                                    JSON.stringify(
+                                        id<TValue>({
+                                            newValue,
+                                            isAutocompleteOptionSelection: false
+                                        })
+                                    )
+                                );
+                            }}
+                        />
                     );
-                })()}
-                value={serializedValue}
-                onChange={event => setSerializedValue(event.target.value)}
-                name={`${inputId}-no-autofill`}
-                autoComplete="off"
-            />
+                }
+
+                return (
+                    <Autocomplete
+                        freeSolo
+                        options={autocomplete.options}
+                        value={(JSON.parse(serializedValue) as TValue).newValue}
+                        onOpen={autocomplete.onPanelOpen}
+                        loading={autocomplete.isLoadingOptions}
+                        loadingText={
+                            <>
+                                <CircularProgress /> Loading...
+                            </>
+                        }
+                        onChange={(_event: unknown, newValue: string | null) => {
+                            if (newValue === null) {
+                                return;
+                            }
+
+                            setSerializedValue(
+                                JSON.stringify(
+                                    id<TValue>({
+                                        newValue,
+                                        isAutocompleteOptionSelection: true
+                                    })
+                                )
+                            );
+                        }}
+                        onInputChange={event => {
+                            if (event === null) {
+                                return;
+                            }
+
+                            //@ts-expect-error: ok
+                            const newValue = event.target.value;
+
+                            setSerializedValue(
+                                JSON.stringify(
+                                    id<TValue>({
+                                        newValue,
+                                        isAutocompleteOptionSelection: false
+                                    })
+                                )
+                            );
+                        }}
+                        renderInput={({ InputProps, InputLabelProps, ...rest }) => (
+                            <Input {...InputProps} {...rest} {...commonPropsOfInput} />
+                        )}
+                    />
+                );
+            })()}
         </FormFieldWrapper>
     );
-});
+}, same);
 
 const useStyles = tss
     .withName({ TextFormField })
