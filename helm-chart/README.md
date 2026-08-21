@@ -22,7 +22,25 @@ ingress:
     - host: datalab.my-domain.net
 EOF
 
-helm install onyxia onyxia/onyxia --version "10.30.14" -f onyxia-values.yaml
+helm install onyxia onyxia/onyxia --version "11.6.0" -f onyxia-values.yaml
+```
+
+To expose Onyxia with the Kubernetes Gateway API instead of an Ingress, use an `HTTPRoute`.
+The `parentRefs` entries must point to the `Gateway` already configured by your cluster administrator:
+
+```bash
+cat << EOF > ./onyxia-values.yaml
+httpRoute:
+  enabled: true
+  parentRefs:
+    - name: onyxia-gateway
+      namespace: infra-gateway
+      sectionName: web
+  hostnames:
+    - datalab.my-domain.net
+EOF
+
+helm install onyxia onyxia/onyxia --version "11.6.0" -f onyxia-values.yaml
 ```
 
 ### Using the Keycloak Theme (Optional)
@@ -44,7 +62,7 @@ extraInitContainers: |
     args:
       - -c
       - |
-        curl -L -f -S -o /extensions/onyxia.jar https://github.com/InseeFrLab/onyxia/releases/download/v10.30.14/keycloak-theme.jar
+        curl -L -f -S -o /extensions/onyxia.jar https://github.com/InseeFrLab/onyxia/releases/download/v11.6.0/keycloak-theme.jar
     volumeMounts:
       - name: extensions
         mountPath: /extensions
@@ -70,16 +88,20 @@ After that, you should be able to select *onyxia* as *Login Theme*.
 
 Documentation reference for the available configuration parameter of the Onyxia Helm Chart.
 
--   [The REST API (`api`)](https://github.com/InseeFrLab/onyxia-api/blob/v4.11.0/README.md#configuration)
--   [The Web Application (`web`)](https://github.com/InseeFrLab/onyxia/blob/web-v4.56.20/web/.env)
+The chart deploys the API by default and configures the web application to reach it at `/api`.
+To deploy the web application without a backend (for S3 standalone mode), disable the API:
+
+```yaml
+api:
+  enabled: false
+```
+
+-   [The REST API (`api`)](https://github.com/InseeFrLab/onyxia-api/blob/v4.12.0/README.md#configuration)
+-   [The Web Application (`web`)](https://github.com/InseeFrLab/onyxia/blob/web-v5.6.0/web/.env)
 
 Below is a sample `onyxia-values.yaml` file that illustrates where to specify the `api` and `web` configuration parameters.
 
 ```diff
- ingress:
-     enabled: true
-     hosts:
-       - host: datalab.yourdomain.com
 +web:
 +    env:
 +      HEADER_LOGO=https://example.com/logo.svg
@@ -102,9 +124,30 @@ Below is a sample `onyxia-values.yaml` file that illustrates where to specify th
 +              # ...
 ```
 
+Ingress example:
+
+```yaml
+ingress:
+  enabled: true
+  hosts:
+    - host: datalab.yourdomain.com
+```
+
+HTTPRoute example:
+
+```yaml
+httpRoute:
+  enabled: true
+  parentRefs:
+    # Reference the Gateway configured by your cluster administrator.
+    - name: onyxia-gateway
+  hostnames:
+    - datalab.yourdomain.com
+```
+
 ## Catalogs `x-onyxia` specifications
 
 If you are building your own service catalog for Onyxia ([learn how](https://docs.onyxia.sh/catalog-of-services)).  
 Here are defined the onyxia reserved parameter and the structure of the dynamic context:
 
-[`values.schema.json` `"x-onyxia"` specifications](https://github.com/InseeFrLab/onyxia/blob/web-v4.56.20/web/src/core/ports/OnyxiaApi/XOnyxia.ts)
+[`values.schema.json` `"x-onyxia"` specifications](https://github.com/InseeFrLab/onyxia/blob/web-v5.6.0/web/src/core/ports/OnyxiaApi/XOnyxia.ts)

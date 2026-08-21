@@ -57,15 +57,16 @@ type ImportMetaEnv = {
   QUOTA_WARNING_THRESHOLD: string
   QUOTA_CRITICAL_THRESHOLD: string
   RUNNING_TIME_THRESHOLD_HOURS: string
-  SERVICE_CONFIGURATION_EXPANDED_BY_DEFAULT: string
-  S3_DOCUMENTATION_LINK: string
   VAULT_DOCUMENTATION_LINK: string
-  ONYXIA_API_URL: string
   DISABLE_DISPLAY_ALL_CATALOG: string
+  S3: string
+  ONYXIA_API_URL: string
   ONYXIA_VERSION: string
   ONYXIA_VERSION_URL: string
   SCREEN_SCALER: string
   OIDC_DEBUG_LOGS: string
+  OIDC_DISABLE_DPOP: string
+  OIDC_SESSION_RESTORATION_METHOD: string
   // @user-defined-start
   /*
    * Here you can define your own special variables

@@ -1,5 +1,5 @@
 import type { Oidc } from "core/ports/Oidc";
-import { createMockOidc } from "oidc-spa/mock";
+import { createMockOidc } from "oidc-spa/core-mock";
 
 export async function createOidc(params: {
     isUserInitiallyLoggedIn: boolean;
@@ -8,9 +8,10 @@ export async function createOidc(params: {
 
     const oidc = await createMockOidc({
         isUserInitiallyLoggedIn,
-        homeUrl: import.meta.env.BASE_URL,
         mockedTokens: {
-            decodedIdToken: {}
+            decodedIdToken: {
+                sub: "mocked"
+            }
         }
     });
 
@@ -18,8 +19,5 @@ export async function createOidc(params: {
         return oidc;
     }
 
-    return {
-        ...oidc,
-        getTokens: async () => oidc.getTokens()
-    };
+    return oidc;
 }

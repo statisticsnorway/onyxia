@@ -1,5 +1,4 @@
 import type { OidcParams_Partial } from "./OidcParams";
-import type { LocalizedString } from "./Language";
 
 export type DeploymentRegion = {
     id: string;
@@ -19,12 +18,7 @@ export type DeploymentRegion = {
           }
         | undefined;
     initScriptUrl: string;
-    s3Configs: DeploymentRegion.S3Config[];
-    s3ConfigCreationFormDefaults:
-        | (Pick<DeploymentRegion.S3Config, "url" | "pathStyleAccess" | "region"> & {
-              workingDirectory: DeploymentRegion.S3Config["workingDirectory"] | undefined;
-          })
-        | undefined;
+
     allowedURIPatternForUserDefinedInitScript: string;
     kafka:
         | {
@@ -104,60 +98,3 @@ export type DeploymentRegion = {
           }
         | undefined;
 };
-export namespace DeploymentRegion {
-    /** https://github.com/InseeFrLab/onyxia-api/blob/main/docs/region-configuration.md#s3 */
-    export type S3Config = {
-        url: string;
-        pathStyleAccess: boolean;
-        region: string | undefined;
-        sts: {
-            url: string | undefined;
-            durationSeconds: number | undefined;
-            role:
-                | {
-                      roleARN: string;
-                      roleSessionName: string;
-                  }
-                | undefined;
-            oidcParams: OidcParams_Partial;
-        };
-        workingDirectory:
-            | {
-                  bucketMode: "shared";
-                  bucketName: string;
-                  prefix: string;
-                  prefixGroup: string;
-              }
-            | {
-                  bucketMode: "multi";
-                  bucketNamePrefix: string;
-                  bucketNamePrefixGroup: string;
-              };
-        bookmarkedDirectories: S3Config.BookmarkedDirectory[];
-    };
-
-    export namespace S3Config {
-        export type BookmarkedDirectory =
-            | BookmarkedDirectory.Static
-            | BookmarkedDirectory.Dynamic;
-
-        export namespace BookmarkedDirectory {
-            export type Common = {
-                fullPath: string;
-                title: LocalizedString;
-                description: LocalizedString | undefined;
-                tags: LocalizedString[] | undefined;
-            };
-
-            export type Static = Common & {
-                claimName: undefined;
-            };
-
-            export type Dynamic = Common & {
-                claimName: string;
-                includedClaimPattern: string | undefined;
-                excludedClaimPattern: string | undefined;
-            };
-        }
-    }
-}

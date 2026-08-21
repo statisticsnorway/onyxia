@@ -11,6 +11,7 @@ import {
 import * as userAuthentication from "./userAuthentication";
 import { join as pathJoin } from "pathe";
 import * as deploymentRegionManagement from "core/usecases/deploymentRegionManagement";
+import { AccessError } from "clean-architecture";
 
 /*
  * Values of the user profile that can be changed.
@@ -32,6 +33,7 @@ export type UserConfigs = Id<
         selectedProjectId: string | null;
         isCommandBarEnabled: boolean;
         userProfileStr: string | null;
+        s3BookmarksStr: string | null;
     }
 >;
 
@@ -139,12 +141,28 @@ export const protectedThunks = {
 
             assert(isUserLoggedIn);
 
-            const { username, email } = user;
-
             // NOTE: Default values
             const userConfigs: UserConfigs = {
-                gitName: username,
-                gitEmail: email,
+                gitName: (() => {
+                    try {
+                        return user.username;
+                    } catch (error) {
+                        if (error instanceof AccessError) {
+                            return "unknown";
+                        }
+                        throw error;
+                    }
+                })(),
+                gitEmail: (() => {
+                    try {
+                        return user.email;
+                    } catch (error) {
+                        if (error instanceof AccessError) {
+                            return "unknown@unknown.net";
+                        }
+                        throw error;
+                    }
+                })(),
                 gitCredentialCacheDuration: 0,
                 isBetaModeEnabled: false,
                 isDevModeEnabled: false,
@@ -153,7 +171,8 @@ export const protectedThunks = {
                 doDisplayAcknowledgeConfigVolatilityDialogIfNoVault: true,
                 selectedProjectId: null,
                 isCommandBarEnabled: paramsOfBootstrapCore.isCommandBarEnabledByDefault,
-                userProfileStr: null
+                userProfileStr: null,
+                s3BookmarksStr: null
             };
 
             const dirPath = await dispatch(privateThunks.getDirPath());

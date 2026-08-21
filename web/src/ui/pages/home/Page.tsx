@@ -6,25 +6,31 @@ import { Button } from "onyxia-ui/Button";
 import { useTranslation } from "ui/i18n";
 import { Card as OnyxiaUiCard } from "onyxia-ui/Card";
 import { env } from "env";
-import { useConst } from "powerhooks/useConst";
 import { declareComponentKeys } from "i18nifty";
 import { ThemedImage } from "onyxia-ui/ThemedImage";
 import { LocalizedMarkdown } from "ui/shared/Markdown";
 import { LinkFromConfigButton } from "./LinkFromConfigButton";
 import { id } from "tsafe/id";
 import { useThemedImageUrl } from "onyxia-ui/ThemedImage";
-import { useCoreState } from "core";
+import { useCoreState, getCoreSync } from "core";
+import { withLoader } from "ui/tools/withLoader";
 
-const Page = Home;
+const Page = withLoader({
+    loader: async () => {
+        if (env.ONYXIA_API_URL === undefined) {
+            routes.s3Explorer_root().replace();
+            return new Promise<never>(() => {});
+        }
+        if (env.DISABLE_HOMEPAGE) {
+            routes.catalog().replace();
+            return new Promise<never>(() => {});
+        }
+    },
+    Component: Home
+});
 export default Page;
 
 function Home() {
-    useConst(() => {
-        if (env.DISABLE_HOMEPAGE) {
-            routes.catalog().replace();
-        }
-    });
-
     const backgroundUrl = useThemedImageUrl(env.BACKGROUND_ASSET);
 
     const { classes } = useStyles({
@@ -33,7 +39,6 @@ function Home() {
     });
 
     const { isUserLoggedIn, user } = useCoreState("userAuthentication", "main");
-    const isFileExplorerEnabled = useCoreState("fileExplorer", "isFileExplorerEnabled");
 
     const { t } = useTranslation({ Home });
 
@@ -145,7 +150,7 @@ function Home() {
                         url: "https://join.slack.com/t/3innovation/shared_invite/zt-1hnzukjcn-6biCSmVy4qvyDGwbNI~sWg"
                     }
                 },
-                ...(!isFileExplorerEnabled
+                ...(!getCoreSync().functions.s3ExplorerUiController.getIsS3ExplorerEnabled()
                     ? []
                     : [
                           {
@@ -154,7 +159,7 @@ function Home() {
                               description: t("cardText3"),
                               button: {
                                   label: t("cardButton3"),
-                                  url: routes.fileExplorerEntry().link.href
+                                  url: routes.s3Explorer_root().link.href
                               }
                           }
                       ])
@@ -162,7 +167,7 @@ function Home() {
         }
 
         return env.HOMEPAGE_CARDS;
-    }, [t, isFileExplorerEnabled]);
+    }, [t]);
 
     return (
         <div className={classes.root}>

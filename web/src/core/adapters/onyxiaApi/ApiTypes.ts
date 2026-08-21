@@ -1,5 +1,4 @@
 import type { LocalizedString, JSONSchema } from "core/ports/OnyxiaApi";
-import type { ArrayOrNot } from "core/tools/ArrayOrNot";
 
 export type ApiTypes = {
     "/public/ip": {
@@ -80,52 +79,6 @@ export type ApiTypes = {
                     scc: string;
                     enabled: boolean;
                 };
-            };
-            data?: {
-                S3?: ArrayOrNot<{
-                    URL: string;
-                    pathStyleAccess?: true;
-
-                    region?: string;
-                    sts?: {
-                        URL?: string;
-                        durationSeconds?: number;
-                        role:
-                            | {
-                                  roleARN: string;
-                                  roleSessionName: string;
-                              }
-                            | undefined;
-                        oidcConfiguration?: Partial<ApiTypes.OidcConfiguration>;
-                    };
-
-                    /** Ok to be undefined only if sts is undefined */
-                    workingDirectory?:
-                        | {
-                              bucketMode: "shared";
-                              bucketName: string;
-                              prefix: string;
-                              prefixGroup: string;
-                          }
-                        | {
-                              bucketMode: "multi";
-                              bucketNamePrefix: string;
-                              bucketNamePrefixGroup: string;
-                          };
-                    bookmarkedDirectories?: ({
-                        fullPath: string;
-                        title: LocalizedString;
-                        description: LocalizedString | undefined;
-                        tags: LocalizedString[] | undefined;
-                    } & (
-                        | { claimName: undefined }
-                        | {
-                              claimName: string;
-                              includedClaimPattern: string;
-                              excludedClaimPattern: string;
-                          }
-                    ))[];
-                }>;
             };
             vault?: {
                 URL: string;

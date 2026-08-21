@@ -10,8 +10,7 @@ export const translations: Translations<"zh-CN"> = {
     /* spell-checker: disable */
     Account: {
         profile: "个人资料",
-        git: undefined,
-        storage: "链接到储存器",
+        git: "Git",
         "user-interface": "变换显示模式",
         k8sCodeSnippets: "Kubernetes",
         text1: "我的账号",
@@ -69,15 +68,6 @@ export const translations: Translations<"zh-CN"> = {
             </>
         )
     },
-    AccountStorageTab: {
-        "credentials section title": "将您的数据连接到您的服务",
-        "credentials section helper":
-            "与 Amazon (AWS S3) 兼容的对象存储 MinIO. 此信息已自动填写.",
-        "accessible as env": "可在您的服务中作为环境变量被访问",
-        "init script section title": "访问datalab服务之外的存储器",
-        "init script section helper": `下载或复制用您选择的编程语言编写的初始化脚本.`,
-        "expires in": ({ howMuchTime }) => `有效期至 ${howMuchTime}`
-    },
     AccountKubernetesTab: {
         "credentials section title": "连接到 Kubernetes 集群",
         "credentials section helper": "用于直接与 Kubernetes API 服务器交互的凭证。",
@@ -120,123 +110,6 @@ export const translations: Translations<"zh-CN"> = {
         ),
         "expires in": ({ howMuchTime }) => `该令牌有效期至 ${howMuchTime}`
     },
-    ProjectSettings: {
-        "page header title": "项目设置",
-        "page header help title": ({ groupProjectName }) =>
-            groupProjectName === undefined
-                ? "您个人项目的设置"
-                : `“${groupProjectName}”的设置`,
-        "page header help content": ({
-            groupProjectName,
-            doesUserBelongToSomeGroupProject
-        }) => (
-            <>
-                本页面允许您配置适用于
-                {groupProjectName === undefined
-                    ? " 您的个人项目"
-                    : ` ${groupProjectName}项目`}{" "}
-                的设置。
-                <br />
-                {groupProjectName !== undefined && (
-                    <>
-                        请注意，${groupProjectName}是一个与其他用户共享的团队项目；
-                        您在此处所做的设置更改将适用于所有项目成员。
-                        <br />
-                    </>
-                )}
-                {doesUserBelongToSomeGroupProject && (
-                    <>
-                        您可以使用标题中的下拉菜单在您的项目之间切换。
-                        <br />
-                    </>
-                )}
-                请注意，只有您的Onyxia实例管理员可以创建新项目。
-            </>
-        ),
-        "security-info": "安全信息",
-        "s3-configs": "S3 配置"
-    },
-    ProjectSettingsS3ConfigTab: {
-        "add custom config": "添加自定义S3配置"
-    },
-    S3ConfigCard: {
-        "data source": "数据源",
-        credentials: "凭证",
-        "sts credentials": "由Onyxia代表您动态请求的令牌 (STS)",
-        account: "账户",
-        "use in services": "在服务中使用",
-        "use in services helper": `如果启用，此配置将默认用于实现S3集成的服务中。`,
-        "use for onyxia explorers": "用于Onyxia探索器",
-        "use for onyxia explorers helper": `如果启用，此配置将被文件浏览器和数据浏览器使用。`,
-        edit: "编辑",
-        delete: "删除"
-    },
-    AddCustomS3ConfigDialog: {
-        "dialog title": "新的自定义 S3 配置",
-        "dialog subtitle": "指定自定义服务账户或连接到另一个兼容 S3 的服务",
-        cancel: "取消",
-        "save config": "保存配置",
-        "update config": "更新配置",
-        "is required": "此字段为必填项",
-        "must be an url": "不是有效的 URL",
-        "not a valid access key id": "这不像是一个有效的访问密钥 ID",
-        "url textField label": "URL",
-        "url textField helper text": "S3 服务的 URL",
-        "region textField label": "AWS S3 区域",
-        "region textField helper text": "例如：eu-west-1，如果不确定，请留空",
-        "workingDirectoryPath textField label": "工作目录路径",
-        "workingDirectoryPath textField helper text": (
-            <>
-                这可以让你指定在 S3 服务上你拥有的桶和 S3 对象前缀。 <br />
-                例如：<code>我的桶/我的前缀/</code> 或 <code>仅我的桶/</code>{" "}
-                如果你拥有整个桶。
-            </>
-        ),
-        "account credentials": "账户凭证",
-        "friendlyName textField label": "配置名称",
-        "friendlyName textField helper text":
-            "这只是帮助您识别此配置。例如：我的 AWS 存储桶",
-        "isAnonymous switch label": "匿名访问",
-        "isAnonymous switch helper text": "如果不需要密钥，请将其设置为开启",
-        "accessKeyId textField label": "访问密钥 ID",
-        "accessKeyId textField helper text": "例如：1A2B3C4D5E6F7G8H9I0J",
-        "secretAccessKey textField label": "秘密访问密钥",
-        "sessionToken textField label": "会话令牌",
-        "sessionToken textField helper text": "可选的，如果不确定请留空",
-        "url style": "URL 样式",
-        "url style helper text": `指定您的 S3 服务器如何格式化下载文件的 URL。`,
-        "path style label": ({ example }) => (
-            <>
-                路径样式
-                {example !== undefined && (
-                    <>
-                        :&nbsp;
-                        <code>{example}我的数据集.parquet</code>
-                    </>
-                )}
-            </>
-        ),
-        "virtual-hosted style label": ({ example }) => (
-            <>
-                虚拟托管样式
-                {example !== undefined && (
-                    <>
-                        :&nbsp;
-                        <code>{example}我的数据集.parquet</code>
-                    </>
-                )}
-            </>
-        )
-    },
-    TestS3ConnectionButton: {
-        "test connection": "测试连接",
-        "test connection failed": ({ errorMessage }) => (
-            <>
-                测试连接失败，错误信息： <br />
-                {errorMessage}
-            </>
-        )
-    },
     AccountUserInterfaceTab: {
         title: "配置界面模式",
         "enable dark mode": "开启深色模式",
@@ -277,63 +150,320 @@ export const translations: Translations<"zh-CN"> = {
         reset: "重置",
         "reset helper dialogs helper text": "重置您要求不再显示的消息窗口"
     },
-    FileExplorerEntry: {
-        "page title - file explorer": "文件资源管理器",
-        "what this page is used for - file explorer": "在此处存储您的数据.",
-        "help content": ({ accountTabLink, docHref }) => (
+    ConfirmBucketCreationAttemptDialog: {
+        "bucket does not exist title": ({ bucket }) => `存储桶 ${bucket} 不存在`,
+        "bucket does not exist body": "要立即尝试创建吗？",
+        no: "否",
+        yes: "是",
+        "success title": "成功",
+        "failed title": "失败",
+        "success body": ({ bucket }) => `存储桶 ${bucket} 创建成功。`,
+        "failed body": ({ bucket }) => `创建 ${bucket} 失败。`,
+        ok: "确定"
+    },
+    ConfirmOverwriteDialog: {
+        "dialog title": "文件已存在",
+        "dialog body": "是否要覆盖现有文件？",
+        "no, keep the existing file": "否，保留现有文件",
+        "yes, overwrite": "是，覆盖"
+    },
+    ConfirmCustomS3ConfigDeletionDialog: {
+        "dialog title": "确认删除自定义 S3 配置？",
+        cancel: "取消",
+        yes: "是"
+    },
+    DisplayErrorDialog: {
+        error: "错误",
+        ok: "确定"
+    },
+    S3Explorer: {
+        "page header title": "数据存储",
+        "no profile title": "连接您的对象存储",
+        "no profile description": "创建 S3 配置文件以连接存储并开始浏览文件。",
+        "create profile": "创建配置文件",
+        back: "返回",
+        upload: "上传",
+        "create new folder": "创建新文件夹",
+        "download file": "下载文件"
+    },
+    S3ShareObjectDialogContainer: {
+        "dialog title": "共享对象"
+    },
+    S3BookmarksBar: {
+        "s3 bookmarks aria label": "S3 书签",
+        "show more bookmarks": "显示更多书签"
+    },
+    S3BookmarkItem: {
+        "open bookmark": "打开书签",
+        "open bucket": "打开存储桶",
+        "bookmark actions": "书签操作",
+        rename: "重命名",
+        delete: "删除",
+        "rename bookmark": "重命名书签",
+        "delete bookmark": "删除书签"
+    },
+    S3BookmarksEntryPointList: {
+        "s3 bookmark entry points aria label": "S3 书签入口",
+        bookmarks: "书签",
+        "no bookmarks yet": "暂无书签。",
+        "storage locations": "存储位置"
+    },
+    S3DialogCopyField: {
+        "generating url": "正在生成 URL...",
+        copy: "复制",
+        copied: "已复制"
+    },
+    S3DialogItemSummary: {
+        public: "公开"
+    },
+    S3ProfileSelect: {
+        "select s3 profile aria label": "选择 S3 配置文件",
+        "profile settings aria label": "配置文件设置",
+        "s3 profiles aria label": "S3 配置文件",
+        "new s3 profile": "新建 S3 配置文件"
+    },
+    S3SelectionActionBar: {
+        download: "下载",
+        delete: "删除",
+        "copy s3 uri": "复制 S3 URI",
+        copied: "已复制",
+        "copy s3 uri tooltip": ({ s3UriStr }) => `复制 "${s3UriStr}"`,
+        "add to bookmarks": "添加到书签",
+        "delete from bookmarks": "从书签中删除",
+        share: "共享",
+        "make public": "设为公开",
+        "make private": "设为私有",
+        "one selected": "已选择 1 项",
+        "many selected": ({ count }) => `已选择 ${count} 项`,
+        "clear selection": "清除选择"
+    },
+    ConfirmAbortUploadDialog: {
+        "dialog title": "取消上传？",
+        "dialog body": "上传尚未完成。要取消上传吗？",
+        "continue upload": "继续上传",
+        "cancel upload": "取消上传"
+    },
+    S3Uploads: {
+        "uploading count": ({ count }) => `正在上传 ${count} 个项目...`,
+        "upload count": ({ count }) => `${count} 个上传`,
+        "expand uploads": "展开上传",
+        "collapse uploads": "折叠上传",
+        "close uploads": "关闭上传",
+        "uploading status": "正在上传...",
+        completed: "已完成",
+        error: "错误",
+        "uploaded size of total size": ({ uploadedSize, totalSize }) =>
+            `${uploadedSize} / ${totalSize}`,
+        of: "共",
+        "open uploaded directory": "打开已上传目录",
+        "cancel upload": "取消上传",
+        "retry upload": "重试上传"
+    },
+    CustomNoRowsOverlay: {
+        "no rows": "无行"
+    },
+    DataTextEditor: {
+        "not a valid format": ({ format }) => `不是有效格式: ${format}`,
+        format: "格式",
+        "all defaults": "全部默认值",
+        schema: "架构"
+    },
+    JsonSchemaDialog: {
+        "json schema": "JSON 架构",
+        ok: "确定"
+    },
+    SelectFormField: {
+        "empty string": "(空字符串)"
+    },
+    CreateOrRenameBookmarkDialog: {
+        "dialog title": "书签名称",
+        "add dialog title": "将此位置添加到书签",
+        "rename dialog title": "重命名书签",
+        "dialog subtitle": "保存此 S3 位置，以便之后更快访问。",
+        "bookmarkName textField label": "名称",
+        "bookmarkName textField empty error": "书签名称不能为空",
+        "copy s3 path aria label": "复制 S3 路径",
+        cancel: "取消",
+        ok: "确定",
+        "add to bookmarks": "添加到书签",
+        "rename bookmark": "重命名书签"
+    },
+    DirectoryCreationDialog: {
+        "dialog title": "创建文件夹",
+        "dialog subtitle": "在此位置创建一个类似文件夹的前缀",
+        "dialog body":
+            "S3 不会将文件夹存储为真实对象。此操作只会从当前位置打开一个新的前缀片段，以便你在其下上传对象。只有当至少一个对象使用该前缀时，这个文件夹才会显示；空文件夹在 S3 中并不存在。",
+        "folderName textField label": "文件夹名称",
+        "folderName textField empty error": "文件夹名称不能为空",
+        "folderName textField duplicate error": "文件夹名称已存在",
+        cancel: "取消",
+        "create folder": "创建文件夹"
+    },
+    MakePrefixPublicDialog: {
+        "dialog title": "公开前缀",
+        "make public dialog title": "公开此前缀？",
+        "make private dialog title": "将此前缀设为私有？",
+        "make public dialog body main":
+            "此前缀中的所有文件都将可通过链接访问，包括当前和未来的内容。",
+        "make public dialog body alternative":
+            "如果只想共享特定文件或限制访问时间，请改为创建共享链接。",
+        "make private dialog body main":
+            "此前缀中的所有文件都可通过链接访问，包括当前和未来的内容。将此前缀设为私有会移除公开访问。",
+        "make private dialog body alternative":
+            "如果只想共享特定文件或限制访问时间，请改为创建共享链接。",
+        "dialog body": ({ s3Uri, s3UriClassName }) => (
             <>
-                阅读{" "}
-                <MuiLink href={docHref} target="_blank">
-                    我们的文档
-                </MuiLink>
-                。&nbsp;
-                <MuiLink {...accountTabLink}>配置 Minio 客户端</MuiLink>。
+                你即将公开 <span className={s3UriClassName}>{s3Uri}</span>
+                。任何人都可以列出并下载此前缀中当前和未来的所有对象。
+                <br />
+                <br />
+                你分享的此前缀中对象的下载链接将永不过期。
             </>
         ),
-        "title personal": "我的数据",
-        "description personal": "您自己的文件和数据集。",
-        "title project": ({ projectName }) => `项目 ${projectName}`,
-        "description project": ({ projectName }) => `项目 ${projectName} 的共享存储空间`,
-        tags: ({ type }) => {
-            switch (type) {
-                case "personal":
-                    return "我的数据";
-                case "project":
-                    return "群组数据";
-            }
-        }
-    },
-    S3EntryCard: {
-        "space path": "空间路径"
-    },
-    FileExplorerDisabledDialog: {
-        "dialog title": "未配置S3服务器",
-        "dialog body": "此实例未配置S3服务器。但您可以手动添加一个，以启用S3文件浏览器。",
         cancel: "取消",
-        "go to settings": "前往设置"
+        "make public": "公开",
+        "make private": "设为私有"
     },
-    ShareDialog: {
-        title: "分享您的数据",
-        close: "关闭",
-        "create and copy link": "创建并复制链接",
-        "paragraph current policy": ({ isPublic }) =>
-            isPublic
-                ? "您的文件是公开的，任何拥有链接的人都可以下载。"
-                : "您的文件当前是私密的。",
-
-        "paragraph change policy": ({ isPublic }) =>
-            isPublic
-                ? "要限制访问，请更改文件的共享状态。"
-                : "要分享并提供对文件的访问，请更改共享状态或创建一个临时访问链接。",
-
-        "hint link access": ({ isPublic, expiration }) =>
-            isPublic
-                ? "只要文件是公开的，您的链接就可用。"
-                : `此链接将在 ${expiration} 内提供对您的数据的访问权限。`,
-        "label input link": "访问链接"
+    S3ExplorerMainView: {
+        "create prefix dialog title": "创建前缀",
+        "create prefix dialog subtitle": "在当前 S3 位置内创建一个新前缀。",
+        "prefix name field label": "前缀名称",
+        "prefix name empty error": "前缀名称不能为空。",
+        cancel: "取消",
+        "create prefix": "创建前缀",
+        "delete selection dialog title": "删除所选项",
+        "delete selection dialog subtitle": "此操作会永久删除所选项目。",
+        "delete selection dialog body": ({ count }) =>
+            `你即将删除 ${count} 个所选项目。删除前缀也会删除其中的所有内容。`,
+        delete: "删除",
+        share: "共享",
+        download: "下载",
+        "copy s3 uri": "复制 S3 URI",
+        copied: "已复制",
+        "copy s3 uri tooltip": ({ s3UriStr }) => `复制 "${s3UriStr}"`,
+        "add to bookmarks": "添加到书签",
+        "delete from bookmarks": "从书签中删除",
+        "make public": "公开",
+        "make private": "设为私有",
+        folder: "文件夹",
+        object: "对象",
+        "folder is public": "文件夹是公开的",
+        "folder is private": "文件夹是私有的",
+        today: "今天",
+        yesterday: "昨天",
+        "access denied": "访问被拒绝",
+        "bucket not found": "未找到存储桶",
+        "CORS error": "CORS 错误",
+        error: "错误",
+        "access denied description": "你没有权限列出此 S3 位置。",
+        "bucket not found description":
+            "请求的存储桶不存在，或无法使用当前配置文件访问。",
+        "CORS error description": ({ bucket, origin }) =>
+            `无法从 ${origin} 访问存储桶“${bucket}”。该存储桶的 CORS 策略可能不允许来自此网站的请求。请更新 S3 CORS 配置以允许此来源，然后重试。`,
+        "select item": ({ itemName }) => `选择 ${itemName}`,
+        "select all items": "选择所有项目",
+        public: "公开",
+        deleting: "正在删除...",
+        uploading: "正在上传",
+        "drag and drop to import files": "拖放以导入文件",
+        "go back": "返回",
+        "no objects found": "未找到对象",
+        "no objects found description": ({ s3UriStr }) =>
+            `没有键以 "${s3UriStr}" 开头的对象。`,
+        "this prefix is empty": "此前缀为空",
+        "empty prefix description": "上传文件或创建文件夹以开始填充此位置。",
+        "empty prefix upload description": "在此上传文件，或将文件拖放到此区域。",
+        "upload files": "上传文件",
+        "upload files here": "在此上传文件",
+        "drop files here hint": "将文件拖放到此区域中的任意位置即可上传。",
+        "new folder": "新建文件夹",
+        name: "名称",
+        "last modified": "最后修改",
+        size: "大小"
     },
-    SelectTime: {
-        "validity duration label": "有效期"
+    S3ShareObjectDialog: {
+        "generating public URL": "正在生成公开 URL...",
+        "copy public URL aria label": "复制公开 URL",
+        "signed URL with limited validity period": "带有限有效期的签名 URL",
+        "signed link validity aria label": "签名链接有效期",
+        "generating signed URL": "正在生成签名 URL...",
+        "copy signed URL aria label": "复制签名 URL",
+        "public sharing note":
+            "任何拥有该 URL 的人都可以访问此对象。由于该对象位于公开前缀中，因此链接永不过期。",
+        "signed URL expiration note":
+            "若要共享永不过期的 URL，请公开此对象的某个上级前缀。",
+        "validity duration one hour": "1 小时",
+        "validity duration one day": "1 天",
+        "validity duration one week": "1 周",
+        "selected duration": "所选时长"
+    },
+    S3ProfileDialog: {
+        "detail title": "S3 配置文件详情",
+        "create title": "新建自定义 S3 配置文件",
+        "edit title": "编辑自定义 S3 配置文件",
+        "close aria label": "关闭 S3 配置文件对话框"
+    },
+    S3ProfileDetails: {
+        "read only": "只读",
+        custom: "自定义",
+        edit: "编辑",
+        delete: "删除",
+        "connection details title": "连接详情",
+        "connection details subtitle": "在资源管理器外配置 S3 客户端时使用这些值。",
+        "endpoint url label": "端点 URL",
+        "default region label": "默认区域",
+        "access credentials title": "访问凭据",
+        "access credentials anonymous subtitle":
+            "此配置文件不公开凭据。当目标存储桶允许时，请使用匿名 S3 访问。",
+        "access credentials subtitle": "复制正在配置的客户端所需的值。",
+        "access key id label": "访问密钥 ID",
+        "secret access key label": "秘密访问密钥",
+        "session token label": "会话令牌",
+        "environment variable": "环境变量",
+        "no expiration": "这些凭据未提供过期时间。",
+        expires: ({ expirationTime }) => `过期时间：${expirationTime}。`,
+        renewing: "正在续期...",
+        "renew tokens": "续期令牌",
+        "init script title": "在 Datalab 服务外访问你的存储",
+        "init script subtitle": "下载或复制所选编程语言的初始化脚本。",
+        "technology aria label": "技术",
+        download: "下载",
+        "select s3 profile aria label": "选择 S3 配置文件",
+        "s3 profiles aria label": "S3 配置文件",
+        "new s3 profile": "新建 S3 配置文件",
+        "copy aria label": ({ what }) => `复制${what}`,
+        copied: "已复制",
+        copy: "复制"
+    },
+    S3ProfileForm: {
+        "must be an url": "请输入有效的 URL。",
+        "is required": "此字段为必填项。",
+        "not a valid access key id": "请输入有效的访问密钥 ID。",
+        "profile name already used": "此配置文件名称已被使用。",
+        "connection details title": "连接详情",
+        "connection details subtitle": "定义资源管理器使用的配置文件名称和 S3 端点。",
+        "profile name label": "配置文件名称",
+        "s3 service url label": "S3 服务 URL",
+        "s3 service url helper": "示例：https://minio.lab.example.net",
+        "default region label": "默认区域",
+        "default region helper": "示例：eu-west-1，如不确定请留空",
+        "url style title": "URL 样式",
+        "url style subtitle": "指定 S3 服务器如何生成文件下载 URL。",
+        "path style": "路径样式",
+        "virtual hosted style": "虚拟主机样式",
+        example: "示例",
+        "account credentials title": "账户凭据",
+        "account credentials subtitle": "选择此配置文件使用匿名访问还是显式凭据。",
+        "anonymous access": "匿名访问",
+        "access key id label": "访问密钥 ID",
+        "access key id helper": "示例：ASIAIOSFODNN7EXAMPLE",
+        "secret access key label": "秘密访问密钥",
+        "secret access key helper": "示例：wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+        "session token label": "会话令牌",
+        "session token helper": "可选。如果你的凭据不包含会话令牌，请留空。",
+        cancel: "取消",
+        "save configuration": "保存配置",
+        "create profile": "创建配置文件"
     },
     MySecrets: {
         "page title - my secrets": "我的密钥",
@@ -351,27 +481,8 @@ export const translations: Translations<"zh-CN"> = {
             </>
         )
     },
-    ExplorerItem: {
-        description: "描述"
-    },
     SecretsExplorerItem: {
         description: "描述"
-    },
-    ExplorerButtonBar: {
-        file: "文件",
-        delete: "删除",
-        "download directory": "下载",
-        "upload file": "上传文件",
-        "copy path": "复制 S3 对象名称",
-        "create new empty directory": "创建目录",
-        refresh: "刷新",
-        new: "新建",
-        share: "分享",
-        "alt list view": "显示列表",
-        "alt block view": "显示块"
-    },
-    ExplorerDownloadSnackbar: {
-        "download preparation": "下载准备中 ..."
     },
     SecretsExplorerButtonBar: {
         secret: "密码",
@@ -383,32 +494,6 @@ export const translations: Translations<"zh-CN"> = {
         refresh: "刷新",
         "create what": ({ what }) => `新 ${what}`,
         new: "新建"
-    },
-    Explorer: {
-        file: "文档",
-        secret: "密码",
-        cancel: "取消",
-        delete: "删除",
-        "do not display again": "不要再显示",
-        "untitled what": ({ what }) => `untitled_${what}`,
-        directory: "目录",
-        multiple: "项目",
-        "deletion dialog title": ({ deleteWhat, isPlural }) =>
-            `删除${isPlural ? "这些" : "此"}${deleteWhat}？`,
-        "deletion dialog body": ({ deleteWhat, isPlural }) => `
-        您将要删除${isPlural ? "这些" : "此"}${deleteWhat}。
-        此操作可能导致与${isPlural ? "这些" : "此"}${deleteWhat}相关的数据丢失。
-        `,
-        "already a directory with this name": "已经有一个同名的文件夹",
-        "can't be empty": "不能为空",
-        create: "建立",
-        "new directory": "新建文件夹"
-    },
-    ListExplorerItems: {
-        "header name": "名称",
-        "header modified date": "修改日期",
-        "header size": "大小",
-        "header policy": "策略"
     },
     SecretsExplorer: {
         file: "文档",
@@ -428,10 +513,6 @@ export const translations: Translations<"zh-CN"> = {
         create: "建立",
         "new directory": "新建文件夹"
     },
-    ExplorerItems: {
-        "empty directory": "此目录为空"
-    },
-
     SecretsExplorerItems: {
         "empty directory": "此目录为空"
     },
@@ -461,40 +542,27 @@ export const translations: Translations<"zh-CN"> = {
         "key input desc": "环境变量名称",
         "value input desc": "环境变量值"
     },
-    ExplorerUploadModalDropArea: {
-        "browse files": "浏览您的文件",
-        "drag and drop or": "拖拽，放置或"
-    },
-    ExplorerUploadProgress: {
-        over: "over",
-        importing: "导入"
-    },
-    ExplorerUploadModal: {
-        "import files": "导入文件",
-        cancel: "取消",
-        minimize: "最小化"
-    },
     Header: {
         login: "登录",
         logout: "登出",
-        project: "项目",
         region: "区域"
+    },
+    ProjectSelect: {
+        project: "项目"
     },
     LeftBar: {
         reduce: "缩小",
         home: "我的主页",
         account: "我的账号",
-        projectSettings: "项目设置",
         catalog: "服务目录",
         myServices: "我的服务",
         mySecrets: "我的密钥",
-        myFiles: "我的文档",
         "divider: services features": "服务功能",
         "divider: external services features": "外部服务功能",
         "divider: onyxia instance specific features": "Onyxia实例特定功能",
         dataExplorer: "数据浏览器",
-        fileExplorer: "文件浏览器",
         dataCollection: "集合浏览器",
+        s3Explorer: "数据存储",
         sqlOlapShell: "SQL OLAP 外壳"
     },
     AutoLogoutCountdown: {
@@ -688,6 +756,7 @@ ${
         "reset to default": "重置为默认值"
     },
     ConfigurationTopLevelGroup: {
+        global: "global",
         miscellaneous: "杂项",
         "Configuration that applies to all charts": "适用于所有图表的配置",
         "Top level configuration values": "顶级配置值"
@@ -699,7 +768,8 @@ ${
     },
     TextFormField: {
         "not matching pattern": ({ pattern }) => `不符合模式 ${pattern}`,
-        "toggle password visibility": "切换密码可见性"
+        "toggle password visibility": "切换密码可见性",
+        loading: "正在加载..."
     },
     FormFieldGroupComponent: {
         add: "添加"
@@ -730,7 +800,8 @@ ${
     },
     PodLogsTab: {
         "not necessarily first logs": "这不一定是第一批日志，较旧的日志可能已被清除",
-        "new logs are displayed in realtime": "新日志实时显示"
+        "new logs are displayed in realtime": "新日志实时显示",
+        follow: "跟随"
     },
     MyServiceButtonBar: {
         back: "返回",
@@ -812,7 +883,8 @@ ${
                 Kubernetes 命名空间的事件，这是一个来自 <code>kubectl get events</code>
                 的实时流
             </>
-        )
+        ),
+        close: "关闭"
     },
     MyServicesConfirmDeleteDialog: {
         "confirm delete title": "您确定?",
@@ -827,7 +899,8 @@ ${
         refresh: "刷新",
         launch: "新的服务",
         trash: "删除所有",
-        "trash my own": "删除您的所有服务"
+        "trash my own": "删除您的所有服务",
+        events: "事件"
     },
     MyServicesCard: {
         service: "服务",
@@ -960,7 +1033,8 @@ ${
     },
     UrlInput: {
         load: "加载",
-        reset: "清空"
+        reset: "清空",
+        "data source": "数据源"
     },
     CommandBar: {
         ok: "是"
@@ -1129,6 +1203,28 @@ ${
         "json-ld compact error": "无法压缩 JSON-LD 响应。",
         "json-ld frame error": "无法对 JSON-LD 响应进行框架处理。",
         "datasets parsing error": "无法解析目录中的数据集。"
+    },
+    S3UriBar: {
+        explore: "浏览..",
+        "copy s3 path": "复制 S3 路径",
+        copied: "已复制",
+        "copied path": ({ s3Uri }) => `已复制路径：${s3Uri}`,
+        "add to bookmarks": "添加到书签",
+        "delete from bookmarks": "从书签中删除",
+        "pinned storage location": "已固定的存储位置",
+        bookmarked: "已添加书签",
+        "edit s3 uri": "编辑 S3 URI",
+        prefix: "前缀",
+        "admin bookmark": "管理员书签",
+        bookmark: "书签",
+        object: "对象",
+        public: "公开",
+        "go to s3 uri": ({ s3Uri, isPublic }) =>
+            `${isPublic ? "公开。 " : ""}转到 ${s3Uri}`,
+        "s3 uri": "S3 URI",
+        "edit from s3 root": "从 S3 根目录编辑",
+        "edit object key": "编辑对象键",
+        "object key": "对象键",
+        listing: "正在列出..."
     }
-    /* spell-checker: enable */
 };

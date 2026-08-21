@@ -1,10 +1,13 @@
 import { Suspense, memo } from "react";
+import { createPortal } from "react-dom";
 import { tss } from "tss";
 import { useRoute } from "ui/routes";
 import { keyframes } from "tss-react";
 import { objectKeys } from "tsafe/objectKeys";
 import { pages } from "ui/pages";
 import CircularProgress from "@mui/material/CircularProgress";
+import { evtDeclaredComponents } from "pluginSystem/declareComponent";
+import { useRerenderOnStateChange } from "evt/hooks/useRerenderOnStateChange";
 
 type Props = {
     className?: string;
@@ -18,7 +21,11 @@ export const Main = memo((props: Props) => {
     const { classes, cx } = useStyles();
 
     return (
-        <main key={route.name || ""} className={cx(classes.root, className)}>
+        <main
+            id={`page-container-${route.name}`}
+            key={route.name || ""}
+            className={cx(classes.root, className)}
+        >
             <Suspense
                 fallback={
                     <div className={classes.suspenseFallback}>
@@ -38,9 +45,40 @@ export const Main = memo((props: Props) => {
                     return <pages.page404.LazyComponent />;
                 })()}
             </Suspense>
+            <CustomComponent />
         </main>
     );
 });
+
+function CustomComponent() {
+    useRerenderOnStateChange(evtDeclaredComponents);
+
+    const { classes } = useStyles();
+
+    return (
+        <>
+            {evtDeclaredComponents.state
+                .map(({ Component, containerElement }, i) =>
+                    containerElement == null
+                        ? null
+                        : createPortal(
+                              <Suspense
+                                  fallback={
+                                      <div className={classes.suspenseFallback}>
+                                          <CircularProgress />
+                                      </div>
+                                  }
+                              >
+                                  <Component />
+                              </Suspense>,
+                              containerElement,
+                              i
+                          )
+                )
+                .filter(n => n !== null)}
+        </>
+    );
+}
 
 const useStyles = tss.withName({ Main }).create({
     root: {

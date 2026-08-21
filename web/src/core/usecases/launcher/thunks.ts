@@ -1,12 +1,10 @@
 import type { Thunks } from "core/bootstrap";
 import { assert, type Equals, is } from "tsafe/assert";
-import * as userAuthentication from "../userAuthentication";
 import * as deploymentRegionManagement from "core/usecases/deploymentRegionManagement";
 import * as projectManagement from "core/usecases/projectManagement";
-import * as s3ConfigManagement from "core/usecases/s3ConfigManagement";
+import * as s3ProfilesManagement from "core/usecases/s3ProfilesManagement";
 import * as userConfigsUsecase from "core/usecases/userConfigs";
 import * as userProfileForm from "core/usecases/userProfileForm";
-import { bucketNameAndObjectNameFromS3Path } from "core/adapters/s3Client/utils/bucketNameAndObjectNameFromS3Path";
 import { parseUrl } from "core/tools/parseUrl";
 import * as secretExplorer from "../secretExplorer";
 import { actions } from "./state";
@@ -28,7 +26,7 @@ type RestorableServiceConfigLike = {
     chartVersion: string | undefined;
     friendlyName: string | undefined;
     isShared: boolean | undefined;
-    s3ConfigId: string | undefined;
+    s3ProfileName: string | undefined;
     helmValuesPatch:
         | {
               path: (string | number)[];
@@ -47,7 +45,7 @@ type RestorableServiceConfigLike = {
               : RestorableServiceConfig[Key] | undefined;
     };
 
-    assert<Equals<Got, Expected>>();
+    assert<Equals<Got, Expected>>;
 }
 
 export const thunks = {
@@ -122,7 +120,7 @@ export const thunks = {
                         chartVersion: chartVersion_pinned,
                         friendlyName,
                         isShared,
-                        s3ConfigId: s3ConfigId_pinned,
+                        s3ProfileName: s3ProfileName_pinned,
                         helmValuesPatch
                     },
                     autoLaunch
@@ -172,47 +170,50 @@ export const thunks = {
                 const doInjectPersonalInfos =
                     projectManagement.selectors.canInjectPersonalInfos(getState());
 
-                const { s3ConfigId, s3ConfigId_default } = (() => {
-                    const s3Configs = s3ConfigManagement.selectors
-                        .s3Configs(getState())
+                const { s3ProfileName, s3ProfileName_default } = (() => {
+                    const s3Profiles = s3ProfilesManagement.selectors
+                        .s3Profiles(getState())
                         .filter(s3Config =>
-                            doInjectPersonalInfos ? true : s3Config.origin === "project"
+                            doInjectPersonalInfos
+                                ? true
+                                : s3Config.origin ===
+                                  "created by user (or group project member)"
                         );
 
-                    const s3ConfigId_default = (() => {
-                        const s3Config = s3Configs.find(
-                            s3Config => s3Config.isXOnyxiaDefault
-                        );
-                        if (s3Config === undefined) {
-                            return undefined;
-                        }
+                    const s3ProfileName_default = (
+                        s3Profiles.find(
+                            s3Profile => s3Profile.profileName === "default"
+                        ) ??
+                        s3Profiles.find(
+                            s3Profile => s3Profile.origin === "defined in region"
+                        ) ??
+                        s3Profiles.find(() => true)
+                    )?.profileName;
 
-                        return s3Config.id;
-                    })();
-
-                    const s3ConfigId = (() => {
-                        use_pinned_s3_config: {
-                            if (s3ConfigId_pinned === undefined) {
-                                break use_pinned_s3_config;
+                    const s3ProfileName = (() => {
+                        use_pinned_s3_profile: {
+                            if (s3ProfileName_pinned === undefined) {
+                                break use_pinned_s3_profile;
                             }
-                            const s3Config = s3Configs.find(
-                                s3Config => s3Config.id === s3ConfigId_pinned
+                            const s3Config = s3Profiles.find(
+                                s3Profile =>
+                                    s3Profile.profileName === s3ProfileName_pinned
                             );
                             if (s3Config === undefined) {
-                                break use_pinned_s3_config;
+                                break use_pinned_s3_profile;
                             }
-                            return s3Config.id;
+                            return s3Config.profileName;
                         }
 
-                        return s3ConfigId_default;
+                        return s3ProfileName_default;
                     })();
 
-                    return { s3ConfigId, s3ConfigId_default };
+                    return { s3ProfileName, s3ProfileName_default };
                 })();
 
                 const xOnyxiaContext = await dispatch(
                     protectedThunks.getXOnyxiaContext({
-                        s3ConfigId,
+                        s3ProfileName,
                         doInjectPersonalInfos
                     })
                 );
@@ -285,8 +286,8 @@ export const thunks = {
                                 ? { isChartUsingS3: false }
                                 : {
                                       isChartUsingS3: true,
-                                      s3ConfigId,
-                                      s3ConfigId_default
+                                      s3ProfileName,
+                                      s3ProfileName_default
                                   },
                             helmDependencies,
 
@@ -362,7 +363,7 @@ export const thunks = {
                         friendlyName: undefined,
                         helmValuesPatch: undefined,
                         isShared: undefined,
-                        s3ConfigId: undefined
+                        s3ProfileName: undefined
                     },
                     autoLaunch: false
                 })
@@ -394,18 +395,18 @@ export const thunks = {
                 })
             );
         },
-    changeS3Config:
-        (params: { s3ConfigId: string }) =>
+    changeS3Profile:
+        (params: { s3ProfileName: string }) =>
         async (...args) => {
             const [dispatch, getState] = args;
 
-            const { s3ConfigId } = params;
+            const { s3ProfileName } = params;
 
             const restorableConfig = privateSelectors.restorableConfig(getState());
 
             assert(restorableConfig !== null);
 
-            if (restorableConfig.s3ConfigId === s3ConfigId) {
+            if (restorableConfig.s3ProfileName === s3ProfileName) {
                 // NOTE: No changes, skip.
                 return;
             }
@@ -414,7 +415,7 @@ export const thunks = {
                 thunks.initialize({
                     restorableConfig: {
                         ...restorableConfig,
-                        s3ConfigId
+                        s3ProfileName
                     },
                     autoLaunch: false
                 })
@@ -574,14 +575,14 @@ const { getContext, setContext, getIsContextSet } = createUsecaseContextApi<{
 
 export const protectedThunks = {
     getXOnyxiaContext:
-        (params: { s3ConfigId: string | undefined; doInjectPersonalInfos: boolean }) =>
+        (params: { s3ProfileName: string | undefined; doInjectPersonalInfos: boolean }) =>
         async (...args): Promise<XOnyxiaContext> => {
-            const { s3ConfigId, doInjectPersonalInfos } = params;
+            const { s3ProfileName, doInjectPersonalInfos } = params;
 
             const [
                 dispatch,
                 getState,
-                { paramsOfBootstrapCore, secretsManager, onyxiaApi }
+                { paramsOfBootstrapCore, secretsManager, onyxiaApi, oidc }
             ] = args;
 
             const { user } = await onyxiaApi.getUserAndProjects();
@@ -597,9 +598,9 @@ export const protectedThunks = {
             const project =
                 projectManagement.protectedSelectors.currentProject(getState());
 
-            const { decodedIdToken, accessToken, refreshToken } = await dispatch(
-                userAuthentication.protectedThunks.getTokens()
-            );
+            assert(oidc.isUserLoggedIn);
+
+            const { decodedIdToken, accessToken, refreshToken } = await oidc.getTokens();
 
             const name = (() => {
                 if (user.familyName === undefined && user.firstName === undefined) {
@@ -613,6 +614,105 @@ export const protectedThunks = {
 
                 return `${user.familyName} ${user.firstName}`;
             })();
+
+            const s3_array: XOnyxiaContext["s3_array"] =
+                s3ProfileName === undefined
+                    ? []
+                    : (
+                          await (() =>
+                              Promise.all(
+                                  s3ProfilesManagement.selectors
+                                      .s3Profiles(getState())
+                                      .map(
+                                          async (
+                                              s3Profile
+                                          ): Promise<
+                                              XOnyxiaContext["s3_array"][number]
+                                          > => {
+                                              const { host = "", port = 443 } =
+                                                  s3Profile.paramsOfCreateS3Client.url !==
+                                                  ""
+                                                      ? parseUrl(
+                                                            s3Profile
+                                                                .paramsOfCreateS3Client
+                                                                .url
+                                                        )
+                                                      : {};
+
+                                              const s3: XOnyxiaContext["s3"] = {
+                                                  profileName: s3Profile.profileName,
+                                                  AWS_ACCESS_KEY_ID: undefined,
+                                                  AWS_SECRET_ACCESS_KEY: undefined,
+                                                  AWS_SESSION_TOKEN: undefined,
+                                                  AWS_DEFAULT_REGION:
+                                                      s3Profile.paramsOfCreateS3Client
+                                                          .region ?? "us-east-1",
+                                                  AWS_S3_ENDPOINT: host,
+                                                  port,
+                                                  pathStyleAccess:
+                                                      s3Profile.paramsOfCreateS3Client
+                                                          .pathStyleAccess,
+                                                  isAnonymous: true
+                                              };
+
+                                              if (
+                                                  s3Profile.paramsOfCreateS3Client
+                                                      .isStsEnabled
+                                              ) {
+                                                  const s3Client = await dispatch(
+                                                      s3ProfilesManagement.protectedThunks.getS3Client(
+                                                          {
+                                                              profileName:
+                                                                  s3Profile.profileName
+                                                          }
+                                                      )
+                                                  );
+
+                                                  const tokens = await s3Client.getToken({
+                                                      doForceRenew: false
+                                                  });
+
+                                                  assert(tokens !== undefined);
+
+                                                  s3.AWS_ACCESS_KEY_ID =
+                                                      tokens.accessKeyId;
+                                                  s3.AWS_SECRET_ACCESS_KEY =
+                                                      tokens.secretAccessKey;
+                                                  s3.AWS_SESSION_TOKEN =
+                                                      tokens.sessionToken;
+                                                  s3.isAnonymous = false;
+                                              } else if (
+                                                  s3Profile.paramsOfCreateS3Client
+                                                      .credentials !== undefined
+                                              ) {
+                                                  s3.AWS_ACCESS_KEY_ID =
+                                                      s3Profile.paramsOfCreateS3Client.credentials.accessKeyId;
+                                                  s3.AWS_SECRET_ACCESS_KEY =
+                                                      s3Profile.paramsOfCreateS3Client.credentials.secretAccessKey;
+                                                  s3.AWS_SESSION_TOKEN =
+                                                      s3Profile.paramsOfCreateS3Client.credentials.sessionToken;
+                                                  s3.isAnonymous = false;
+                                              }
+
+                                              return s3;
+                                          }
+                                      )
+                              ))()
+                      ).sort((a, b) => {
+                          if (a.profileName === b.profileName) {
+                              return 0;
+                          }
+
+                          if (a.profileName === "default") {
+                              return -1;
+                          }
+
+                          if (b.profileName === "default") {
+                              return 1;
+                          }
+
+                          return 0;
+                      });
 
             const xOnyxiaContext: XOnyxiaContext = {
                 user: {
@@ -674,80 +774,17 @@ export const protectedThunks = {
                         )
                     };
                 })(),
-                s3: await (async () => {
-                    const s3Config = (() => {
-                        if (s3ConfigId === undefined) {
-                            return undefined;
-                        }
-
-                        const s3Configs =
-                            s3ConfigManagement.selectors.s3Configs(getState());
-
-                        const s3Config = s3Configs.find(
-                            s3Config => s3Config.id === s3ConfigId
-                        );
-
-                        assert(s3Config !== undefined);
-
-                        return s3Config;
-                    })();
-
-                    if (s3Config === undefined) {
-                        return undefined;
-                    }
-
-                    const { host = "", port = 443 } =
-                        s3Config.paramsOfCreateS3Client.url !== ""
-                            ? parseUrl(s3Config.paramsOfCreateS3Client.url)
-                            : {};
-
-                    const { bucketName, objectName: objectNamePrefix } =
-                        bucketNameAndObjectNameFromS3Path(s3Config.workingDirectoryPath);
-
-                    const s3: XOnyxiaContext["s3"] = {
-                        isEnabled: true,
-                        AWS_ACCESS_KEY_ID: undefined,
-                        AWS_SECRET_ACCESS_KEY: undefined,
-                        AWS_SESSION_TOKEN: undefined,
-                        AWS_BUCKET_NAME: bucketName,
-                        AWS_DEFAULT_REGION: s3Config.region ?? "us-east-1",
-                        AWS_S3_ENDPOINT: host,
-                        port,
-                        pathStyleAccess: s3Config.paramsOfCreateS3Client.pathStyleAccess,
-                        objectNamePrefix,
-                        workingDirectoryPath: s3Config.workingDirectoryPath,
-                        isAnonymous: false
-                    };
-
-                    if (s3Config.paramsOfCreateS3Client.isStsEnabled) {
-                        const s3Client = await dispatch(
-                            s3ConfigManagement.protectedThunks.getS3ClientForSpecificConfig(
-                                {
-                                    s3ConfigId: s3Config.id
-                                }
-                            )
-                        );
-
-                        const tokens = await s3Client.getToken({ doForceRenew: false });
-
-                        assert(tokens !== undefined);
-
-                        s3.AWS_ACCESS_KEY_ID = tokens.accessKeyId;
-                        s3.AWS_SECRET_ACCESS_KEY = tokens.secretAccessKey;
-                        s3.AWS_SESSION_TOKEN = tokens.sessionToken;
-                    } else if (
-                        s3Config.paramsOfCreateS3Client.credentials !== undefined
-                    ) {
-                        s3.AWS_ACCESS_KEY_ID =
-                            s3Config.paramsOfCreateS3Client.credentials.accessKeyId;
-                        s3.AWS_SECRET_ACCESS_KEY =
-                            s3Config.paramsOfCreateS3Client.credentials.secretAccessKey;
-                        s3.AWS_SESSION_TOKEN =
-                            s3Config.paramsOfCreateS3Client.credentials.sessionToken;
-                    }
-
-                    return s3;
-                })(),
+                s3:
+                    s3ProfileName === undefined
+                        ? undefined
+                        : (() => {
+                              const s3 = s3_array.find(
+                                  s3 => s3.profileName === s3ProfileName
+                              );
+                              assert(s3 !== undefined);
+                              return s3;
+                          })(),
+                s3_array,
                 region: {
                     defaultIpProtection: region.defaultIpProtection,
                     defaultNetworkPolicy: region.defaultNetworkPolicy,

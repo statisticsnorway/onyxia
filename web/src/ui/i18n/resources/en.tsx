@@ -10,7 +10,6 @@ export const translations: Translations<"en"> = {
     Account: {
         profile: "Profile",
         git: "Git",
-        storage: "Connect to storage",
         k8sCodeSnippets: "Kubernetes",
         "user-interface": "Interface preferences",
         text1: "My account",
@@ -74,17 +73,6 @@ export const translations: Translations<"en"> = {
             </>
         )
     },
-    AccountStorageTab: {
-        "credentials section title": "Connect your data to your services",
-        "credentials section helper":
-            "Amazon-compatible MinIO object storage (AWS S3). This information is already filled in automatically.",
-        "accessible as env":
-            "Accessible withing your services as the environnement variable:",
-        "init script section title": "To access your storage outside of datalab services",
-        "init script section helper":
-            "Download or copy the init script in the programming language of your choice.",
-        "expires in": ({ howMuchTime }) => `Expires ${howMuchTime}`
-    },
     AccountKubernetesTab: {
         "credentials section title": "Connect to the Kubernetes cluster",
         "credentials section helper":
@@ -128,129 +116,6 @@ export const translations: Translations<"en"> = {
             </>
         ),
         "expires in": ({ howMuchTime }) => `The token expires ${howMuchTime}`
-    },
-    ProjectSettings: {
-        "page header title": "Project Settings",
-        "page header help title": ({ groupProjectName }) =>
-            groupProjectName === undefined
-                ? "Settings of your personal project"
-                : `Settings for "${groupProjectName}"`,
-        "page header help content": ({
-            groupProjectName,
-            doesUserBelongToSomeGroupProject
-        }) => (
-            <>
-                This page allows you to configure the settings that apply to
-                {groupProjectName === undefined
-                    ? " your personal project"
-                    : ` the ${groupProjectName}`}
-                .
-                <br />
-                {groupProjectName !== undefined && (
-                    <>
-                        Be aware that {groupProjectName} is a group project shared with
-                        other users; the settings you change here will apply to all
-                        project members.
-                        <br />
-                    </>
-                )}
-                {doesUserBelongToSomeGroupProject && (
-                    <>
-                        You can switch between your projects using the dropdown menu in
-                        the header.
-                        <br />
-                    </>
-                )}
-                Note that only your Onyxia instance administrator can create new projects.
-            </>
-        ),
-        "security-info": "Security Information",
-        "s3-configs": "S3 Configurations"
-    },
-    ProjectSettingsS3ConfigTab: {
-        "add custom config": "Add a custom S3 configuration"
-    },
-    S3ConfigCard: {
-        "data source": "Data source",
-        credentials: "Credentials",
-        "sts credentials": "Tokens dynamically requested on your behalf by Onyxia (STS)",
-        account: "Account",
-        "use in services": "Use in services",
-        "use in services helper": `If enabled, this configuration will be used by
-            default in your services that implement an S3 integration.`,
-        "use for onyxia explorers": "Use for Onyxia explorers",
-        "use for onyxia explorers helper": `If enabled this configuration will be used
-            by the file explorer and the data explorer.`,
-        edit: "Edit",
-        delete: "Delete"
-    },
-    AddCustomS3ConfigDialog: {
-        "dialog title": "New custom S3 configuration",
-        "dialog subtitle":
-            "Specify a custom service account or connect to another S3 compatible service",
-        cancel: "Cancel",
-        "save config": "Save configuration",
-        "update config": "Update configuration",
-        "is required": "This field is required",
-        "must be an url": "Not a valid URL",
-        "not a valid access key id": "This doesn't look like a valid access key id",
-        "url textField label": "URL",
-        "url textField helper text": "URL of the S3 service",
-        "region textField label": "AWS S3 Region",
-        "region textField helper text": "Example: eu-west-1, if not sure, leave empty",
-        "workingDirectoryPath textField label": "Working directory path",
-        "workingDirectoryPath textField helper text": (
-            <>
-                This let you specify the bucket and the S3 object prefix you own on the S3
-                service. <br />
-                Example: <code>my-bucket/my-prefix/</code> or <code>just my-bucket/</code>{" "}
-                if you own the whole bucket.
-            </>
-        ),
-        "account credentials": "Account credentials",
-        "friendlyName textField label": "Configuration Name",
-        "friendlyName textField helper text":
-            "This is just to help you identify this configuration. Example: My AWS bucket",
-        "isAnonymous switch label": "Anonymous access",
-        "isAnonymous switch helper text": "Set to ON if no secret access key is required",
-        "accessKeyId textField label": "Access key ID",
-        "accessKeyId textField helper text": "Example: 1A2B3C4D5E6F7G8H9I0J",
-        "secretAccessKey textField label": "Secret access key",
-        "sessionToken textField label": "Session token",
-        "sessionToken textField helper text": "Optional, leave empty if not sure",
-        "url style": "URL style",
-        "url style helper text": `Specify how your S3 server formats the URL for downloading files.`,
-        "path style label": ({ example }) => (
-            <>
-                Path style
-                {example !== undefined && (
-                    <>
-                        :&nbsp;
-                        <code>{example}my-dataset.parquet</code>
-                    </>
-                )}
-            </>
-        ),
-        "virtual-hosted style label": ({ example }) => (
-            <>
-                Virtual-hosted style
-                {example !== undefined && (
-                    <>
-                        :&nbsp;
-                        <code>{example}my-dataset.parquet</code>
-                    </>
-                )}
-            </>
-        )
-    },
-    TestS3ConnectionButton: {
-        "test connection": "Test connection",
-        "test connection failed": ({ errorMessage }) => (
-            <>
-                Test connection failed with error: <br />
-                {errorMessage}
-            </>
-        )
     },
     AccountUserInterfaceTab: {
         title: "Interface preferences",
@@ -301,68 +166,322 @@ export const translations: Translations<"en"> = {
         "reset helper dialogs helper text":
             "Reset message windows that have been requested not to be shown again"
     },
-    FileExplorerEntry: {
-        "page title - file explorer": "File Explorer",
-        "what this page is used for - file explorer":
-            "Here you can browse your S3 Buckets.",
-        "help content": ({ accountTabLink, docHref }) => (
+    ConfirmBucketCreationAttemptDialog: {
+        "bucket does not exist title": ({ bucket }) =>
+            `The ${bucket} bucket does not exist`,
+        "bucket does not exist body": "Do you want to attempt creating it now?",
+        no: "No",
+        yes: "Yes",
+        "success title": "Success",
+        "failed title": "Failed",
+        "success body": ({ bucket }) => `Bucket ${bucket} successfully created.`,
+        "failed body": ({ bucket }) => `Failed to create ${bucket}.`,
+        ok: "Ok"
+    },
+    ConfirmOverwriteDialog: {
+        "dialog title": "File already exists",
+        "dialog body": "Do you want to overwrite the existing file?",
+        "no, keep the existing file": "No, keep the existing file",
+        "yes, overwrite": "Yes, overwrite"
+    },
+    ConfirmCustomS3ConfigDeletionDialog: {
+        "dialog title": "Confirm deletion of custom S3 config?",
+        cancel: "Cancel",
+        yes: "Yes"
+    },
+    DisplayErrorDialog: {
+        error: "Error",
+        ok: "Ok"
+    },
+    CreateOrRenameBookmarkDialog: {
+        "dialog title": "Bookmark Name",
+        "add dialog title": "Add this location to bookmarks",
+        "rename dialog title": "Rename bookmark",
+        "dialog subtitle": "Save this S3 location so you can access it faster later.",
+        "bookmarkName textField label": "Name",
+        "bookmarkName textField empty error": "Bookmark name can't be empty",
+        "copy s3 path aria label": "Copy S3 path",
+        cancel: "Cancel",
+        ok: "Ok",
+        "add to bookmarks": "Add to bookmarks",
+        "rename bookmark": "Rename bookmark"
+    },
+    DirectoryCreationDialog: {
+        "dialog title": "Create a folder",
+        "dialog subtitle": "Create a folder-like prefix at this location",
+        "dialog body":
+            "S3 does not store folders as real objects. This action only opens a new prefix segment from the current location, so you can upload objects under it. The folder will appear once at least one object exists with that prefix; empty folders do not exist in S3.",
+        "folderName textField label": "Folder name",
+        "folderName textField empty error": "Folder name can't be empty",
+        "folderName textField duplicate error": "Folder name already exists",
+        cancel: "Cancel",
+        "create folder": "Create folder"
+    },
+    MakePrefixPublicDialog: {
+        "dialog title": "Make prefix public",
+        "make public dialog title": "Make this prefix public?",
+        "make private dialog title": "Make this prefix private?",
+        "make public dialog body main":
+            "All files in this prefix will be accessible to anyone with a link, including current and future content.",
+        "make public dialog body alternative":
+            "To share specific files or limit access over time, create a sharing link instead.",
+        "make private dialog body main":
+            "All files in this prefix are accessible to anyone with a link, including current and future content. Making this prefix private removes public access.",
+        "make private dialog body alternative":
+            "To share specific files or limit access over time, create a sharing link instead.",
+        "dialog body": ({ s3Uri, s3UriClassName }) => (
             <>
-                Read{" "}
-                <MuiLink href={docHref} target="_blank">
-                    our documentation
-                </MuiLink>
-                . &nbsp;
-                <MuiLink {...accountTabLink}>
-                    Configure the minio clients
-                </MuiLink>.
+                You&apos;re about to make <span className={s3UriClassName}>{s3Uri}</span>{" "}
+                public. Anyone will be able to list and download all current and future
+                objects in this prefix.
+                <br />
+                <br />
+                Download links you share for objects in this prefix will never expire.
             </>
         ),
-        "title personal": "My data",
-        "description personal": "Your own files and datasets.",
-        "title project": ({ projectName }) => `Project ${projectName}`,
-        "description project": ({ projectName }) =>
-            `Shared storage space for project ${projectName}`,
-        tags: ({ type }) => {
-            switch (type) {
-                case "personal":
-                    return "My data";
-                case "project":
-                    return "Group data";
-            }
-        }
-    },
-    S3EntryCard: {
-        "space path": "Space path"
-    },
-    FileExplorerDisabledDialog: {
-        "dialog title": "No S3 server configured",
-        "dialog body":
-            "There's no S3 server configured for this instance. But you can add one manually for enabling the S3 file explorer.",
         cancel: "Cancel",
-        "go to settings": "Go to settings"
+        "make public": "Make public",
+        "make private": "Make private"
     },
-    ShareDialog: {
-        title: "Share your data",
-        close: "Close",
-        "create and copy link": "Create and copy link",
-        "paragraph current policy": ({ isPublic }) =>
-            isPublic
-                ? "Your file is public, anyone with the link can download it."
-                : "Your file is currently private.",
-
-        "paragraph change policy": ({ isPublic }) =>
-            isPublic
-                ? "To restrict its access, change your file's sharing status."
-                : "To share and provide access to your file, change the sharing status or create a temporary access link.",
-
-        "hint link access": ({ isPublic, expiration }) =>
-            isPublic
-                ? "Your link is available as long as the file is public."
-                : `This link will grant access to your data for ${expiration}.`,
-        "label input link": "Access link"
+    S3ExplorerMainView: {
+        "create prefix dialog title": "Create prefix",
+        "create prefix dialog subtitle":
+            "Create a new prefix inside the current S3 location.",
+        "prefix name field label": "Prefix name",
+        "prefix name empty error": "Prefix name cannot be empty.",
+        cancel: "Cancel",
+        "create prefix": "Create prefix",
+        "delete selection dialog title": "Delete selection",
+        "delete selection dialog subtitle":
+            "This action permanently deletes the selected items.",
+        "delete selection dialog body": ({ count }) =>
+            `You are about to delete ${count} selected item${count > 1 ? "s" : ""}. Deleting a prefix also deletes everything inside it.`,
+        delete: "Delete",
+        share: "Share",
+        download: "Download",
+        "copy s3 uri": "Copy S3 URI",
+        copied: "Copied",
+        "copy s3 uri tooltip": ({ s3UriStr }) => `Copy "${s3UriStr}"`,
+        "add to bookmarks": "Add to bookmarks",
+        "delete from bookmarks": "Delete from bookmarks",
+        "make public": "Make public",
+        "make private": "Make private",
+        folder: "Folder",
+        object: "Object",
+        "folder is public": "Folder is public",
+        "folder is private": "Folder is private",
+        today: "Today",
+        yesterday: "Yesterday",
+        "access denied": "Access denied",
+        "bucket not found": "Bucket not found",
+        "CORS error": "CORS error",
+        error: "Error",
+        "access denied description":
+            "You do not have permission to list this S3 location.",
+        "bucket not found description":
+            "The requested bucket does not exist or is not reachable with the current profile.",
+        "CORS error description": ({ bucket, origin }) =>
+            `Cannot access bucket "${bucket}" from ${origin}. The bucket’s CORS policy may not allow requests from this website. Update the S3 CORS configuration to allow this origin, then try again.`,
+        "select item": ({ itemName }) => `Select ${itemName}`,
+        "select all items": "Select all items",
+        public: "Public",
+        deleting: "Deleting...",
+        uploading: "Uploading",
+        "drag and drop to import files": "Drag and drop to import files",
+        "go back": "Go back",
+        "no objects found": "No objects found",
+        "no objects found description": ({ s3UriStr }) =>
+            `There are no objects whose key starts with "${s3UriStr}".`,
+        "this prefix is empty": "This prefix is empty",
+        "empty prefix description":
+            "Upload files or create a folder to start populating this location.",
+        "empty prefix upload description":
+            "Upload files here or drag and drop them into this area.",
+        "upload files": "Upload files",
+        "upload files here": "Upload files here",
+        "drop files here hint": "Drop files anywhere in this area to upload them.",
+        "new folder": "New folder",
+        name: "Name",
+        "last modified": "Last modified",
+        size: "Size"
     },
-    SelectTime: {
-        "validity duration label": "Validity duration"
+    S3ShareObjectDialog: {
+        "generating public URL": "Generating public URL...",
+        "copy public URL aria label": "Copy public URL",
+        "signed URL with limited validity period":
+            "Signed URL with limited validity period",
+        "signed link validity aria label": "Signed link validity duration",
+        "generating signed URL": "Generating signed URL...",
+        "copy signed URL aria label": "Copy signed URL",
+        "public sharing note":
+            "Anyone with the URL can access this object. The link never expires because the object is inside a public prefix.",
+        "signed URL expiration note":
+            "To share a URL that does not expire, make one of this object's parent prefixes public.",
+        "validity duration one hour": "1 hour",
+        "validity duration one day": "1 day",
+        "validity duration one week": "1 week",
+        "selected duration": "the selected duration"
+    },
+    S3Explorer: {
+        "page header title": "Data Storage",
+        "no profile title": "Connect your object storage",
+        "no profile description":
+            "Create an S3 profile to connect to your storage and start exploring your files.",
+        "create profile": "Create Profile",
+        back: "Back",
+        upload: "Upload",
+        "create new folder": "Create new folder",
+        "download file": "Download file"
+    },
+    S3ShareObjectDialogContainer: {
+        "dialog title": "Share object"
+    },
+    S3BookmarksBar: {
+        "s3 bookmarks aria label": "S3 bookmarks",
+        "show more bookmarks": "Show more bookmarks"
+    },
+    S3BookmarkItem: {
+        "open bookmark": "Open bookmark",
+        "open bucket": "Open bucket",
+        "bookmark actions": "Bookmark actions",
+        rename: "Rename",
+        delete: "Delete",
+        "rename bookmark": "Rename bookmark",
+        "delete bookmark": "Delete bookmark"
+    },
+    S3BookmarksEntryPointList: {
+        "s3 bookmark entry points aria label": "S3 bookmark entry points",
+        bookmarks: "Bookmarks",
+        "no bookmarks yet": "No bookmarks yet.",
+        "storage locations": "Storage locations"
+    },
+    S3DialogCopyField: {
+        "generating url": "Generating URL...",
+        copy: "Copy",
+        copied: "Copied"
+    },
+    S3DialogItemSummary: {
+        public: "Public"
+    },
+    S3ProfileSelect: {
+        "select s3 profile aria label": "Select S3 profile",
+        "profile settings aria label": "Profile settings",
+        "s3 profiles aria label": "S3 profiles",
+        "new s3 profile": "New S3 Profile"
+    },
+    S3SelectionActionBar: {
+        download: "Download",
+        delete: "Delete",
+        "copy s3 uri": "Copy S3 URI",
+        copied: "Copied",
+        "copy s3 uri tooltip": ({ s3UriStr }) => `Copy "${s3UriStr}"`,
+        "add to bookmarks": "Add to bookmarks",
+        "delete from bookmarks": "Delete from bookmarks",
+        share: "Share",
+        "make public": "Make public",
+        "make private": "Make private",
+        "one selected": "1 selected",
+        "many selected": ({ count }) => `${count} selected`,
+        "clear selection": "Clear selection"
+    },
+    ConfirmAbortUploadDialog: {
+        "dialog title": "Cancel Upload?",
+        "dialog body":
+            "Your upload is not complete. Would you like to cancel the upload?",
+        "continue upload": "Continue Upload",
+        "cancel upload": "Cancel Upload"
+    },
+    S3Uploads: {
+        "uploading count": ({ count }) =>
+            `Uploading ${count} item${count === 1 ? "" : "s"}...`,
+        "upload count": ({ count }) => `${count} upload${count === 1 ? "" : "s"}`,
+        "expand uploads": "Expand uploads",
+        "collapse uploads": "Collapse uploads",
+        "close uploads": "Close uploads",
+        "uploading status": "Uploading...",
+        completed: "Completed",
+        error: "Error",
+        "uploaded size of total size": ({ uploadedSize, totalSize }) =>
+            `${uploadedSize} of ${totalSize}`,
+        of: "of",
+        "open uploaded directory": "Open uploaded directory",
+        "cancel upload": "Cancel upload",
+        "retry upload": "Retry upload"
+    },
+    S3ProfileDialog: {
+        "detail title": "S3 Profile Detail",
+        "create title": "New Custom S3 Profile",
+        "edit title": "Edit Custom S3 Profile",
+        "close aria label": "Close S3 profile dialog"
+    },
+    S3ProfileDetails: {
+        "read only": "Read-only",
+        custom: "Custom",
+        edit: "Edit",
+        delete: "Delete",
+        "connection details title": "Connection details",
+        "connection details subtitle":
+            "Use these values when configuring S3 clients outside the explorer.",
+        "endpoint url label": "Endpoint URL",
+        "default region label": "Default region",
+        "access credentials title": "Access credentials",
+        "access credentials anonymous subtitle":
+            "This profile does not expose credentials. Use anonymous S3 access where the target bucket allows it.",
+        "access credentials subtitle":
+            "Copy the value required by the client you are configuring.",
+        "access key id label": "Access key ID",
+        "secret access key label": "Secret access key",
+        "session token label": "Session token",
+        "environment variable": "Environment variable",
+        "no expiration": "No expiration time is advertised for these credentials.",
+        expires: ({ expirationTime }) => `Expires ${expirationTime}.`,
+        renewing: "Renewing...",
+        "renew tokens": "Renew tokens",
+        "init script title": "To access your storage outside of datalab services",
+        "init script subtitle":
+            "Download or copy the init script in the programming language of your choice.",
+        "technology aria label": "Technology",
+        download: "Download",
+        "select s3 profile aria label": "Select S3 profile",
+        "s3 profiles aria label": "S3 profiles",
+        "new s3 profile": "New S3 Profile",
+        "copy aria label": ({ what }) => `Copy ${what}`,
+        copied: "Copied",
+        copy: "Copy"
+    },
+    S3ProfileForm: {
+        "must be an url": "Enter a valid URL.",
+        "is required": "This field is required.",
+        "not a valid access key id": "Enter a valid access key ID.",
+        "profile name already used": "This profile name is already used.",
+        "connection details title": "Connection details",
+        "connection details subtitle":
+            "Define the profile name and S3 endpoint used by the explorer.",
+        "profile name label": "Profile name",
+        "s3 service url label": "URL of the S3 service",
+        "s3 service url helper": "Example: https://minio.lab.example.net",
+        "default region label": "Default region",
+        "default region helper": "Example: eu-west-1, if not sure, leave empty",
+        "url style title": "URL style",
+        "url style subtitle":
+            "Specify how your S3 server formats the URL for downloading files.",
+        "path style": "Path style",
+        "virtual hosted style": "Virtual-hosted style",
+        example: "Example",
+        "account credentials title": "Account credentials",
+        "account credentials subtitle":
+            "Choose whether this profile uses anonymous access or explicit credentials.",
+        "anonymous access": "Anonymous access",
+        "access key id label": "Access Key ID",
+        "access key id helper": "Example: ASIAIOSFODNN7EXAMPLE",
+        "secret access key label": "Secret Access Key",
+        "secret access key helper": "Example: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+        "session token label": "Session Token",
+        "session token helper":
+            "Optional. Leave empty when your credentials do not include a session token.",
+        cancel: "Cancel",
+        "save configuration": "Save Configuration",
+        "create profile": "Create Profile"
     },
     MySecrets: {
         "page title - my secrets": "My Secrets",
@@ -385,9 +504,6 @@ export const translations: Translations<"en"> = {
     SecretsExplorerItem: {
         description: "description"
     },
-    ExplorerItem: {
-        description: "description"
-    },
     SecretsExplorerButtonBar: {
         secret: "secret",
         rename: "rename",
@@ -398,25 +514,6 @@ export const translations: Translations<"en"> = {
         refresh: "refresh",
         "create what": ({ what }) => `Create ${what}`,
         new: "New"
-    },
-    ExplorerButtonBar: {
-        file: "file",
-        delete: "delete",
-        "download directory": "Download",
-        "upload file": "Upload file",
-        "copy path": "Copy S3 object name",
-        "create new empty directory": "create new empty directory",
-        refresh: "refresh",
-        new: "New",
-        share: "Share",
-        "alt list view": "Show list",
-        "alt block view": "Show block"
-    },
-    ExplorerDownloadSnackbar: {
-        "download preparation": "Preparing download ..."
-    },
-    ExplorerItems: {
-        "empty directory": "This directory is empty"
     },
 
     SecretsExplorerItems: {
@@ -437,27 +534,6 @@ export const translations: Translations<"en"> = {
             deleteWhat
         }) => `You are about to delete ${deleteWhat}.
             This action can't be reverted.`,
-        "already a directory with this name":
-            "There is already a directory with this name",
-        "can't be empty": "Can't be empty",
-        "new directory": "New directory"
-    },
-    Explorer: {
-        file: "file",
-        secret: "secret",
-        create: "create",
-        cancel: "cancel",
-        delete: "delete",
-        "do not display again": "Don't display again",
-        "untitled what": ({ what }) => `untitled_${what}`,
-        directory: "folder",
-        multiple: "items",
-        "deletion dialog title": ({ deleteWhat, isPlural }) =>
-            `Delete ${isPlural ? "these" : "this"} ${deleteWhat}?`,
-        "deletion dialog body": ({ deleteWhat, isPlural }) => `
-        You are about to delete ${isPlural ? "these" : "this"} ${deleteWhat}.
-        This action may result in the loss of data associated with ${isPlural ? "these" : "this"} ${deleteWhat}.
-        `,
         "already a directory with this name":
             "There is already a directory with this name",
         "can't be empty": "Can't be empty",
@@ -491,46 +567,27 @@ export const translations: Translations<"en"> = {
         "key input desc": "Environnement variable name",
         "value input desc": "Environnement variable value"
     },
-    ExplorerUploadModalDropArea: {
-        "browse files": "browse files",
-        "drag and drop or": "Drag and drop or"
-    },
-    ExplorerUploadProgress: {
-        over: "over",
-        importing: "Importing"
-    },
-    ExplorerUploadModal: {
-        "import files": "Import files",
-        cancel: "Cancel",
-        minimize: "Minimize"
-    },
-    ListExplorerItems: {
-        "header name": "Name",
-        "header modified date": "Modified",
-        "header size": "Size",
-        "header policy": "Policy"
-    },
     Header: {
         login: "Login",
         logout: "Logout",
-        project: "Project",
         region: "Region"
+    },
+    ProjectSelect: {
+        project: "Project"
     },
     LeftBar: {
         reduce: "Reduce",
         home: "Home",
         account: "My account",
-        projectSettings: "Project settings",
         catalog: "Service catalog",
         myServices: "My Services",
         mySecrets: "My Secrets",
-        myFiles: "My Files",
         "divider: services features": "Services features",
         "divider: external services features": "External services features",
         "divider: onyxia instance specific features": "Onyxia instance specific features",
         dataExplorer: "Data Explorer",
         dataCollection: "Data Collection",
-        fileExplorer: "File Explorer",
+        s3Explorer: "Data Storage",
         sqlOlapShell: "SQL Olap Shell"
     },
     AutoLogoutCountdown: {
@@ -737,6 +794,7 @@ Feel free to explore and take charge of your Kubernetes deployments!
     },
     ConfigurationTopLevelGroup: {
         miscellaneous: "Miscellaneous",
+        global: "global",
         "Configuration that applies to all charts":
             "Configuration that applies to all charts",
         "Top level configuration values": "Top level configuration values"
@@ -748,7 +806,11 @@ Feel free to explore and take charge of your Kubernetes deployments!
     },
     TextFormField: {
         "not matching pattern": ({ pattern }) => `Does not match the pattern ${pattern}`,
-        "toggle password visibility": "Toggle password visibility"
+        "toggle password visibility": "Toggle password visibility",
+        loading: "Loading..."
+    },
+    SelectFormField: {
+        "empty string": "(Empty string)"
     },
     FormFieldGroupComponent: {
         add: "Add"
@@ -777,7 +839,8 @@ Feel free to explore and take charge of your Kubernetes deployments!
     PodLogsTab: {
         "not necessarily first logs":
             "This is not necessarily the first logs, older logs might have been flushed",
-        "new logs are displayed in realtime": "New logs are displayed in realtime"
+        "new logs are displayed in realtime": "New logs are displayed in realtime",
+        follow: "Follow"
     },
     MyServiceButtonBar: {
         back: "Back",
@@ -863,7 +926,8 @@ Feel free to explore and take charge of your Kubernetes deployments!
                 Kubernetes namespace's events, it's a real-time feed of{" "}
                 <code>kubectl get events</code>
             </>
-        )
+        ),
+        close: "Close"
     },
     MyServicesConfirmDeleteDialog: {
         "confirm delete title": "Are you sure?",
@@ -879,7 +943,8 @@ Feel free to explore and take charge of your Kubernetes deployments!
         refresh: "Refresh",
         launch: "New service",
         trash: "Delete all",
-        "trash my own": "Delete all my services"
+        "trash my own": "Delete all my services",
+        events: "Events"
     },
     MyServicesCard: {
         service: "Service",
@@ -1016,7 +1081,8 @@ Feel free to explore and take charge of your Kubernetes deployments!
     },
     UrlInput: {
         load: "Load",
-        reset: "Reset"
+        reset: "Reset",
+        "data source": "Data source"
     },
     CommandBar: {
         ok: "Ok"
@@ -1151,6 +1217,9 @@ Feel free to explore and take charge of your Kubernetes deployments!
         },
         "label rows per page": "Items per page"
     },
+    CustomNoRowsOverlay: {
+        "no rows": "No rows"
+    },
     CustomDataGridToolbarDensitySelector: {
         toolbarDensity: "Density",
         toolbarDensityStandard: "Standard",
@@ -1187,5 +1256,38 @@ Feel free to explore and take charge of your Kubernetes deployments!
         "json-ld compact error": "Failed to compact the JSON-LD response.",
         "json-ld frame error": "Failed to frame the JSON-LD response.",
         "datasets parsing error": "Unable to parse datasets from the catalog."
+    },
+    DataTextEditor: {
+        "not a valid format": ({ format }) => `Not a valid ${format}`,
+        format: "Format",
+        "all defaults": "All defaults",
+        schema: "Schema"
+    },
+    JsonSchemaDialog: {
+        "json schema": "JSON Schema",
+        ok: "Ok"
+    },
+    S3UriBar: {
+        explore: "Explore..",
+        "copy s3 path": "Copy S3 path",
+        copied: "Copied",
+        "copied path": ({ s3Uri }) => `Copied path: ${s3Uri}`,
+        "add to bookmarks": "Add to bookmarks",
+        "delete from bookmarks": "Delete from bookmarks",
+        "pinned storage location": "Pinned storage location",
+        bookmarked: "Bookmarked",
+        "edit s3 uri": "Edit S3 URI",
+        prefix: "Prefix",
+        "admin bookmark": "Admin bookmark",
+        bookmark: "Bookmark",
+        object: "Object",
+        public: "Public",
+        "go to s3 uri": ({ s3Uri, isPublic }) =>
+            `${isPublic ? "Public. " : ""}Go to ${s3Uri}`,
+        "s3 uri": "S3 URI",
+        "edit from s3 root": "Edit from S3 root",
+        "edit object key": "Edit object key",
+        "object key": "Object key",
+        listing: "Listing..."
     }
 };

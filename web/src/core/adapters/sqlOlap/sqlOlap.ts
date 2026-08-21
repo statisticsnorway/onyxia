@@ -18,6 +18,7 @@ import type { S3Client } from "core/ports/S3Client";
 import { Deferred } from "evt/tools/Deferred";
 import { streamToArrayBuffer } from "core/tools/streamToArrayBuffer";
 import { getHttpUrlWithoutRedirect } from "core/tools/getHttpUrlWithoutRedirect";
+import { parseS3Uri } from "core/tools/S3Uri";
 
 export const createDuckDbSqlOlap = (params: {
     getS3Client: () => Promise<
@@ -96,9 +97,15 @@ export const createDuckDbSqlOlap = (params: {
                             dOut.resolve({ errorCause: errorCause_getS3Client });
                             return new Promise<never>(() => {});
                         }
+                        const s3Uri = parseS3Uri({
+                            value: sourceUrl,
+                            delimiter: "/"
+                        });
 
-                        const result = await s3Client.getFileContent({
-                            path: sourceUrl.replace(/^s3:\/\//, ""),
+                        assert(!s3Uri.isDelimiterTerminated);
+
+                        const result = await s3Client.getObjectContent({
+                            s3Uri,
                             range: "bytes=0-15"
                         });
 
@@ -278,7 +285,7 @@ export const createDuckDbSqlOlap = (params: {
                 sourceUrl = sourceUrl_noRedirect;
             }
 
-            const sqlQuery = `SELECT * FROM ${(() => {
+            let sqlQuery = `SELECT * FROM ${(() => {
                 switch (fileType) {
                     case "csv":
                         return `read_csv('${sourceUrl}')`;
@@ -287,7 +294,11 @@ export const createDuckDbSqlOlap = (params: {
                     case "json":
                         return `read_json('${sourceUrl}')`;
                 }
-            })()} LIMIT ${rowsPerPage} OFFSET ${rowsPerPage * (page - 1)}`;
+            })()} LIMIT ${rowsPerPage}`;
+
+            if (page !== 1) {
+                sqlQuery += ` OFFSET ${rowsPerPage * (page - 1)}`;
+            }
 
             const conn = await db.connect();
             const stmt = await conn.prepare(sqlQuery);

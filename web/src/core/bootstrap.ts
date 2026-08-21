@@ -15,9 +15,11 @@ import { pluginSystemInitCore } from "pluginSystem";
 import { createOnyxiaApi } from "core/adapters/onyxiaApi";
 import { assert } from "tsafe/assert";
 import { fnv1aHashToHex } from "core/tools/fnv1aHashToHex";
+import { type S3Config, parseS3ConfigFromEnvValue } from "core/ports/OnyxiaApi/S3Config";
+import { setRootContext } from "./rootContext";
 
 export type ParamsOfBootstrapCore = {
-    apiUrl: string;
+    onyxiaApiUrl: string | undefined;
     transformBeforeRedirectForKeycloakTheme: (params: {
         authorizationUrl: string;
     }) => string;
@@ -30,6 +32,7 @@ export type ParamsOfBootstrapCore = {
     enableOidcDebugLogs: boolean;
     disableDisplayAllCatalog: boolean;
     getIsDarkModeEnabled: () => boolean;
+    S3_envValue: string;
 };
 
 export type Context = {
@@ -38,6 +41,7 @@ export type Context = {
     onyxiaApi: OnyxiaApi;
     secretsManager: SecretsManager;
     sqlOlap: SqlOlap;
+    s3Config: S3Config;
 };
 
 export type Core = GenericCore<typeof usecases, Context>;
@@ -46,74 +50,114 @@ export async function bootstrapCore(
     params: ParamsOfBootstrapCore
 ): Promise<{ core: Core }> {
     const {
-        apiUrl,
+        onyxiaApiUrl,
         transformBeforeRedirectForKeycloakTheme,
         getCurrentLang,
-        isAuthGloballyRequired,
         enableOidcDebugLogs
     } = params;
 
+    const isAuthGloballyRequired =
+        onyxiaApiUrl === undefined ? true : params.isAuthGloballyRequired;
+
     let isCoreCreated = false;
+
+    const s3Config = parseS3ConfigFromEnvValue({
+        envValue: params.S3_envValue
+    });
 
     let oidc: Oidc | undefined = undefined;
 
-    const onyxiaApi = createOnyxiaApi({
-        url: apiUrl,
-        getOidcAccessToken: async () => {
-            if (oidc === undefined) {
-                return undefined;
-            }
+    const onyxiaApi: OnyxiaApi = await (async () => {
+        if (onyxiaApiUrl === undefined) {
+            const { createOnyxiaApi } = await import("core/adapters/onyxiaApi/mock");
 
-            if (!oidc.isUserLoggedIn) {
-                return undefined;
-            }
-            return (await oidc.getTokens()).accessToken;
-        },
-        getCurrentRegionId: () => {
-            if (!isCoreCreated) {
-                return undefined;
-            }
+            const oidcParams = (() => {
+                const [entry] = s3Config.entries;
 
-            let project;
-
-            try {
-                project =
-                    usecases.deploymentRegionManagement.selectors.currentDeploymentRegion(
-                        getState()
-                    );
-            } catch (error) {
-                if (error instanceof AccessError) {
-                    // NOTE: Not initialized yet, it's not a bug.
+                if (entry === undefined) {
                     return undefined;
                 }
-                throw error;
-            }
 
-            return project.id;
-        },
-        getCurrentProjectId: () => {
-            if (!isCoreCreated) {
-                return undefined;
-            }
+                const { issuerUri, clientId, ...rest } = entry.sts.oidcParams;
 
-            let project;
+                assert(issuerUri !== undefined, "Missing OIDC Issuer URI");
+                assert(clientId !== undefined, "Missing OIDC Client ID");
 
-            try {
-                project =
-                    usecases.projectManagement.protectedSelectors.currentProject(
-                        getState()
-                    );
-            } catch (error) {
-                if (error instanceof AccessError) {
-                    // NOTE: Not initialized yet, it's not a bug.
-                    return undefined;
+                return {
+                    issuerUri,
+                    clientId,
+                    ...rest
+                };
+            })();
+
+            return createOnyxiaApi({
+                oidcParams,
+                getDecodedIdTokenSub: () => {
+                    assert(oidc !== undefined);
+                    assert(oidc.isUserLoggedIn);
+                    return oidc.getDecodedIdToken().sub;
                 }
-                throw error;
-            }
-
-            return project.id;
+            });
         }
-    });
+
+        return createOnyxiaApi({
+            url: onyxiaApiUrl,
+            getOidcAccessToken: async () => {
+                if (oidc === undefined) {
+                    return undefined;
+                }
+
+                if (!oidc.isUserLoggedIn) {
+                    return undefined;
+                }
+                return (await oidc.getTokens()).accessToken;
+            },
+            getCurrentRegionId: () => {
+                if (!isCoreCreated) {
+                    return undefined;
+                }
+
+                let project;
+
+                try {
+                    project =
+                        usecases.deploymentRegionManagement.selectors.currentDeploymentRegion(
+                            getState()
+                        );
+                } catch (error) {
+                    if (error instanceof AccessError) {
+                        // NOTE: Not initialized yet, it's not a bug.
+                        return undefined;
+                    }
+                    throw error;
+                }
+
+                return project.id;
+            },
+            getCurrentProjectId: () => {
+                if (!isCoreCreated) {
+                    return undefined;
+                }
+
+                let project;
+
+                try {
+                    project =
+                        usecases.projectManagement.protectedSelectors.currentProject(
+                            getState()
+                        );
+                } catch (error) {
+                    if (error instanceof AccessError) {
+                        // NOTE: Not initialized yet, it's not a bug.
+                        return undefined;
+                    }
+                    throw error;
+                }
+
+                return project.id;
+            }
+        });
+    })();
 
     oidc = await (async () => {
         const { oidcParams } = await onyxiaApi.getAvailableRegionsAndOidcParams();
@@ -157,7 +201,7 @@ export async function bootstrapCore(
                 }
 
                 const result = await dispatch(
-                    usecases.s3ConfigManagement.protectedThunks.getS3ConfigAndClientForExplorer()
+                    usecases.s3ProfilesManagement.protectedThunks.getAmbientS3ProfileAndClient()
                 );
 
                 if (result === undefined) {
@@ -166,19 +210,22 @@ export async function bootstrapCore(
                     };
                 }
 
-                const { s3Config, s3Client } = result;
+                const { s3Profile, s3Client } = result;
 
                 return {
                     s3Client,
-                    s3_endpoint: s3Config.paramsOfCreateS3Client.url,
-                    s3_url_style: s3Config.paramsOfCreateS3Client.pathStyleAccess
+                    s3_endpoint: s3Profile.paramsOfCreateS3Client.url,
+                    s3_url_style: s3Profile.paramsOfCreateS3Client.pathStyleAccess
                         ? "path"
                         : "vhost",
-                    s3_region: s3Config.region
+                    s3_region: s3Profile.paramsOfCreateS3Client.region
                 };
             }
-        })
+        }),
+        s3Config
     };
+
+    setRootContext(context);
 
     const { core, dispatch, getState } = createCore({
         context,
@@ -255,24 +302,49 @@ export async function bootstrapCore(
         });
     }
 
-    if (oidc.isUserLoggedIn) {
+    init_userConfigs: {
+        if (!oidc.isUserLoggedIn) {
+            break init_userConfigs;
+        }
+
         await dispatch(usecases.userConfigs.protectedThunks.initialize());
     }
 
-    if (oidc.isUserLoggedIn) {
+    init_projectManagement: {
+        if (!oidc.isUserLoggedIn) {
+            break init_projectManagement;
+        }
         await dispatch(usecases.projectManagement.protectedThunks.initialize());
     }
 
-    if (oidc.isUserLoggedIn) {
+    init_restorableConfigManagement: {
+        if (!oidc.isUserLoggedIn) {
+            break init_restorableConfigManagement;
+        }
+        if (onyxiaApiUrl === undefined) {
+            break init_restorableConfigManagement;
+        }
+
         dispatch(usecases.restorableConfigManagement.protectedThunks.initialize());
     }
 
-    if (oidc.isUserLoggedIn) {
+    init_userProfileForm: {
+        if (!oidc.isUserLoggedIn) {
+            break init_userProfileForm;
+        }
+        if (onyxiaApiUrl === undefined) {
+            break init_userProfileForm;
+        }
+
         await dispatch(usecases.userProfileForm.protectedThunks.initialize());
     }
 
-    if (oidc.isUserLoggedIn) {
-        await dispatch(usecases.s3ConfigManagement.protectedThunks.initialize());
+    init_s3ProfilesManagement: {
+        if (!oidc.isUserLoggedIn) {
+            break init_s3ProfilesManagement;
+        }
+
+        await dispatch(usecases.s3ProfilesManagement.protectedThunks.initialize());
     }
 
     pluginSystemInitCore({ core, context });
