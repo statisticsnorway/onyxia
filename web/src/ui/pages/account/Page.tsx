@@ -14,6 +14,7 @@ import { assert, type Equals } from "tsafe/assert";
 import { getIconUrlByName, customIcons } from "lazy-icons";
 import { withLoader } from "ui/tools/withLoader";
 import { enforceLogin } from "ui/shared/enforceLogin";
+import { env } from "env";
 
 const Page = withLoader({
     loader: enforceLogin,
@@ -24,7 +25,6 @@ export default Page;
 const AccountGitTab = lazy(() => import("./AccountGitTab"));
 const AccountKubernetesTab = lazy(() => import("./AccountKubernetesTab"));
 const AccountProfileTab = lazy(() => import("./AccountProfileTab"));
-const AccountStorageTab = lazy(() => import("./AccountStorageTab"));
 const AccountUserInterfaceTab = lazy(() => import("./AccountUserInterfaceTab"));
 const AccountVaultTab = lazy(() => import("./AccountVaultTab"));
 
@@ -35,15 +35,12 @@ function Account() {
     const { t } = useTranslation({ Account });
 
     const {
-        functions: { s3CodeSnippets, k8sCodeSnippets, vaultCredentials }
+        functions: { k8sCodeSnippets, vaultCredentials }
     } = getCoreSync();
 
     const tabs = useMemo(
         () =>
             accountTabIds
-                .filter(accountTabId =>
-                    accountTabId !== "storage" ? true : s3CodeSnippets.isAvailable()
-                )
                 .filter(accountTabId =>
                     accountTabId !== "k8sCodeSnippets"
                         ? true
@@ -52,6 +49,13 @@ function Account() {
                 .filter(accountTabId =>
                     accountTabId !== "vault" ? true : vaultCredentials.isAvailable()
                 )
+                .filter(accountTabId => {
+                    if (env.ONYXIA_API_URL !== undefined) {
+                        return true;
+                    }
+
+                    return accountTabId === "user-interface";
+                })
                 .map(id => ({ id, title: t(id) })),
         [t]
     );
@@ -61,6 +65,14 @@ function Account() {
     );
 
     const { classes } = useStyles();
+
+    const activeTabId =
+        route.params.tabId ??
+        (() => {
+            const tab = tabs.at(0);
+            assert(tab !== undefined);
+            return tab.id;
+        })();
 
     return (
         <div className={classes.root}>
@@ -75,27 +87,26 @@ function Account() {
                 className={classes.tabs}
                 size="big"
                 tabs={tabs}
-                activeTabId={route.params.tabId}
+                activeTabId={activeTabId}
                 maxTabCount={5}
                 onRequestChangeActiveTab={onRequestChangeActiveTab}
             >
                 <Suspense>
                     {(() => {
-                        switch (route.params.tabId) {
+                        switch (activeTabId) {
                             case "profile":
                                 return <AccountProfileTab />;
                             case "git":
                                 return <AccountGitTab />;
-                            case "storage":
-                                return <AccountStorageTab />;
                             case "user-interface":
                                 return <AccountUserInterfaceTab />;
                             case "k8sCodeSnippets":
                                 return <AccountKubernetesTab />;
                             case "vault":
                                 return <AccountVaultTab />;
+                            default:
+                                assert<Equals<typeof activeTabId, never>>(false);
                         }
-                        assert<Equals<typeof route.params.tabId, never>>(false);
                     })()}
                 </Suspense>
             </Tabs>

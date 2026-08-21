@@ -106,7 +106,7 @@ export const thunks = {
         async (...args) => {
             const [dispatch, getState, rootContext] = args;
 
-            if (getState().s3CodeSnippets.isRefreshing) {
+            if (getState()[name].isRefreshing) {
                 return;
             }
 
@@ -158,8 +158,8 @@ export const thunks = {
 
             dispatch(
                 actions.refreshed({
-                    idpIssuerUrl: kubernetesOidcClient.params.issuerUri,
-                    clientId: kubernetesOidcClient.params.clientId,
+                    idpIssuerUrl: kubernetesOidcClient.issuerUri,
+                    clientId: kubernetesOidcClient.clientId,
                     refreshToken: oidcTokens.refreshToken ?? "",
                     idToken: oidcTokens.idToken,
                     user: `${region.kubernetes.usernamePrefix ?? ""}${user.username}`,

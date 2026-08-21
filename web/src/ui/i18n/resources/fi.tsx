@@ -10,8 +10,7 @@ export const translations: Translations<"fi"> = {
     /* spell-checker: disable */
     Account: {
         profile: "Profiili",
-        git: undefined,
-        storage: "Yhdistä tallennustilaan",
+        git: "Git",
         k8sCodeSnippets: "Kubernetes",
         "user-interface": "Käyttöliittymän asetukset",
         text1: "Oma tili",
@@ -75,17 +74,6 @@ export const translations: Translations<"fi"> = {
             </>
         )
     },
-    AccountStorageTab: {
-        "credentials section title": "Yhdistä datat palveluihisi",
-        "credentials section helper":
-            "Amazon-yhteensopiva MinIO-objektivarasto (AWS S3). Tämä tieto täytetään automaattisesti.",
-        "accessible as env": "Käytettävissä palveluissasi ympäristömuuttujana:",
-        "init script section title":
-            "Pääsy tallennustilaan datalab-palveluiden ulkopuolelta",
-        "init script section helper":
-            "Lataa tai kopioi alustan tukemat aloituskomenskriptit valitsemallasi ohjelmointikielellä.",
-        "expires in": ({ howMuchTime }) => `Vanhenee ${howMuchTime} kuluttua`
-    },
     AccountKubernetesTab: {
         "credentials section title": "Yhdistä Kubernetes-klusteriin",
         "credentials section helper":
@@ -129,134 +117,6 @@ export const translations: Translations<"fi"> = {
             </>
         ),
         "expires in": ({ howMuchTime }) => `Pääte vanhenee ${howMuchTime} kuluttua`
-    },
-    ProjectSettings: {
-        "page header title": "Projektiasetukset",
-        "page header help title": ({ groupProjectName }) =>
-            groupProjectName === undefined
-                ? "Henkilökohtaisen projektisi asetukset"
-                : `Asetukset "${groupProjectName}"`,
-        "page header help content": ({
-            groupProjectName,
-            doesUserBelongToSomeGroupProject
-        }) => (
-            <>
-                Tällä sivulla voit määrittää asetuksia, jotka koskevat
-                {groupProjectName === undefined
-                    ? " henkilökohtaista projektiasi"
-                    : ` ${groupProjectName} projektia`}
-                .
-                <br />
-                {groupProjectName !== undefined && (
-                    <>
-                        Huomaa, että {groupProjectName} on ryhmäprojekti, joka on jaettu
-                        muiden käyttäjien kanssa; tällä sivulla tekemäsi muutokset
-                        koskevat kaikkia projektin jäseniä.
-                        <br />
-                    </>
-                )}
-                {doesUserBelongToSomeGroupProject && (
-                    <>
-                        Voit vaihtaa projekteja käyttämällä pudotusvalikkoa
-                        otsikkopalkissa.
-                        <br />
-                    </>
-                )}
-                Huomaa, että vain Onyxia-instanssisi ylläpitäjä voi luoda uusia
-                projekteja.
-            </>
-        ),
-        "security-info": "Turvallisuustiedot",
-        "s3-configs": "S3-konfiguraatiot"
-    },
-    ProjectSettingsS3ConfigTab: {
-        "add custom config": "Lisää mukautettu S3-kokoonpano"
-    },
-    S3ConfigCard: {
-        "data source": "Tietolähde",
-        credentials: "Tunnistetiedot",
-        "sts credentials":
-            "Dynaamisesti pyydetyt tokenit puolestasi Onyxian toimesta (STS)",
-        account: "Tili",
-        "use in services": "Käytä palveluissa",
-        "use in services helper": `Jos otettu käyttöön, tätä konfiguraatiota käytetään
-            oletusarvoisesti palveluissasi, jotka toteuttavat S3-integraation.`,
-        "use for onyxia explorers": "Käytä Onyxia-tutkijoille",
-        "use for onyxia explorers helper": `Jos otettu käyttöön, tätä konfiguraatiota käytetään
-            tiedostonhallintaohjelmassa ja data-analysaattorissa.`,
-        edit: "Muokkaa",
-        delete: "Poista"
-    },
-    AddCustomS3ConfigDialog: {
-        "dialog title": "Uusi mukautettu S3-kokoonpano",
-        "dialog subtitle":
-            "Määritä mukautettu palvelutili tai yhdistä toiseen S3-yhteensopivaan palveluun",
-        cancel: "Peruuta",
-        "save config": "Tallenna kokoonpano",
-        "update config": "Päivitä kokoonpano",
-        "is required": "Tämä kenttä on pakollinen",
-        "must be an url": "Ei ole kelvollinen URL-osoite",
-        "not a valid access key id": "Tämä ei näytä kelvolliselta pääsyavain-ID:ltä",
-        "url textField label": "URL",
-        "url textField helper text": "S3-palvelun URL-osoite",
-        "region textField label": "AWS S3-alue",
-        "region textField helper text":
-            "Esimerkki: eu-west-1, jos epävarma, jätä tyhjäksi",
-        "workingDirectoryPath textField label": "Työkansion polku",
-        "workingDirectoryPath textField helper text": (
-            <>
-                Tämän avulla voit määrittää ämpärin ja S3-objektin etuliitteen, joka
-                sinulla on S3-palvelussa. <br />
-                Esimerkki: <code>minun-ämpäri/etuliitteeni/</code> tai{" "}
-                <code>vain minun-ämpäri/</code> jos omistat koko ämpärin.
-            </>
-        ),
-        "account credentials": "Tilin tunnistetiedot",
-        "friendlyName textField label": "Konfiguraation nimi",
-        "friendlyName textField helper text":
-            "Tämä auttaa sinua tunnistamaan tämän konfiguraation. Esimerkki: Minun AWS-bucket",
-        "isAnonymous switch label": "Anonyymi pääsy",
-        "isAnonymous switch helper text":
-            "Aseta PÄÄLLE, jos salainen pääsyavain ei ole tarpeen",
-
-        "accessKeyId textField label": "Pääsyavaimen tunnus",
-        "accessKeyId textField helper text": "Esimerkki: 1A2B3C4D5E6F7G8H9I0J",
-        "secretAccessKey textField label": "Salainen pääsyavain",
-        "sessionToken textField label": "Istuntotunnus",
-        "sessionToken textField helper text": "Valinnainen, jätä tyhjäksi, jos epävarma",
-        "url style": "URL-tyyli",
-        "url style helper text": `Määritä, miten S3-palvelimesi muotoilee tiedostojen lataamisen URL-osoitteita.`,
-        "path style label": ({ example }) => (
-            <>
-                Polkutyyli
-                {example !== undefined && (
-                    <>
-                        :&nbsp;
-                        <code>{example}tietoaineisto.parquet</code>
-                    </>
-                )}
-            </>
-        ),
-        "virtual-hosted style label": ({ example }) => (
-            <>
-                Virtual-hosted tyyli
-                {example !== undefined && (
-                    <>
-                        :&nbsp;
-                        <code>{example}tietoaineisto.parquet</code>
-                    </>
-                )}
-            </>
-        )
-    },
-    TestS3ConnectionButton: {
-        "test connection": "Testaa yhteys",
-        "test connection failed": ({ errorMessage }) => (
-            <>
-                Yhteystestaus epäonnistui virheellä: <br />
-                {errorMessage}
-            </>
-        )
     },
     AccountUserInterfaceTab: {
         title: "Käyttöliittymän asetukset",
@@ -308,66 +168,335 @@ export const translations: Translations<"fi"> = {
         "reset helper dialogs helper text":
             "Nollaa ohjeviestit, joista on pyydetty, ettei niitä näytetä uudelleen"
     },
-    FileExplorerEntry: {
-        "page title - file explorer": "Tiedostoselain",
-        "what this page is used for - file explorer":
-            "Täällä voit selata S3 Bucket -tiedostojasi.",
-        "help content": ({ accountTabLink, docHref }) => (
+    ConfirmBucketCreationAttemptDialog: {
+        "bucket does not exist title": ({ bucket }) => `Bucket ${bucket} ei ole olemassa`,
+        "bucket does not exist body": "Haluatko yrittää luoda sen nyt?",
+        no: "Ei",
+        yes: "Kyllä",
+        "success title": "Onnistui",
+        "failed title": "Epäonnistui",
+        "success body": ({ bucket }) => `Bucket ${bucket} luotiin onnistuneesti.`,
+        "failed body": ({ bucket }) => `Kohteen ${bucket} luonti epäonnistui.`,
+        ok: "Ok"
+    },
+    ConfirmOverwriteDialog: {
+        "dialog title": "Tiedosto on jo olemassa",
+        "dialog body": "Haluatko korvata olemassa olevan tiedoston?",
+        "no, keep the existing file": "Ei, säilytä olemassa oleva tiedosto",
+        "yes, overwrite": "Kyllä, korvaa"
+    },
+    ConfirmCustomS3ConfigDeletionDialog: {
+        "dialog title": "Vahvistetaanko mukautetun S3-määrityksen poistaminen?",
+        cancel: "Peruuta",
+        yes: "Kyllä"
+    },
+    DisplayErrorDialog: {
+        error: "Virhe",
+        ok: "Ok"
+    },
+    S3Explorer: {
+        "page header title": "Tietojen tallennus",
+        "no profile title": "Yhdistä objektitallennustilasi",
+        "no profile description":
+            "Luo S3-profiili, jotta voit yhdistää tallennustilasi ja selata tiedostojasi.",
+        "create profile": "Luo profiili",
+        back: "Takaisin",
+        upload: "Lataa palvelimelle",
+        "create new folder": "Luo uusi kansio",
+        "download file": "lataa tiedosto"
+    },
+    S3ShareObjectDialogContainer: {
+        "dialog title": "Jaa objekti"
+    },
+    S3BookmarksBar: {
+        "s3 bookmarks aria label": "S3-kirjanmerkit",
+        "show more bookmarks": "Näytä lisää kirjanmerkkejä"
+    },
+    S3BookmarkItem: {
+        "open bookmark": "Avaa kirjanmerkki",
+        "open bucket": "Avaa bucket",
+        "bookmark actions": "Kirjanmerkin toiminnot",
+        rename: "Nimeä uudelleen",
+        delete: "Poista",
+        "rename bookmark": "Nimeä kirjanmerkki uudelleen",
+        "delete bookmark": "Poista kirjanmerkki"
+    },
+    S3BookmarksEntryPointList: {
+        "s3 bookmark entry points aria label": "S3-kirjanmerkkien aloituspisteet",
+        bookmarks: "Kirjanmerkit",
+        "no bookmarks yet": "Ei vielä kirjanmerkkejä.",
+        "storage locations": "Tallennussijainnit"
+    },
+    S3DialogCopyField: {
+        "generating url": "URL-osoitetta luodaan...",
+        copy: "Kopioi",
+        copied: "Kopioitu"
+    },
+    S3DialogItemSummary: {
+        public: "Julkinen"
+    },
+    S3ProfileSelect: {
+        "select s3 profile aria label": "Valitse S3-profiili",
+        "profile settings aria label": "Profiilin asetukset",
+        "s3 profiles aria label": "S3-profiilit",
+        "new s3 profile": "Uusi S3-profiili"
+    },
+    S3SelectionActionBar: {
+        download: "Lataa",
+        delete: "Poista",
+        "copy s3 uri": "Kopioi S3-URI",
+        copied: "Kopioitu",
+        "copy s3 uri tooltip": ({ s3UriStr }) => `Kopioi "${s3UriStr}"`,
+        "add to bookmarks": "Lisää kirjanmerkkeihin",
+        "delete from bookmarks": "Poista kirjanmerkeistä",
+        share: "Jaa",
+        "make public": "Tee julkiseksi",
+        "make private": "Tee yksityiseksi",
+        "one selected": "1 valittu",
+        "many selected": ({ count }) => `${count} valittu`,
+        "clear selection": "Tyhjennä valinta"
+    },
+    ConfirmAbortUploadDialog: {
+        "dialog title": "Peruutetaanko lataus?",
+        "dialog body": "Lataus ei ole valmis. Haluatko peruuttaa latauksen?",
+        "continue upload": "Jatka latausta",
+        "cancel upload": "Peruuta lataus"
+    },
+    S3Uploads: {
+        "uploading count": ({ count }) => `Ladataan ${count} kohdetta...`,
+        "upload count": ({ count }) => `${count} lataus${count === 1 ? "" : "ta"}`,
+        "expand uploads": "Laajenna lataukset",
+        "collapse uploads": "Supista lataukset",
+        "close uploads": "Sulje lataukset",
+        "uploading status": "Ladataan...",
+        completed: "Valmis",
+        error: "Virhe",
+        "uploaded size of total size": ({ uploadedSize, totalSize }) =>
+            `${uploadedSize} / ${totalSize}`,
+        of: "/",
+        "open uploaded directory": "Avaa ladattu hakemisto",
+        "cancel upload": "Peruuta lataus",
+        "retry upload": "Yritä latausta uudelleen"
+    },
+    CustomNoRowsOverlay: {
+        "no rows": "Ei rivejä"
+    },
+    DataTextEditor: {
+        "not a valid format": ({ format }) => `Ei kelvollinen muoto: ${format}`,
+        format: "Muoto",
+        "all defaults": "Kaikki oletukset",
+        schema: "Skeema"
+    },
+    JsonSchemaDialog: {
+        "json schema": "JSON-skeema",
+        ok: "Ok"
+    },
+    SelectFormField: {
+        "empty string": "(Tyhjä merkkijono)"
+    },
+    CreateOrRenameBookmarkDialog: {
+        "dialog title": "Kirjanmerkin nimi",
+        "add dialog title": "Lisää tämä sijainti kirjanmerkkeihin",
+        "rename dialog title": "Nimeä kirjanmerkki uudelleen",
+        "dialog subtitle":
+            "Tallenna tämä S3-sijainti, jotta löydät sen myöhemmin nopeammin.",
+        "bookmarkName textField label": "Nimi",
+        "bookmarkName textField empty error": "Kirjanmerkin nimi ei voi olla tyhjä",
+        "copy s3 path aria label": "Kopioi S3-polku",
+        cancel: "Peruuta",
+        ok: "Ok",
+        "add to bookmarks": "Lisää kirjanmerkkeihin",
+        "rename bookmark": "Nimeä kirjanmerkki uudelleen"
+    },
+    DirectoryCreationDialog: {
+        "dialog title": "Luo kansio",
+        "dialog subtitle": "Luo kansiota vastaava etuliite tähän sijaintiin",
+        "dialog body":
+            "S3 ei tallenna kansioita varsinaisina objekteina. Tämä toiminto avaa vain uuden etuliitesegmentin nykyisestä sijainnista, jotta voit ladata objekteja sen alle. Kansio tulee näkyviin, kun vähintään yksi objekti käyttää tätä etuliitettä; tyhjiä kansioita ei ole S3:ssa.",
+        "folderName textField label": "Kansion nimi",
+        "folderName textField empty error": "Kansion nimi ei voi olla tyhjä",
+        "folderName textField duplicate error": "Kansion nimi on jo olemassa",
+        cancel: "Peruuta",
+        "create folder": "Luo kansio"
+    },
+    MakePrefixPublicDialog: {
+        "dialog title": "Tee etuliitteestä julkinen",
+        "make public dialog title": "Tehdäänkö tästä etuliitteestä julkinen?",
+        "make private dialog title": "Tehdäänkö tästä etuliitteestä yksityinen?",
+        "make public dialog body main":
+            "Kaikki tämän etuliitteen tiedostot ovat kaikkien linkin saaneiden käytettävissä, mukaan lukien nykyinen ja tuleva sisältö.",
+        "make public dialog body alternative":
+            "Jos haluat jakaa vain tietyt tiedostot tai rajata pääsyn ajallisesti, luo sen sijaan jakolinkki.",
+        "make private dialog body main":
+            "Kaikki tämän etuliitteen tiedostot ovat kaikkien linkin saaneiden käytettävissä, mukaan lukien nykyinen ja tuleva sisältö. Etuliitteen tekeminen yksityiseksi poistaa julkisen pääsyn.",
+        "make private dialog body alternative":
+            "Jos haluat jakaa vain tietyt tiedostot tai rajata pääsyn ajallisesti, luo sen sijaan jakolinkki.",
+        "dialog body": ({ s3Uri, s3UriClassName }) => (
             <>
-                Lue{" "}
-                <MuiLink href={docHref} target="_blank">
-                    dokumentaatiomme
-                </MuiLink>
-                . &nbsp;
-                <MuiLink {...accountTabLink}>Määritä Minio-asiakkaat</MuiLink>.
+                Olet tekemässä etuliitteestä{" "}
+                <span className={s3UriClassName}>{s3Uri}</span> julkisen. Kuka tahansa voi
+                listata ja ladata kaikki tämän etuliitteen nykyiset ja tulevat objektit.
+                <br />
+                <br />
+                Tämän etuliitteen objekteille jakamasi latauslinkit eivät koskaan vanhene.
             </>
         ),
-        "title personal": "Omat tietoni",
-        "description personal": "Omat tiedostosi ja tietoaineistosi.",
-        "title project": ({ projectName }) => `Projekti ${projectName}`,
-        "description project": ({ projectName }) =>
-            `Projektin ${projectName} yhteinen tallennustila`,
-        tags: ({ type }) => {
-            switch (type) {
-                case "personal":
-                    return "Omat tiedot";
-                case "project":
-                    return "Ryhmän tiedot";
-            }
-        }
-    },
-    S3EntryCard: {
-        "space path": "Tilapolku"
-    },
-    FileExplorerDisabledDialog: {
-        "dialog title": "S3-palvelinta ei ole määritetty",
-        "dialog body":
-            "Tälle instanssille ei ole määritetty S3-palvelinta. Voit kuitenkin lisätä sellaisen manuaalisesti ottaaksesi käyttöön S3-tiedostonhallinnan.",
         cancel: "Peruuta",
-        "go to settings": "Siirry asetuksiin"
+        "make public": "Tee julkiseksi",
+        "make private": "Tee yksityiseksi"
     },
-    ShareDialog: {
-        title: "Jaa tietosi",
-        close: "Sulje",
-        "create and copy link": "Luo ja kopioi linkki",
-        "paragraph current policy": ({ isPublic }) =>
-            isPublic
-                ? "Tiedostosi on julkinen, kuka tahansa linkin omistava voi ladata sen."
-                : "Tiedostosi on tällä hetkellä yksityinen.",
-
-        "paragraph change policy": ({ isPublic }) =>
-            isPublic
-                ? "Rajoittaaksesi pääsyä muuta tiedostosi jakamisen tilaa."
-                : "Jaa tiedosto ja anna pääsy muuttamalla jakamisen tilaa tai luomalla väliaikainen linkki.",
-
-        "hint link access": ({ isPublic, expiration }) =>
-            isPublic
-                ? "Linkkisi on käytettävissä niin kauan kuin tiedosto on julkinen."
-                : `Tämä linkki antaa pääsyn tietoihisi ${expiration} ajaksi.`,
-        "label input link": "Pääsylinkki"
+    S3ExplorerMainView: {
+        "create prefix dialog title": "Luo etuliite",
+        "create prefix dialog subtitle": "Luo uusi etuliite nykyiseen S3-sijaintiin.",
+        "prefix name field label": "Etuliitteen nimi",
+        "prefix name empty error": "Etuliitteen nimi ei voi olla tyhjä.",
+        cancel: "Peruuta",
+        "create prefix": "Luo etuliite",
+        "delete selection dialog title": "Poista valinta",
+        "delete selection dialog subtitle":
+            "Tämä toiminto poistaa valitut kohteet pysyvästi.",
+        "delete selection dialog body": ({ count }) =>
+            `Olet poistamassa ${count} valittua kohdetta. Etuliitteen poistaminen poistaa myös kaiken sen sisältä.`,
+        delete: "Poista",
+        share: "Jaa",
+        download: "Lataa",
+        "copy s3 uri": "Kopioi S3-URI",
+        copied: "Kopioitu",
+        "copy s3 uri tooltip": ({ s3UriStr }) => `Kopioi "${s3UriStr}"`,
+        "add to bookmarks": "Lisää kirjanmerkkeihin",
+        "delete from bookmarks": "Poista kirjanmerkeistä",
+        "make public": "Tee julkiseksi",
+        "make private": "Tee yksityiseksi",
+        folder: "Kansio",
+        object: "Objekti",
+        "folder is public": "Kansio on julkinen",
+        "folder is private": "Kansio on yksityinen",
+        today: "Tänään",
+        yesterday: "Eilen",
+        "access denied": "Pääsy evätty",
+        "bucket not found": "Bucketia ei löydy",
+        "CORS error": "CORS-virhe",
+        error: "Virhe",
+        "access denied description": "Sinulla ei ole oikeutta listata tätä S3-sijaintia.",
+        "bucket not found description":
+            "Pyydettyä bucketia ei ole olemassa tai sitä ei voi käyttää nykyisellä profiililla.",
+        "CORS error description": ({ bucket, origin }) =>
+            `Bucketiin ”${bucket}” ei voi muodostaa yhteyttä alkuperästä ${origin}. Bucketin CORS-käytäntö ei ehkä salli pyyntöjä tältä verkkosivustolta. Salli tämä alkuperä S3:n CORS-määrityksissä ja yritä uudelleen.`,
+        "select item": ({ itemName }) => `Valitse ${itemName}`,
+        "select all items": "Valitse kaikki kohteet",
+        public: "Julkinen",
+        deleting: "Poistetaan...",
+        uploading: "Ladataan",
+        "drag and drop to import files": "Vedä ja pudota tiedostoja tuodaksesi ne",
+        "go back": "Takaisin",
+        "no objects found": "Objekteja ei löytynyt",
+        "no objects found description": ({ s3UriStr }) =>
+            `Ei objekteja, joiden avain alkaa merkkijonolla "${s3UriStr}".`,
+        "this prefix is empty": "Tämä etuliite on tyhjä",
+        "empty prefix description":
+            "Lataa tiedostoja tai luo kansio aloittaaksesi tämän sijainnin täyttämisen.",
+        "empty prefix upload description":
+            "Lataa tiedostoja tähän tai vedä ja pudota ne tälle alueelle.",
+        "upload files": "Lataa tiedostoja",
+        "upload files here": "Lataa tiedostoja tähän",
+        "drop files here hint":
+            "Pudota tiedostoja mihin tahansa tälle alueelle ladataksesi ne.",
+        "new folder": "Uusi kansio",
+        name: "Nimi",
+        "last modified": "Viimeksi muokattu",
+        size: "Koko"
     },
-    SelectTime: {
-        "validity duration label": "Voimassaoloaika"
+    S3ShareObjectDialog: {
+        "generating public URL": "Luodaan julkista URL-osoitetta...",
+        "copy public URL aria label": "Kopioi julkinen URL",
+        "signed URL with limited validity period":
+            "Allekirjoitettu URL rajatulla voimassaoloajalla",
+        "signed link validity aria label": "Allekirjoitetun linkin voimassaoloaika",
+        "generating signed URL": "Luodaan allekirjoitettua URL-osoitetta...",
+        "copy signed URL aria label": "Kopioi allekirjoitettu URL",
+        "public sharing note":
+            "Kuka tahansa URL-osoitteen saanut voi käyttää tätä objektia. Linkki ei vanhene, koska objekti on julkisessa etuliitteessä.",
+        "signed URL expiration note":
+            "Jos haluat jakaa vanhentumattoman URL-osoitteen, tee jokin tämän objektin yläetuliitteistä julkiseksi.",
+        "validity duration one hour": "1 tunti",
+        "validity duration one day": "1 päivä",
+        "validity duration one week": "1 viikko",
+        "selected duration": "valittu kesto"
+    },
+    S3ProfileDialog: {
+        "detail title": "S3-profiilin tiedot",
+        "create title": "Uusi mukautettu S3-profiili",
+        "edit title": "Muokkaa mukautettua S3-profiilia",
+        "close aria label": "Sulje S3-profiili-ikkuna"
+    },
+    S3ProfileDetails: {
+        "read only": "Vain luku",
+        custom: "Mukautettu",
+        edit: "Muokkaa",
+        delete: "Poista",
+        "connection details title": "Yhteystiedot",
+        "connection details subtitle":
+            "Käytä näitä arvoja, kun määrität S3-asiakkaita selaimen ulkopuolella.",
+        "endpoint url label": "Päätepisteen URL",
+        "default region label": "Oletusalue",
+        "access credentials title": "Käyttöoikeustiedot",
+        "access credentials anonymous subtitle":
+            "Tämä profiili ei paljasta käyttöoikeustietoja. Käytä anonyymiä S3-käyttöä, kun kohdebucket sallii sen.",
+        "access credentials subtitle":
+            "Kopioi arvo, jota määrittämäsi asiakas tarvitsee.",
+        "access key id label": "Käyttöavaimen tunnus",
+        "secret access key label": "Salainen käyttöavain",
+        "session token label": "Istuntotunnus",
+        "environment variable": "Ympäristömuuttuja",
+        "no expiration": "Näille tunnuksille ei ole ilmoitettu vanhenemisaikaa.",
+        expires: ({ expirationTime }) => `Vanhenee ${expirationTime}.`,
+        renewing: "Uudistetaan...",
+        "renew tokens": "Uudista tunnukset",
+        "init script title": "Käytä tallennustilaasi Datalab-palveluiden ulkopuolella",
+        "init script subtitle":
+            "Lataa tai kopioi alustusskripti valitsemallasi ohjelmointikielellä.",
+        "technology aria label": "Teknologia",
+        download: "Lataa",
+        "select s3 profile aria label": "Valitse S3-profiili",
+        "s3 profiles aria label": "S3-profiilit",
+        "new s3 profile": "Uusi S3-profiili",
+        "copy aria label": ({ what }) => `Kopioi ${what}`,
+        copied: "Kopioitu",
+        copy: "Kopioi"
+    },
+    S3ProfileForm: {
+        "must be an url": "Anna kelvollinen URL.",
+        "is required": "Tämä kenttä on pakollinen.",
+        "not a valid access key id": "Anna kelvollinen käyttöavaimen tunnus.",
+        "profile name already used": "Tämä profiilin nimi on jo käytössä.",
+        "connection details title": "Yhteystiedot",
+        "connection details subtitle":
+            "Määritä profiilin nimi ja S3-päätepiste, joita selain käyttää.",
+        "profile name label": "Profiilin nimi",
+        "s3 service url label": "S3-palvelun URL",
+        "s3 service url helper": "Esimerkki: https://minio.lab.example.net",
+        "default region label": "Oletusalue",
+        "default region helper": "Esimerkki: eu-west-1, jätä tyhjäksi jos et ole varma",
+        "url style title": "URL-tyyli",
+        "url style subtitle":
+            "Määritä, miten S3-palvelin muodostaa tiedostojen lataus-URL-osoitteet.",
+        "path style": "Polkutyyli",
+        "virtual hosted style": "Virtual-hosted-tyyli",
+        example: "Esimerkki",
+        "account credentials title": "Tilin käyttöoikeustiedot",
+        "account credentials subtitle":
+            "Valitse, käyttääkö profiili anonyymiä käyttöä vai erillisiä tunnuksia.",
+        "anonymous access": "Anonyymi käyttö",
+        "access key id label": "Käyttöavaimen tunnus",
+        "access key id helper": "Esimerkki: ASIAIOSFODNN7EXAMPLE",
+        "secret access key label": "Salainen käyttöavain",
+        "secret access key helper": "Esimerkki: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+        "session token label": "Istuntotunnus",
+        "session token helper":
+            "Valinnainen. Jätä tyhjäksi, jos tunnuksesi eivät sisällä istuntotunnusta.",
+        cancel: "Peruuta",
+        "save configuration": "Tallenna määritys",
+        "create profile": "Luo profiili"
     },
     MySecrets: {
         "page title - my secrets": "Omat salaisuudet",
@@ -390,9 +519,6 @@ export const translations: Translations<"fi"> = {
     SecretsExplorerItem: {
         description: "kuvaus"
     },
-    ExplorerItem: {
-        description: "kuvaus"
-    },
     SecretsExplorerButtonBar: {
         secret: "salaisuus",
         rename: "nimeä uudelleen",
@@ -404,26 +530,6 @@ export const translations: Translations<"fi"> = {
         "create what": ({ what }) => `Luo ${what}`,
         new: "Uusi"
     },
-    ExplorerButtonBar: {
-        file: "tiedosto",
-        delete: "poista",
-        "download directory": "Lataa",
-        "upload file": "Lataa tiedosto",
-        "copy path": "Kopioi S3-objektin nimi",
-        "create new empty directory": "Luo hakemisto",
-        refresh: "päivitä",
-        new: "Uusi",
-        share: "Jaa",
-        "alt list view": "Näytä lista",
-        "alt block view": "Näytä lohko"
-    },
-    ExplorerDownloadSnackbar: {
-        "download preparation": "Latauksen valmistelu ..."
-    },
-    ExplorerItems: {
-        "empty directory": "Tämä hakemisto on tyhjä"
-    },
-
     SecretsExplorerItems: {
         "empty directory": "Tämä hakemisto on tyhjä"
     },
@@ -440,26 +546,6 @@ export const translations: Translations<"fi"> = {
         "deletion dialog title": ({ deleteWhat }) => `Poista ${deleteWhat}?`,
         "deletion dialog body": ({ deleteWhat }) => `Olet poistamassa ${deleteWhat}.
             Tätä toimintoa ei voi peruuttaa.`,
-        "already a directory with this name": "Tämän niminen hakemisto on jo olemassa",
-        "can't be empty": "Ei voi olla tyhjä",
-        "new directory": "Uusi hakemisto"
-    },
-    Explorer: {
-        file: "tiedosto",
-        secret: "salaisuus",
-        create: "luo",
-        cancel: "peruuta",
-        delete: "poista",
-        "do not display again": "Älä näytä uudelleen",
-        "untitled what": ({ what }) => `nimetön_${what}`,
-        directory: "hakemisto",
-        multiple: "kohteet",
-        "deletion dialog title": ({ deleteWhat, isPlural }) =>
-            `Poistetaanko ${isPlural ? "nämä" : "tämä"} ${deleteWhat}?`,
-        "deletion dialog body": ({ deleteWhat, isPlural }) => `
-        Olet poistamassa ${isPlural ? "näitä" : "tätä"} ${deleteWhat}.
-        Tämä toiminto voi johtaa näihin liittyvien tietojen menetykseen ${isPlural ? "näihin" : "tähän"} ${deleteWhat}.
-        `,
         "already a directory with this name": "Tämän niminen hakemisto on jo olemassa",
         "can't be empty": "Ei voi olla tyhjä",
         "new directory": "Uusi hakemisto"
@@ -488,52 +574,32 @@ export const translations: Translations<"fi"> = {
             `,
         "use secret dialog ok": "Selvä"
     },
-    ListExplorerItems: {
-        "header name": "Nimi",
-        "header modified date": "Muokattu",
-        "header size": "Koko",
-        "header policy": "Käytäntö"
-    },
     MySecretsEditorRow: {
         "key input desc": "Ympäristömuuttujan nimi",
         "value input desc": "Ympäristömuuttujan arvo"
     },
-    ExplorerUploadModalDropArea: {
-        "browse files": "Selaa tiedostoja",
-        "drag and drop or": "Vedä ja pudota tai"
-    },
-    ExplorerUploadProgress: {
-        over: "yli",
-        importing: "Tuodaan"
-    },
-    ExplorerUploadModal: {
-        "import files": "Tuo tiedostoja",
-        cancel: "Peruuta",
-        minimize: "Pienennä"
-    },
-
     Header: {
         login: "Kirjaudu sisään",
         logout: "Kirjaudu ulos",
-        project: "Projekti",
         region: "Alue"
+    },
+    ProjectSelect: {
+        project: "Projekti"
     },
     LeftBar: {
         reduce: "Pienennä",
         home: "Koti",
         account: "Oma tili",
-        projectSettings: "Projektin asetukset",
         catalog: "Palvelukatalogi",
         myServices: "Omat palvelut",
         mySecrets: "Omat salaisuudet",
-        myFiles: "Omat tiedostot",
         "divider: services features": "Palvelun ominaisuudet",
         "divider: external services features": "Ulkoisten palveluiden ominaisuudet",
         "divider: onyxia instance specific features":
             "Onyxia-instanssin erityisominaisuudet",
         dataExplorer: "Data Explorer",
-        fileExplorer: "Tiedostonhallinta",
         dataCollection: "Kokoelmien selains",
+        s3Explorer: "Tietojen tallennus",
         sqlOlapShell: "SQL OLAP-kuori"
     },
     AutoLogoutCountdown: {
@@ -733,6 +799,7 @@ Tutustu vapaasti ja ota hallintaan Kubernetes-julkaisusi!
         "reset to default": "Palauta oletusarvoon"
     },
     ConfigurationTopLevelGroup: {
+        global: "global",
         miscellaneous: "Sekalaista",
         "Configuration that applies to all charts":
             "Konfiguraatio, joka koskee kaikkia kaavioita",
@@ -745,7 +812,8 @@ Tutustu vapaasti ja ota hallintaan Kubernetes-julkaisusi!
     },
     TextFormField: {
         "not matching pattern": ({ pattern }) => `Ei vastaa mallia ${pattern}`,
-        "toggle password visibility": "Vaihda salasanan näkyvyyttä"
+        "toggle password visibility": "Vaihda salasanan näkyvyyttä",
+        loading: "Ladataan..."
     },
     FormFieldGroupComponent: {
         add: "Lisää"
@@ -782,7 +850,8 @@ Tutustu vapaasti ja ota hallintaan Kubernetes-julkaisusi!
     PodLogsTab: {
         "not necessarily first logs":
             "Nämä eivät välttämättä ole ensimmäiset lokit, vanhemmat lokit saattavat olla poistettu",
-        "new logs are displayed in realtime": "Uudet lokit näytetään reaaliajassa"
+        "new logs are displayed in realtime": "Uudet lokit näytetään reaaliajassa",
+        follow: "Seuraa"
     },
     MyServiceButtonBar: {
         back: "Takaisin",
@@ -865,7 +934,8 @@ Tutustu vapaasti ja ota hallintaan Kubernetes-julkaisusi!
                 Kubernetes-nimiavaruuden tapahtumat, se on reaaliaikainen syöte komennosta{" "}
                 <code>kubectl get events</code>
             </>
-        )
+        ),
+        close: "Sulje"
     },
     MyServicesConfirmDeleteDialog: {
         "confirm delete title": "Oletko varma?",
@@ -882,7 +952,8 @@ Tutustu vapaasti ja ota hallintaan Kubernetes-julkaisusi!
         refresh: "Päivitä",
         launch: "Uusi palvelu",
         trash: "Tyhjennä kaikki",
-        "trash my own": "Poista kaikki omat palvelut"
+        "trash my own": "Poista kaikki omat palvelut",
+        events: "Tapahtumat"
     },
     MyServicesCard: {
         service: "Palvelu",
@@ -1020,7 +1091,8 @@ Tutustu vapaasti ja ota hallintaan Kubernetes-julkaisusi!
     },
     UrlInput: {
         load: "Lataa",
-        reset: "Tyhjennä"
+        reset: "Tyhjennä",
+        "data source": "Tietolähde"
     },
     CommandBar: {
         ok: "ok"
@@ -1191,6 +1263,28 @@ Tutustu vapaasti ja ota hallintaan Kubernetes-julkaisusi!
         "json-ld compact error": "JSON-LD-vastausta ei voitu tiivistää.",
         "json-ld frame error": "JSON-LD-vastausta ei voitu kehystää.",
         "datasets parsing error": "Katalogin datasettejä ei voitu jäsentää."
+    },
+    S3UriBar: {
+        explore: "Selaa..",
+        "copy s3 path": "Kopioi S3-polku",
+        copied: "Kopioitu",
+        "copied path": ({ s3Uri }) => `Kopioitu polku: ${s3Uri}`,
+        "add to bookmarks": "Lisää kirjanmerkkeihin",
+        "delete from bookmarks": "Poista kirjanmerkeistä",
+        "pinned storage location": "Kiinnitetty tallennussijainti",
+        bookmarked: "Kirjanmerkitty",
+        "edit s3 uri": "Muokkaa S3-URIa",
+        prefix: "Etuliite",
+        "admin bookmark": "Ylläpitäjän kirjanmerkki",
+        bookmark: "Kirjanmerkki",
+        object: "Objekti",
+        public: "Julkinen",
+        "go to s3 uri": ({ s3Uri, isPublic }) =>
+            `${isPublic ? "Julkinen. " : ""}Siirry kohteeseen ${s3Uri}`,
+        "s3 uri": "S3 URI",
+        "edit from s3 root": "Muokkaa S3-juuresta",
+        "edit object key": "Muokkaa objektin avainta",
+        "object key": "Objektin avain",
+        listing: "Listataan..."
     }
-    /* spell-checker: enable */
 };

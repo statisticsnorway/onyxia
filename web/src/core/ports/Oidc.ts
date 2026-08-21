@@ -2,10 +2,9 @@ export declare type Oidc = Oidc.LoggedIn | Oidc.NotLoggedIn;
 
 export declare namespace Oidc {
     export type Common = {
-        params: {
-            issuerUri: string;
-            clientId: string;
-        };
+        issuerUri: string;
+        clientId: string;
+        validRedirectUri: string;
     };
 
     export type NotLoggedIn = Common & {
@@ -22,6 +21,7 @@ export declare namespace Oidc {
         subscribeToAutoLogoutCountdown: (
             tickCallback: (params: { secondsLeft: number | undefined }) => void
         ) => { unsubscribeFromAutoLogoutCountdown: () => void };
+        getDecodedIdToken: () => Tokens.DecodedIdToken;
     };
 
     export type Tokens = Tokens.WithRefreshToken | Tokens.WithoutRefreshToken;
@@ -31,7 +31,7 @@ export declare namespace Oidc {
             accessToken: string;
             accessTokenExpirationTime: number;
             idToken: string;
-            decodedIdToken: Record<string, unknown>;
+            decodedIdToken: DecodedIdToken;
         };
 
         export type WithRefreshToken = Common & {
@@ -44,6 +44,11 @@ export declare namespace Oidc {
             hasRefreshToken: false;
             refreshToken?: never;
             refreshTokenExpirationTime?: never;
+        };
+
+        export type DecodedIdToken = {
+            sub: string;
+            [key: string]: unknown;
         };
     }
 }

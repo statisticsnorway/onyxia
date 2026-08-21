@@ -21,11 +21,10 @@ export const LeftBar = memo((props: Props) => {
     const { className } = props;
 
     const {
-        functions: { secretExplorer }
+        functions: { secretExplorer, s3ExplorerUiController }
     } = getCoreSync();
 
     const { isDevModeEnabled } = useCoreState("userConfigs", "userConfigs");
-    const isFileExplorerEnabled = useCoreState("fileExplorer", "isFileExplorerEnabled");
 
     const route = useRoute();
 
@@ -41,7 +40,12 @@ export const LeftBar = memo((props: Props) => {
         <OnyxiaUiLeftBar
             className={cx(classes.root, className)}
             doPersistIsPanelOpen={true}
-            defaultIsPanelOpen={true}
+            defaultIsPanelOpen={(() => {
+                if (env.ONYXIA_API_URL === undefined) {
+                    return false;
+                }
+                return false;
+            })()}
             collapsedWidth={logoContainerWidth}
             reduceText={t("reduce")}
             items={[
@@ -50,7 +54,10 @@ export const LeftBar = memo((props: Props) => {
                     icon: customIcons.homeSvgUrl,
                     label: t("home"),
                     link: routes.home().link,
-                    availability: env.DISABLE_HOMEPAGE ? "not visible" : "available"
+                    availability:
+                        env.DISABLE_HOMEPAGE || env.ONYXIA_API_URL === undefined
+                            ? "not visible"
+                            : "available"
                 },
                 {
                     itemId: "account",
@@ -59,26 +66,26 @@ export const LeftBar = memo((props: Props) => {
                     link: routes.account().link
                 },
                 {
-                    itemId: "projectSettings",
-                    icon: getIconUrlByName("DisplaySettings"),
-                    label: t("projectSettings"),
-                    link: routes.projectSettings().link
-                },
-                {
                     groupId: "services",
-                    label: t("divider: services features")
+                    label: t("divider: services features"),
+                    availability:
+                        env.ONYXIA_API_URL === undefined ? "not visible" : "available"
                 },
                 {
                     itemId: "catalog",
                     icon: customIcons.catalogSvgUrl,
                     label: t("catalog"),
-                    link: routes.catalog().link
+                    link: routes.catalog().link,
+                    availability:
+                        env.ONYXIA_API_URL === undefined ? "not visible" : "available"
                 },
                 {
                     itemId: "myServices",
                     icon: customIcons.servicesSvgUrl,
                     label: t("myServices"),
-                    link: routes.myServices().link
+                    link: routes.myServices().link,
+                    availability:
+                        env.ONYXIA_API_URL === undefined ? "not visible" : "available"
                 },
                 {
                     groupId: "external-services",
@@ -94,25 +101,35 @@ export const LeftBar = memo((props: Props) => {
                         : "not visible"
                 },
                 {
-                    itemId: "fileExplorer",
+                    itemId: "s3Explorer",
                     icon: customIcons.filesSvgUrl,
-                    label: t("fileExplorer"),
-                    link: routes.fileExplorerEntry().link,
-                    availability: isFileExplorerEnabled ? "available" : "not visible"
+                    label: t("s3Explorer"),
+                    link: routes.s3Explorer_root().link,
+                    availability: s3ExplorerUiController.getIsS3ExplorerEnabled()
+                        ? "available"
+                        : "not visible"
                 },
                 {
                     itemId: "dataExplorer",
                     icon: getIconUrlByName("DocumentScanner"),
                     label: t("dataExplorer"),
                     link: routes.dataExplorer().link,
-                    availability: isFileExplorerEnabled ? "available" : "not visible"
+                    availability: s3ExplorerUiController.getIsS3ExplorerEnabled()
+                        ? "available"
+                        : "not visible"
                 },
                 {
                     itemId: "dataCollection",
                     icon: getIconUrlByName("FolderSpecial"),
-                    label: "Data Collection",
+                    label: t("dataCollection"),
                     link: routes.dataCollection().link,
-                    availability: isDevModeEnabled ? "available" : "not visible"
+                    availability: (() => {
+                        if (env.ONYXIA_API_URL === undefined) {
+                            return "not visible";
+                        }
+
+                        return isDevModeEnabled ? "available" : "not visible";
+                    })()
                 },
                 {
                     itemId: "sqlOlapShell",
@@ -149,8 +166,6 @@ export const LeftBar = memo((props: Props) => {
                         return "home" as const;
                     case "account":
                         return "account";
-                    case "projectSettings":
-                        return "projectSettings";
                     case "catalog":
                     case "launcher":
                         return "catalog";
@@ -159,15 +174,15 @@ export const LeftBar = memo((props: Props) => {
                         return "myServices";
                     case "mySecrets":
                         return "mySecrets";
-                    case "fileExplorerEntry":
-                    case "myFiles":
-                        return "fileExplorer";
                     case "sqlOlapShell":
                         return "sqlOlapShell";
                     case "dataExplorer":
                         return "dataExplorer";
                     case "dataCollection":
                         return "dataCollection";
+                    case "s3Explorer":
+                    case "s3Explorer_root":
+                        return "s3Explorer";
                     case "page404":
                         return null;
                     case "document":
@@ -189,14 +204,12 @@ const { i18n } = declareComponentKeys<
     | "reduce"
     | "home"
     | "account"
-    | "projectSettings"
     | "catalog"
     | "myServices"
     | "mySecrets"
-    | "myFiles"
-    | "fileExplorer"
     | "dataExplorer"
     | "dataCollection"
+    | "s3Explorer"
     | "sqlOlapShell"
     | "divider: services features"
     | "divider: external services features"

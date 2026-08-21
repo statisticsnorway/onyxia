@@ -18,11 +18,31 @@ if (import.meta.env.DEV) {
         return;
     }
 
-    const { oidcEarlyInit } = await import("oidc-spa/entrypoint");
+    const [{ oidcEarlyInit }, { browserRuntimeFreeze }, { DPoP }] = await Promise.all([
+        import("oidc-spa/entrypoint"),
+        import("oidc-spa/browser-runtime-freeze"),
+        import.meta.env.OIDC_DISABLE_DPOP === "true"
+            ? { DPoP: undefined }
+            : import("oidc-spa/DPoP")
+    ]);
 
     const { shouldLoadApp } = oidcEarlyInit({
-        enableTokenExfiltrationDefense: false,
-        BASE_URL: import.meta.env.BASE_URL
+        BASE_URL: import.meta.env.BASE_URL,
+        securityDefenses: {
+            ...browserRuntimeFreeze(),
+            ...DPoP?.({ mode: "auto" })
+        },
+        sessionRestorationMethod: (() => {
+            switch (import.meta.env.OIDC_SESSION_RESTORATION_METHOD) {
+                case "iframe":
+                    return "iframe";
+                case "full page redirect":
+                    return "full page redirect";
+                case "auto":
+                default:
+                    return undefined;
+            }
+        })()
     });
 
     if (!shouldLoadApp) {
@@ -42,7 +62,9 @@ if (import.meta.env.DEV) {
         enableScreenScaler({
             rootDivId: "root",
             getTargetWindowInnerWidth: ({ zoomFactor, isPortraitOrientation }) =>
-                isPortraitOrientation ? undefined : targetWindowInnerWidth * zoomFactor
+                window.matchMedia("(pointer: coarse)").matches && isPortraitOrientation
+                    ? undefined
+                    : targetWindowInnerWidth * zoomFactor
         });
     }
 

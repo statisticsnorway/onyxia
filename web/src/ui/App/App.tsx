@@ -8,6 +8,7 @@ import { evtLang, useLang } from "ui/i18n";
 import { PortraitModeUnsupported } from "ui/shared/PortraitModeUnsupported";
 import { LeftBar } from "./LeftBar";
 import { GlobalAlert } from "./GlobalAlert";
+import { GlobalDialog } from "./GlobalDialog";
 import { Main } from "./Main";
 import { AutoLogoutCountdown } from "./AutoLogoutCountdown";
 import { injectOnyxiaInstancePublicUrl } from "keycloak-theme/login/onyxiaInstancePublicUrl";
@@ -15,9 +16,10 @@ import { useDomRect } from "powerhooks/useDomRect";
 import { evtIsScreenScalerOutOfBound } from "screen-scaler";
 import { useRerenderOnStateChange } from "evt/hooks/useRerenderOnStateChange";
 import { evtTheme } from "ui/theme";
+import { Uploads } from "ui/pages/s3Explorer/Uploads";
 
 triggerCoreBootstrap({
-    apiUrl: env.ONYXIA_API_URL,
+    onyxiaApiUrl: env.ONYXIA_API_URL,
     getCurrentLang: () => evtLang.state,
     transformBeforeRedirectForKeycloakTheme: ({ authorizationUrl }) => {
         authorizationUrl = injectOnyxiaInstancePublicUrl({
@@ -35,7 +37,8 @@ triggerCoreBootstrap({
     isAuthGloballyRequired: env.AUTHENTICATION_GLOBALLY_REQUIRED,
     enableOidcDebugLogs: env.OIDC_DEBUG_LOGS,
     disableDisplayAllCatalog: env.DISABLE_DISPLAY_ALL_CATALOG,
-    getIsDarkModeEnabled: () => evtTheme.state.isDarkModeEnabled
+    getIsDarkModeEnabled: () => evtTheme.state.isDarkModeEnabled,
+    S3_envValue: env.S3
 });
 
 export function App() {
@@ -67,6 +70,7 @@ export function App() {
                         message={env.GLOBAL_ALERT.message}
                     />
                 )}
+                <GlobalDialog />
                 <Header className={classes.header} />
                 <section className={classes.betweenHeaderAndFooter}>
                     <LeftBar className={classes.leftBar} />
@@ -74,6 +78,7 @@ export function App() {
                 </section>
                 <Footer className={classes.footer} />
             </div>
+            <Uploads />
             <AutoLogoutCountdown />
         </>
     );

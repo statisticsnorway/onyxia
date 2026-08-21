@@ -1,7 +1,7 @@
 import { assert } from "tsafe/assert";
 import type { Thunks } from "core/bootstrap";
 import { actions } from "./state";
-import { parseKeycloakIssuerUri } from "oidc-spa/tools/parseKeycloakIssuerUri";
+import { createKeycloakUtils, isKeycloak } from "oidc-spa/keycloak";
 
 export const thunks = {
     login:
@@ -33,14 +33,16 @@ export const thunks = {
 
             assert(oidc.isUserLoggedIn);
 
-            const keycloak = parseKeycloakIssuerUri(oidc.params.issuerUri);
+            assert(isKeycloak({ issuerUri: oidc.issuerUri }));
 
-            assert(keycloak !== undefined);
+            const keycloakUtils = createKeycloakUtils({
+                issuerUri: oidc.issuerUri
+            });
 
-            window.location.href = keycloak.getAccountUrl({
-                backToAppFromAccountUrl: window.location.href,
-                clientId: oidc.params.clientId,
-                locale: paramsOfBootstrapCore.getCurrentLang()
+            window.location.href = keycloakUtils.getAccountUrl({
+                clientId: oidc.clientId,
+                locale: paramsOfBootstrapCore.getCurrentLang(),
+                validRedirectUri: oidc.validRedirectUri
             });
 
             return new Promise<never>(() => {});
@@ -61,22 +63,9 @@ export const protectedThunks = {
                         : {
                               isUserLoggedIn: true,
                               user: (await onyxiaApi.getUserAndProjects()).user,
-                              isKeycloak:
-                                  parseKeycloakIssuerUri(oidc.params.issuerUri) !==
-                                  undefined
+                              isKeycloak: isKeycloak({ issuerUri: oidc.issuerUri })
                           }
                 )
             );
-        },
-    getTokens:
-        () =>
-        async (...args) => {
-            const [, , { oidc }] = args;
-
-            assert(oidc.isUserLoggedIn);
-
-            const { decodedIdToken, accessToken, refreshToken } = await oidc.getTokens();
-
-            return { decodedIdToken, accessToken, refreshToken };
         }
 } satisfies Thunks;

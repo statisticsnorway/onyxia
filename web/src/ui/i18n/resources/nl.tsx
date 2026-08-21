@@ -10,8 +10,7 @@ export const translations: Translations<"nl"> = {
     /* spell-checker: disable */
     Account: {
         profile: "Profiel",
-        git: undefined,
-        storage: "Verbinding met opslag",
+        git: "Git",
         k8sCodeSnippets: "Verbinding met Kubernetes",
         "user-interface": "Interfacemodi",
         text1: "Mijn account",
@@ -74,16 +73,6 @@ export const translations: Translations<"nl"> = {
             </>
         )
     },
-    AccountStorageTab: {
-        "credentials section title": "Uw gegevens verbinden met uw diensten",
-        "credentials section helper":
-            "Opslag object MinIO compatible Amazon (AWS S3). Deze informatie is al automatisch ingevuld.",
-        "accessible as env": "Toegankelijk binnen uw diensten als omgevingsvariabele",
-        "init script section title":
-            "Om toegang te krijgen tot opslag buiten de diensten van het datalab",
-        "init script section helper": `Download of kopieer het initialisatiescript in de programmeertaal van uw keuze.`,
-        "expires in": ({ howMuchTime }) => `Vervalt binnen ${howMuchTime}`
-    },
     AccountKubernetesTab: {
         "credentials section title": "Verbind met de Kubernetes-cluster",
         "credentials section helper":
@@ -129,135 +118,6 @@ export const translations: Translations<"nl"> = {
             </>
         ),
         "expires in": ({ howMuchTime }) => `Het token vervalt in ${howMuchTime}`
-    },
-    ProjectSettings: {
-        "page header title": "Projectinstellingen",
-        "page header help title": ({ groupProjectName }) =>
-            groupProjectName === undefined
-                ? "Instellingen van uw persoonlijke project"
-                : `Instellingen voor "${groupProjectName}"`,
-        "page header help content": ({
-            groupProjectName,
-            doesUserBelongToSomeGroupProject
-        }) => (
-            <>
-                Deze pagina stelt u in staat de instellingen te configureren die van
-                toepassing zijn op
-                {groupProjectName === undefined
-                    ? " uw persoonlijke project"
-                    : ` het ${groupProjectName} project`}
-                .
-                <br />
-                {groupProjectName !== undefined && (
-                    <>
-                        Wees u ervan bewust dat {groupProjectName} een groepsproject is
-                        gedeeld met andere gebruikers; de wijzigingen die u hier
-                        aanbrengt, zijn van toepassing op alle leden van het project.
-                        <br />
-                    </>
-                )}
-                {doesUserBelongToSomeGroupProject && (
-                    <>
-                        U kunt tussen uw projecten wisselen via het dropdownmenu in de
-                        kop.
-                        <br />
-                    </>
-                )}
-                Let op: alleen de beheerder van uw Onyxia instantie kan nieuwe projecten
-                aanmaken.
-            </>
-        ),
-        "security-info": "Veiligheidsinformatie",
-        "s3-configs": "S3-configuraties"
-    },
-    ProjectSettingsS3ConfigTab: {
-        "add custom config": "Voeg een aangepaste S3-configuratie toe"
-    },
-    S3ConfigCard: {
-        "data source": "Gegevensbron",
-        credentials: "Inloggegevens",
-        "sts credentials": "Dynamisch aangevraagde tokens namens u door Onyxia (STS)",
-        account: "Account",
-        "use in services": "Gebruiken in diensten",
-        "use in services helper": `Indien ingeschakeld, zal deze configuratie standaard worden gebruikt in uw diensten die een S3-integratie implementeren.`,
-        "use for onyxia explorers": "Gebruiken voor Onyxia-verkenners",
-        "use for onyxia explorers helper": `Indien ingeschakeld zal deze configuratie worden gebruikt
-            door de bestandsverkenner en de gegevensverkenner.`,
-        edit: "Bewerken",
-        delete: "Verwijderen"
-    },
-    AddCustomS3ConfigDialog: {
-        "dialog title": "Nieuwe aangepaste S3-configuratie",
-        "dialog subtitle":
-            "Specificeer een aangepast serviceaccount of verbind met een andere S3-compatibele service",
-        cancel: "Annuleren",
-        "save config": "Configuratie opslaan",
-        "update config": "Configuratie bijwerken",
-        "is required": "Dit veld is verplicht",
-        "must be an url": "Geen geldige URL",
-        "not a valid access key id": "Dit lijkt geen geldige toegangssleutel-ID te zijn",
-        "url textField label": "URL",
-        "url textField helper text": "URL van de S3-service",
-        "region textField label": "AWS S3 Regio",
-        "region textField helper text":
-            "Voorbeeld: eu-west-1, laat leeg indien niet zeker",
-        "workingDirectoryPath textField label": "Pad van werkdirectory",
-        "workingDirectoryPath textField helper text": (
-            <>
-                Hiermee kunt u de bucket en het S3-objectprefix specificeren dat u bezit
-                op de S3-service. <br />
-                Voorbeeld: <code>mijn-bucket/mijn-prefix/</code> of{" "}
-                <code>alleen mijn-bucket/</code> als u de hele bucket bezit.
-            </>
-        ),
-        "account credentials": "Accountgegevens",
-        "friendlyName textField label": "Configuratienaam",
-        "friendlyName textField helper text":
-            "Dit helpt je alleen om deze configuratie te identificeren. Voorbeeld: Mijn AWS-bucket",
-
-        "isAnonymous switch label": "Anonieme toegang",
-        "isAnonymous switch helper text":
-            "Zet op AAN als er geen geheime toegangssleutel nodig is",
-
-        "accessKeyId textField label": "Toegangssleutel-ID",
-        "accessKeyId textField helper text": "Voorbeeld: 1A2B3C4D5E6F7G8H9I0J",
-        "secretAccessKey textField label": "Geheime toegangssleutel",
-        "sessionToken textField label": "Sessietoken",
-        "sessionToken textField helper text":
-            "Optioneel, laat leeg als u het niet zeker weet",
-        "url style": "URL-stijl",
-        "url style helper text": `Specificeer hoe uw S3-server de URL formatteert voor het downloaden van bestanden.`,
-        "path style label": ({ example }) => (
-            <>
-                Padstijl
-                {example !== undefined && (
-                    <>
-                        :&nbsp;
-                        <code>{example}mijn-dataset.parquet</code>
-                    </>
-                )}
-            </>
-        ),
-        "virtual-hosted style label": ({ example }) => (
-            <>
-                Virtueel-gehoste stijl
-                {example !== undefined && (
-                    <>
-                        :&nbsp;
-                        <code>{example}mijn-dataset.parquet</code>
-                    </>
-                )}
-            </>
-        )
-    },
-    TestS3ConnectionButton: {
-        "test connection": "Verbinding testen",
-        "test connection failed": ({ errorMessage }) => (
-            <>
-                Verbindingstest mislukt met fout: <br />
-                {errorMessage}
-            </>
-        )
     },
     AccountUserInterfaceTab: {
         title: "De interfacemodus configureren",
@@ -312,65 +172,336 @@ export const translations: Translations<"nl"> = {
         "reset helper dialogs helper text":
             "De berichtvensters waarvan u heeft gevraagd ze niet meer weer te geven, opnieuw initialiseren"
     },
-    FileExplorerEntry: {
-        "page title - file explorer": "Bestandsverkenner",
-        "what this page is used for - file explorer": "Sla hier uw gegevensbestanden op.",
-        "help content": ({ accountTabLink, docHref }) => (
+    ConfirmBucketCreationAttemptDialog: {
+        "bucket does not exist title": ({ bucket }) => `De bucket ${bucket} bestaat niet`,
+        "bucket does not exist body": "Wil je proberen hem nu aan te maken?",
+        no: "Nee",
+        yes: "Ja",
+        "success title": "Gelukt",
+        "failed title": "Mislukt",
+        "success body": ({ bucket }) => `Bucket ${bucket} is succesvol aangemaakt.`,
+        "failed body": ({ bucket }) => `Aanmaken van ${bucket} is mislukt.`,
+        ok: "Ok"
+    },
+    ConfirmOverwriteDialog: {
+        "dialog title": "Bestand bestaat al",
+        "dialog body": "Wil je het bestaande bestand overschrijven?",
+        "no, keep the existing file": "Nee, bestaand bestand behouden",
+        "yes, overwrite": "Ja, overschrijven"
+    },
+    ConfirmCustomS3ConfigDeletionDialog: {
+        "dialog title": "Verwijderen van aangepaste S3-configuratie bevestigen?",
+        cancel: "Annuleren",
+        yes: "Ja"
+    },
+    DisplayErrorDialog: {
+        error: "Fout",
+        ok: "Ok"
+    },
+    S3Explorer: {
+        "page header title": "Gegevensopslag",
+        "no profile title": "Verbind je objectopslag",
+        "no profile description":
+            "Maak een S3-profiel om verbinding te maken met je opslag en je bestanden te verkennen.",
+        "create profile": "Profiel maken",
+        back: "Terug",
+        upload: "Uploaden",
+        "create new folder": "Nieuwe map maken",
+        "download file": "bestand downloaden"
+    },
+    S3ShareObjectDialogContainer: {
+        "dialog title": "Object delen"
+    },
+    S3BookmarksBar: {
+        "s3 bookmarks aria label": "S3-bladwijzers",
+        "show more bookmarks": "Meer bladwijzers tonen"
+    },
+    S3BookmarkItem: {
+        "open bookmark": "Bladwijzer openen",
+        "open bucket": "Bucket openen",
+        "bookmark actions": "Bladwijzeracties",
+        rename: "Naam wijzigen",
+        delete: "Verwijderen",
+        "rename bookmark": "Bladwijzer hernoemen",
+        "delete bookmark": "Bladwijzer verwijderen"
+    },
+    S3BookmarksEntryPointList: {
+        "s3 bookmark entry points aria label": "S3-bladwijzeringangen",
+        bookmarks: "Bladwijzers",
+        "no bookmarks yet": "Nog geen bladwijzers.",
+        "storage locations": "Opslaglocaties"
+    },
+    S3DialogCopyField: {
+        "generating url": "URL wordt gegenereerd...",
+        copy: "Kopiëren",
+        copied: "Gekopieerd"
+    },
+    S3DialogItemSummary: {
+        public: "Openbaar"
+    },
+    S3ProfileSelect: {
+        "select s3 profile aria label": "S3-profiel selecteren",
+        "profile settings aria label": "Profielinstellingen",
+        "s3 profiles aria label": "S3-profielen",
+        "new s3 profile": "Nieuw S3-profiel"
+    },
+    S3SelectionActionBar: {
+        download: "Downloaden",
+        delete: "Verwijderen",
+        "copy s3 uri": "S3-URI kopiëren",
+        copied: "Gekopieerd",
+        "copy s3 uri tooltip": ({ s3UriStr }) => `Kopiëren "${s3UriStr}"`,
+        "add to bookmarks": "Toevoegen aan bladwijzers",
+        "delete from bookmarks": "Verwijderen uit bladwijzers",
+        share: "Delen",
+        "make public": "Openbaar maken",
+        "make private": "Privé maken",
+        "one selected": "1 geselecteerd",
+        "many selected": ({ count }) => `${count} geselecteerd`,
+        "clear selection": "Selectie wissen"
+    },
+    ConfirmAbortUploadDialog: {
+        "dialog title": "Upload annuleren?",
+        "dialog body": "Je upload is nog niet voltooid. Wil je de upload annuleren?",
+        "continue upload": "Upload voortzetten",
+        "cancel upload": "Upload annuleren"
+    },
+    S3Uploads: {
+        "uploading count": ({ count }) =>
+            `Bezig met uploaden van ${count} item${count === 1 ? "" : "s"}...`,
+        "upload count": ({ count }) => `${count} upload${count === 1 ? "" : "s"}`,
+        "expand uploads": "Uploads uitklappen",
+        "collapse uploads": "Uploads inklappen",
+        "close uploads": "Uploads sluiten",
+        "uploading status": "Bezig met uploaden...",
+        completed: "Voltooid",
+        error: "Fout",
+        "uploaded size of total size": ({ uploadedSize, totalSize }) =>
+            `${uploadedSize} van ${totalSize}`,
+        of: "van",
+        "open uploaded directory": "Geüploade map openen",
+        "cancel upload": "Upload annuleren",
+        "retry upload": "Upload opnieuw proberen"
+    },
+    CustomNoRowsOverlay: {
+        "no rows": "Geen rijen"
+    },
+    DataTextEditor: {
+        "not a valid format": ({ format }) => `Geen geldige indeling: ${format}`,
+        format: "Indeling",
+        "all defaults": "Alle standaardwaarden",
+        schema: "Schema"
+    },
+    JsonSchemaDialog: {
+        "json schema": "JSON-schema",
+        ok: "Ok"
+    },
+    SelectFormField: {
+        "empty string": "(Lege tekenreeks)"
+    },
+    CreateOrRenameBookmarkDialog: {
+        "dialog title": "Bladwijzernaam",
+        "add dialog title": "Deze locatie aan bladwijzers toevoegen",
+        "rename dialog title": "Bladwijzer hernoemen",
+        "dialog subtitle": "Sla deze S3-locatie op zodat je er later sneller bij kunt.",
+        "bookmarkName textField label": "Naam",
+        "bookmarkName textField empty error": "De bladwijzernaam mag niet leeg zijn",
+        "copy s3 path aria label": "S3-pad kopiëren",
+        cancel: "Annuleren",
+        ok: "Ok",
+        "add to bookmarks": "Aan bladwijzers toevoegen",
+        "rename bookmark": "Bladwijzer hernoemen"
+    },
+    DirectoryCreationDialog: {
+        "dialog title": "Map aanmaken",
+        "dialog subtitle": "Maak een mapachtig prefix aan op deze locatie",
+        "dialog body":
+            "S3 slaat mappen niet op als echte objecten. Deze actie opent alleen een nieuw prefixsegment vanaf de huidige locatie, zodat je er objecten onder kunt uploaden. De map verschijnt zodra er minstens één object met dit prefix bestaat; lege mappen bestaan niet in S3.",
+        "folderName textField label": "Mapnaam",
+        "folderName textField empty error": "De mapnaam mag niet leeg zijn",
+        "folderName textField duplicate error": "De mapnaam bestaat al",
+        cancel: "Annuleren",
+        "create folder": "Map aanmaken"
+    },
+    MakePrefixPublicDialog: {
+        "dialog title": "Prefix openbaar maken",
+        "make public dialog title": "Deze prefix openbaar maken?",
+        "make private dialog title": "Deze prefix privé maken?",
+        "make public dialog body main":
+            "Alle bestanden in deze prefix zijn toegankelijk voor iedereen met een link, inclusief huidige en toekomstige inhoud.",
+        "make public dialog body alternative":
+            "Maak in plaats daarvan een deellink als je specifieke bestanden wilt delen of toegang in de tijd wilt beperken.",
+        "make private dialog body main":
+            "Alle bestanden in deze prefix zijn toegankelijk voor iedereen met een link, inclusief huidige en toekomstige inhoud. Door deze prefix privé te maken wordt openbare toegang verwijderd.",
+        "make private dialog body alternative":
+            "Maak in plaats daarvan een deellink als je specifieke bestanden wilt delen of toegang in de tijd wilt beperken.",
+        "dialog body": ({ s3Uri, s3UriClassName }) => (
             <>
-                Lezen{" "}
-                <MuiLink href={docHref} target="_blank">
-                    onze documentatie
-                </MuiLink>
-                . &nbsp;
-                <MuiLink {...accountTabLink}>Minio-clients instellen</MuiLink>.
+                Je staat op het punt <span className={s3UriClassName}>{s3Uri}</span>{" "}
+                openbaar te maken. Iedereen kan alle huidige en toekomstige objecten in
+                deze prefix weergeven en downloaden.
+                <br />
+                <br />
+                Downloadlinks die je deelt voor objecten in deze prefix verlopen nooit.
             </>
         ),
-        "title personal": "Mijn gegevens",
-        "description personal": "Je eigen bestanden en datasets.",
-        "title project": ({ projectName }) => `Project ${projectName}`,
-        "description project": ({ projectName }) =>
-            `Gedeelde opslagruimte voor project ${projectName}`,
-        tags: ({ type }) => {
-            switch (type) {
-                case "personal":
-                    return "Mijn gegevens";
-                case "project":
-                    return "Groepsgegevens";
-            }
-        }
-    },
-    S3EntryCard: {
-        "space path": "Ruimtepad"
-    },
-    FileExplorerDisabledDialog: {
-        "dialog title": "Geen S3-server geconfigureerd",
-        "dialog body":
-            "Er is geen S3-server geconfigureerd voor deze instantie. Je kunt er echter handmatig een toevoegen om de S3-bestandsverkenner in te schakelen.",
         cancel: "Annuleren",
-        "go to settings": "Ga naar instellingen"
+        "make public": "Openbaar maken",
+        "make private": "Privé maken"
     },
-    ShareDialog: {
-        title: "Deel je gegevens",
-        close: "Sluiten",
-        "create and copy link": "Link maken en kopiëren",
-        "paragraph current policy": ({ isPublic }) =>
-            isPublic
-                ? "Je bestand is openbaar, iedereen met de link kan het downloaden."
-                : "Je bestand is momenteel privé.",
-
-        "paragraph change policy": ({ isPublic }) =>
-            isPublic
-                ? "Om toegang te beperken, verander de deelstatus van je bestand."
-                : "Om toegang te geven tot je bestand, verander de deelstatus of maak een tijdelijke toegangslink.",
-
-        "hint link access": ({ isPublic, expiration }) =>
-            isPublic
-                ? "Je link is beschikbaar zolang het bestand openbaar is."
-                : `Deze link geeft toegang tot je gegevens gedurende ${expiration}.`,
-        "label input link": "Toegangslink"
+    S3ExplorerMainView: {
+        "create prefix dialog title": "Prefix aanmaken",
+        "create prefix dialog subtitle":
+            "Maak een nieuwe prefix aan binnen de huidige S3-locatie.",
+        "prefix name field label": "Prefixnaam",
+        "prefix name empty error": "De prefixnaam mag niet leeg zijn.",
+        cancel: "Annuleren",
+        "create prefix": "Prefix aanmaken",
+        "delete selection dialog title": "Selectie verwijderen",
+        "delete selection dialog subtitle":
+            "Deze actie verwijdert de geselecteerde items permanent.",
+        "delete selection dialog body": ({ count }) =>
+            `Je staat op het punt ${count} geselecteerd${count > 1 ? "e items" : " item"} te verwijderen. Het verwijderen van een prefix verwijdert ook alles erin.`,
+        delete: "Verwijderen",
+        share: "Delen",
+        download: "Downloaden",
+        "copy s3 uri": "S3-URI kopiëren",
+        copied: "Gekopieerd",
+        "copy s3 uri tooltip": ({ s3UriStr }) => `Kopiëren "${s3UriStr}"`,
+        "add to bookmarks": "Aan bladwijzers toevoegen",
+        "delete from bookmarks": "Uit bladwijzers verwijderen",
+        "make public": "Openbaar maken",
+        "make private": "Privé maken",
+        folder: "Map",
+        object: "Object",
+        "folder is public": "Map is openbaar",
+        "folder is private": "Map is privé",
+        today: "Vandaag",
+        yesterday: "Gisteren",
+        "access denied": "Toegang geweigerd",
+        "bucket not found": "Bucket niet gevonden",
+        "CORS error": "CORS-fout",
+        error: "Fout",
+        "access denied description":
+            "Je hebt geen toestemming om deze S3-locatie weer te geven.",
+        "bucket not found description":
+            "De gevraagde bucket bestaat niet of is niet bereikbaar met het huidige profiel.",
+        "CORS error description": ({ bucket, origin }) =>
+            `Bucket '${bucket}' is niet toegankelijk vanaf ${origin}. Het CORS-beleid van de bucket staat mogelijk geen verzoeken van deze website toe. Werk de S3-CORS-configuratie bij om deze oorsprong toe te staan en probeer het opnieuw.`,
+        "select item": ({ itemName }) => `Selecteer ${itemName}`,
+        "select all items": "Alle items selecteren",
+        public: "Openbaar",
+        deleting: "Bezig met verwijderen...",
+        uploading: "Bezig met uploaden",
+        "drag and drop to import files": "Sleep bestanden hierheen om ze te importeren",
+        "go back": "Terug",
+        "no objects found": "Geen objecten gevonden",
+        "no objects found description": ({ s3UriStr }) =>
+            `Er zijn geen objecten waarvan de sleutel begint met "${s3UriStr}".`,
+        "this prefix is empty": "Deze prefix is leeg",
+        "empty prefix description":
+            "Upload bestanden of maak een map om deze locatie te vullen.",
+        "empty prefix upload description":
+            "Upload hier bestanden of sleep ze naar dit gebied.",
+        "upload files": "Bestanden uploaden",
+        "upload files here": "Bestanden hier uploaden",
+        "drop files here hint": "Sleep bestanden ergens in dit gebied om ze te uploaden.",
+        "new folder": "Nieuwe map",
+        name: "Naam",
+        "last modified": "Laatst gewijzigd",
+        size: "Grootte"
     },
-    SelectTime: {
-        "validity duration label": "Geldigheidsduur"
+    S3ShareObjectDialog: {
+        "generating public URL": "Openbare URL genereren...",
+        "copy public URL aria label": "Openbare URL kopiëren",
+        "signed URL with limited validity period":
+            "Ondertekende URL met beperkte geldigheidsduur",
+        "signed link validity aria label": "Geldigheidsduur van de ondertekende link",
+        "generating signed URL": "Ondertekende URL genereren...",
+        "copy signed URL aria label": "Ondertekende URL kopiëren",
+        "public sharing note":
+            "Iedereen met de URL heeft toegang tot dit object. De link verloopt nooit omdat het object in een openbare prefix staat.",
+        "signed URL expiration note":
+            "Maak een bovenliggende prefix van dit object openbaar om een URL te delen die niet verloopt.",
+        "validity duration one hour": "1 uur",
+        "validity duration one day": "1 dag",
+        "validity duration one week": "1 week",
+        "selected duration": "de geselecteerde duur"
+    },
+    S3ProfileDialog: {
+        "detail title": "S3-profielgegevens",
+        "create title": "Nieuw aangepast S3-profiel",
+        "edit title": "Aangepast S3-profiel bewerken",
+        "close aria label": "S3-profielvenster sluiten"
+    },
+    S3ProfileDetails: {
+        "read only": "Alleen-lezen",
+        custom: "Aangepast",
+        edit: "Bewerken",
+        delete: "Verwijderen",
+        "connection details title": "Verbindingsgegevens",
+        "connection details subtitle":
+            "Gebruik deze waarden bij het configureren van S3-clients buiten de explorer.",
+        "endpoint url label": "Endpoint-URL",
+        "default region label": "Standaardregio",
+        "access credentials title": "Toegangsgegevens",
+        "access credentials anonymous subtitle":
+            "Dit profiel stelt geen inloggegevens beschikbaar. Gebruik anonieme S3-toegang wanneer de doelbucket dit toestaat.",
+        "access credentials subtitle":
+            "Kopieer de waarde die vereist is door de client die je configureert.",
+        "access key id label": "Access key ID",
+        "secret access key label": "Secret access key",
+        "session token label": "Sessietoken",
+        "environment variable": "Omgevingsvariabele",
+        "no expiration": "Er is geen vervaltijd opgegeven voor deze inloggegevens.",
+        expires: ({ expirationTime }) => `Verloopt op ${expirationTime}.`,
+        renewing: "Vernieuwen...",
+        "renew tokens": "Tokens vernieuwen",
+        "init script title": "Toegang tot je opslag buiten Datalab-services",
+        "init script subtitle":
+            "Download of kopieer het initialisatiescript in de programmeertaal van je keuze.",
+        "technology aria label": "Technologie",
+        download: "Downloaden",
+        "select s3 profile aria label": "S3-profiel selecteren",
+        "s3 profiles aria label": "S3-profielen",
+        "new s3 profile": "Nieuw S3-profiel",
+        "copy aria label": ({ what }) => `${what} kopiëren`,
+        copied: "Gekopieerd",
+        copy: "Kopiëren"
+    },
+    S3ProfileForm: {
+        "must be an url": "Voer een geldige URL in.",
+        "is required": "Dit veld is verplicht.",
+        "not a valid access key id": "Voer een geldige access key ID in.",
+        "profile name already used": "Deze profielnaam is al in gebruik.",
+        "connection details title": "Verbindingsgegevens",
+        "connection details subtitle":
+            "Definieer de profielnaam en het S3-endpoint dat door de explorer wordt gebruikt.",
+        "profile name label": "Profielnaam",
+        "s3 service url label": "URL van de S3-service",
+        "s3 service url helper": "Voorbeeld: https://minio.lab.example.net",
+        "default region label": "Standaardregio",
+        "default region helper": "Voorbeeld: eu-west-1, laat leeg bij twijfel",
+        "url style title": "URL-stijl",
+        "url style subtitle":
+            "Geef aan hoe je S3-server de URL voor het downloaden van bestanden opmaakt.",
+        "path style": "Padstijl",
+        "virtual hosted style": "Virtual-hosted stijl",
+        example: "Voorbeeld",
+        "account credentials title": "Accountgegevens",
+        "account credentials subtitle":
+            "Kies of dit profiel anonieme toegang of expliciete inloggegevens gebruikt.",
+        "anonymous access": "Anonieme toegang",
+        "access key id label": "Access key ID",
+        "access key id helper": "Voorbeeld: ASIAIOSFODNN7EXAMPLE",
+        "secret access key label": "Secret access key",
+        "secret access key helper": "Voorbeeld: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+        "session token label": "Sessietoken",
+        "session token helper":
+            "Optioneel. Laat leeg wanneer je inloggegevens geen sessietoken bevatten.",
+        cancel: "Annuleren",
+        "save configuration": "Configuratie opslaan",
+        "create profile": "Profiel aanmaken"
     },
     MySecrets: {
         "page title - my secrets": "My Secrets",
@@ -390,27 +521,8 @@ export const translations: Translations<"nl"> = {
             </>
         )
     },
-    ExplorerItem: {
-        description: "beschrijving"
-    },
     SecretsExplorerItem: {
         description: "beschrijving"
-    },
-    ExplorerButtonBar: {
-        file: "bestand",
-        delete: "verwijderen",
-        "upload file": "Een bestand uploaden",
-        "copy path": "De naam van het S3-object kopiëren",
-        "create new empty directory": "Nieuwe map",
-        refresh: "vernieuwen",
-        "download directory": "Downloaden",
-        new: "Nieuw",
-        share: "Delen",
-        "alt list view": "Toon lijst",
-        "alt block view": "Toon blok"
-    },
-    ExplorerDownloadSnackbar: {
-        "download preparation": "Voorbereiding van de download ..."
     },
     SecretsExplorerButtonBar: {
         secret: "geheim",
@@ -422,33 +534,6 @@ export const translations: Translations<"nl"> = {
         refresh: "vernieuwen",
         "create what": ({ what }) => `Nieuw ${what}`,
         new: "Nieuw"
-    },
-    Explorer: {
-        file: "bestand",
-        secret: "geheim",
-        create: "creëren",
-        cancel: "annuleren",
-        delete: "verwijderen",
-        "do not display again": "Niet meer weergeven",
-
-        "untitled what": ({ what }) => `${what}_naamloos`,
-        directory: "map",
-        multiple: "items",
-        "deletion dialog title": ({ deleteWhat, isPlural }) =>
-            `${isPlural ? "Deze" : "Dit"} ${deleteWhat} verwijderen?`,
-        "deletion dialog body": ({ deleteWhat, isPlural }) => `
-        U staat op het punt om ${isPlural ? "deze" : "dit"} ${deleteWhat} te verwijderen.
-        Deze actie kan leiden tot het verlies van gegevens die gekoppeld zijn aan ${isPlural ? "deze" : "dit"} ${deleteWhat}.
-        `,
-        "already a directory with this name": "Er bestaat al een map met deze naam",
-        "can't be empty": "Kan niet leeg zijn",
-        "new directory": "Nieuwe map"
-    },
-    ListExplorerItems: {
-        "header name": "Naam",
-        "header modified date": "Gewijzigd",
-        "header size": "Grootte",
-        "header policy": "Beleid"
     },
     SecretsExplorer: {
         file: "bestand",
@@ -468,10 +553,6 @@ export const translations: Translations<"nl"> = {
         create: "Creëren",
         "new directory": "Nieuwe map"
     },
-    ExplorerItems: {
-        "empty directory": "Deze bestandenlijst is leeg"
-    },
-
     SecretsExplorerItems: {
         "empty directory": "Deze bestandenlijst is leeg"
     },
@@ -503,42 +584,29 @@ export const translations: Translations<"nl"> = {
         "key input desc": "Naam van de omgevingsvariabele",
         "value input desc": "Waarde van de omgevingsvariabele"
     },
-    ExplorerUploadModalDropArea: {
-        "browse files": "uw bestanden raadplegen",
-        "drag and drop or": "Slepen en neerzetten of"
-    },
-    ExplorerUploadProgress: {
-        over: "op",
-        importing: "importeren"
-    },
-    ExplorerUploadModal: {
-        "import files": "Bestanden importeren",
-        cancel: "Annuleren",
-        minimize: "Minimaliseren"
-    },
     Header: {
         login: "Inloggen",
         logout: "Uitloggen",
-        project: "Project",
         region: "Regio"
+    },
+    ProjectSelect: {
+        project: "Project"
     },
     LeftBar: {
         reduce: "Verkleinen",
         home: "Onthaal",
         account: "Mijn account",
-        projectSettings: "Projectinstellingen",
         catalog: "Catalogus van de diensten",
         myServices: "Mijn diensten",
         mySecrets: "Mijn geheimen",
-        myFiles: "Mijn bestanden",
         "divider: services features": "Functionaliteiten met betrekking tot de diensten",
         "divider: external services features":
             "Functionaliteiten met betrekking tot de externe diensten",
         "divider: onyxia instance specific features":
             "Functionaliteiten die specifiek zijn voor deze instantie van Onyxia",
         dataExplorer: "Data Verkenner",
-        fileExplorer: "Bestanden Verkenner",
         dataCollection: "Collecties Verkenner",
+        s3Explorer: "Gegevensopslag",
         sqlOlapShell: "SQL OLAP Shell"
     },
     AutoLogoutCountdown: {
@@ -743,6 +811,7 @@ Voel je vrij om te verkennen en de controle over je Kubernetes-implementaties te
         "reset to default": "Terugzetten naar standaardwaarden"
     },
     ConfigurationTopLevelGroup: {
+        global: "global",
         miscellaneous: "Diverse",
         "Configuration that applies to all charts":
             "Configuratie die op alle grafieken van toepassing is",
@@ -756,7 +825,8 @@ Voel je vrij om te verkennen en de controle over je Kubernetes-implementaties te
     TextFormField: {
         "not matching pattern": ({ pattern }) =>
             `Komt niet overeen met het patroon ${pattern}`,
-        "toggle password visibility": "Wachtwoordzichtbaarheid wisselen"
+        "toggle password visibility": "Wachtwoordzichtbaarheid wisselen",
+        loading: "Laden..."
     },
     FormFieldGroupComponent: {
         add: "Toevoegen"
@@ -792,7 +862,9 @@ Voel je vrij om te verkennen en de controle over je Kubernetes-implementaties te
     PodLogsTab: {
         "not necessarily first logs":
             "Dit zijn niet noodzakelijkerwijs de eerste logs, oudere logs kunnen zijn verwijderd",
-        "new logs are displayed in realtime": "Nieuwe logs worden in realtime weergegeven"
+        "new logs are displayed in realtime":
+            "Nieuwe logs worden in realtime weergegeven",
+        follow: "Volgen"
     },
     MyServiceButtonBar: {
         back: "Terug",
@@ -877,7 +949,8 @@ Voel je vrij om te verkennen en de controle over je Kubernetes-implementaties te
                 Evenementen van de Kubernetes namespace, het is een realtime feed van{" "}
                 <code>kubectl get events</code>
             </>
-        )
+        ),
+        close: "Sluiten"
     },
     MyServicesConfirmDeleteDialog: {
         "confirm delete title": "Bent u zeker?",
@@ -894,7 +967,8 @@ Voel je vrij om te verkennen en de controle over je Kubernetes-implementaties te
         refresh: "Vernieuwen",
         launch: "Nieuwe dienst",
         trash: "Alles verwijderen",
-        "trash my own": "Al mijn diensten verwijderen"
+        "trash my own": "Al mijn diensten verwijderen",
+        events: "Gebeurtenissen"
     },
     MyServicesCard: {
         service: "Dienst",
@@ -1031,7 +1105,8 @@ Voel je vrij om te verkennen en de controle over je Kubernetes-implementaties te
     },
     UrlInput: {
         load: "Laden",
-        reset: "Leegmaken"
+        reset: "Leegmaken",
+        "data source": "Gegevensbron"
     },
     CommandBar: {
         ok: "ok"
@@ -1204,6 +1279,28 @@ Voel je vrij om te verkennen en de controle over je Kubernetes-implementaties te
         "json-ld frame error": "De JSON-LD-response kon niet worden geframed.",
         "datasets parsing error":
             "De datasets uit de catalogus konden niet worden geparseerd."
+    },
+    S3UriBar: {
+        explore: "Verkennen..",
+        "copy s3 path": "S3-pad kopiëren",
+        copied: "Gekopieerd",
+        "copied path": ({ s3Uri }) => `Gekopieerd pad: ${s3Uri}`,
+        "add to bookmarks": "Aan bladwijzers toevoegen",
+        "delete from bookmarks": "Uit bladwijzers verwijderen",
+        "pinned storage location": "Vastgezette opslaglocatie",
+        bookmarked: "Bladwijzer",
+        "edit s3 uri": "S3-URI bewerken",
+        prefix: "Prefix",
+        "admin bookmark": "Beheerbladwijzer",
+        bookmark: "Bladwijzer",
+        object: "Object",
+        public: "Openbaar",
+        "go to s3 uri": ({ s3Uri, isPublic }) =>
+            `${isPublic ? "Openbaar. " : ""}Ga naar ${s3Uri}`,
+        "s3 uri": "S3 URI",
+        "edit from s3 root": "Bewerken vanaf S3-root",
+        "edit object key": "Objectsleutel bewerken",
+        "object key": "Objectsleutel",
+        listing: "Lijst wordt geladen..."
     }
-    /* spell-checker: enable */
 };
