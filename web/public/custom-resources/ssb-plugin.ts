@@ -16,7 +16,7 @@ const updatePrice = () => {
     }
 
     const onyxia: Onyxia = (window as any).onyxia;
-    const resources = onyxia.core.states.launcher.getMain().helmValues.resources;
+    const resources = onyxia.core.states.launcher.getMainView().helmValues.resources;
     const cpu = resources.cpu.replace("m", "");
     const memory = resources.memory.replace("Gi", "");
 

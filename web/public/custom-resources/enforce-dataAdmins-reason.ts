@@ -141,7 +141,7 @@ window.addEventListener("onyxiaready", () => {
     function tryGetLauncherState(): void {
       let launcherState: LauncherState | undefined;
       try {
-        launcherState = onyxia.core.states.launcher.getMain?.();
+        launcherState = onyxia.core.states.launcher.getMainView?.();
       } catch {
           return;
       }

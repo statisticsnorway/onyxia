@@ -8,7 +8,7 @@ var updatePrice = function () {
             .insertAdjacentHTML("afterbegin", '<div style="margin-top: 1em;">Estimert pris per arbeidsdag (8 timer): <span id="estimated-cost">_</span></div>');
     }
     var onyxia = window.onyxia;
-    var resources = onyxia.core.states.launcher.getMain().helmValues.resources;
+    var resources = onyxia.core.states.launcher.getMainView().helmValues.resources;
     var cpu = resources.cpu.replace("m", "");
     var memory = resources.memory.replace("Gi", "");
     // Prices fetched 5. feb 2025: https://cloud.google.com/compute/vm-instance-pricing?hl=nb
