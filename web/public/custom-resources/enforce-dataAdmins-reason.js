@@ -105,7 +105,7 @@ window.addEventListener("onyxiaready", function () {
             var _a, _b, _c, _d;
             var launcherState;
             try {
-                launcherState = (_b = (_a = onyxia.core.states.launcher).getMain) === null || _b === void 0 ? void 0 : _b.call(_a);
+                launcherState = (_b = (_a = onyxia.core.states.launcher).getMainView) === null || _b === void 0 ? void 0 : _b.call(_a);
             }
             catch (_e) {
                 return;
